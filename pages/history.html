@@ -1,0 +1,27 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>History</title><link rel="stylesheet" href="../styles.css"></head><body><div class="app"><aside class="sidebar"><div class="side-logo"><div class="side-mark">🌿</div><div class="side-brand"><strong>Hydrotech</strong><span>Dashboard Admin</span></div></div><nav class="nav"><a class="nav-item" href="dashboard.html"><span class="ico">▦</span>Dashboard</a><div class="nav-dropdown"><button class="nav-item" onclick="toggleDropdown()"><span class="ico">⚙</span>Fitur <span class="chev">⌄</span></button><div class="dropdown-menu" id="dropdownMenu"><a href="pengaturan-ppm.html" class="dropdown-item" onclick="navigateToPage('pengaturan-ppm.html')">Pengaturan PPM</a><a href="pengaturan-ph.html" class="dropdown-item" onclick="navigateToPage('pengaturan-ph.html')">Pengaturan pH</a><a href="pengaturan-dithane.html" class="dropdown-item" onclick="navigateToPage('pengaturan-dithane.html')">Pengaturan Dithane</a></div></div><a class="nav-item active" href="history.html"><span class="ico">◷</span>History</a><a class="nav-item" href="profile.html"><span class="ico">♟</span>Profile</a></nav><a class="logout" href="popup-logout.html">↳ Log out</a></aside><main class="main"><header class="topbar"><div class="page-title"><h1>History</h1><p>Selamat datang kembali, Admin</p></div><div class="admin"><div class="bell">🔔</div><div class="admin-card"><div class="admin-a">A</div><div><div class="admin-name">Admin</div><div class="admin-email">admin@hydrotech.com</div></div></div></div></header><div class="content"><div class="history-card"><div class="filter-bar"><input placeholder="Cari data..."><select><option>Semua Tipe</option></select><select><option>Semua Hari</option></select><button>Reset</button><button class="export">↧ Ekspor</button></div><table><thead><tr><th>No</th><th>Hari</th><th>Waktu</th><th>Tipe</th><th>Status</th><th>Aksi</th></tr></thead><tbody><tr><td>1</td><td>Senin</td><td>07:00</td><td><span class="badge blue">pH</span></td><td><span class="badge normal">Normal</span></td><td class="trash">▣</td></tr><tr><td>2</td><td>Senin</td><td>12:00</td><td><span class="badge normal">PPM</span></td><td><span class="badge low">Rendah</span></td><td class="trash">▣</td></tr><tr><td>3</td><td>Selasa</td><td>07:30</td><td><span class="badge purple">Dithane</span></td><td><span class="badge normal">Normal</span></td><td class="trash">▣</td></tr><tr><td>4</td><td>Selasa</td><td>13:00</td><td><span class="badge blue">pH</span></td><td><span class="badge high">Tinggi</span></td><td class="trash">▣</td></tr><tr><td>5</td><td>Rabu</td><td>08:00</td><td><span class="badge normal">PPM</span></td><td><span class="badge normal">Normal</span></td><td class="trash">▣</td></tr><tr><td>6</td><td>Rabu</td><td>14:00</td><td><span class="badge purple">Dithane</span></td><td><span class="badge low">Rendah</span></td><td class="trash">▣</td></tr><tr><td>7</td><td>Kamis</td><td>07:00</td><td><span class="badge blue">pH</span></td><td><span class="badge normal">Normal</span></td><td class="trash">▣</td></tr><tr><td>8</td><td>Kamis</td><td>11:30</td><td><span class="badge normal">PPM</span></td><td><span class="badge high">Tinggi</span></td><td class="trash">▣</td></tr><tr><td>9</td><td>Jumat</td><td>09:00</td><td><span class="badge purple">Dithane</span></td><td><span class="badge normal">Normal</span></td><td class="trash">▣</td></tr><tr><td>10</td><td>Jumat</td><td>15:00</td><td><span class="badge blue">pH</span></td><td><span class="badge low">Rendah</span></td><td class="trash">▣</td></tr></tbody></table><div class="showing" style="margin-left:14px">Menampilkan</div><div class="pagination" style="padding:10px 14px"><span>‹</span><span class="current">1</span><span>2</span><span>›</span></div></div></div></main></div><script>
+function toggleDropdown() {
+  const dropdownMenu = document.getElementById('dropdownMenu');
+  dropdownMenu.classList.toggle('show');
+}
+
+function closeDropdown() {
+  const dropdownMenu = document.getElementById('dropdownMenu');
+  dropdownMenu.classList.remove('show');
+}
+
+function navigateToPage(pageUrl) {
+  closeDropdown();
+  setTimeout(function() {
+    window.location.href = pageUrl;
+  }, 100);
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+  const dropdown = document.querySelector('.nav-dropdown');
+  if (!dropdown.contains(event.target)) {
+    document.getElementById('dropdownMenu').classList.remove('show');
+  }
+});
+</script>
+</body></html>
