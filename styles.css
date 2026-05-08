@@ -368,7 +368,11 @@ body.login-page {
   position: absolute;
   inset: 0;
   border-radius: 24px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.35), transparent 60%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.35),
+    transparent 60%
+  );
 }
 .input-group {
   width: 100%;
@@ -819,8 +823,10 @@ body.login-page {
   width: 22px;
   height: 22px;
   background: #078d43;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2.3'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M10.3%2021a2%202%200%200%200%203.4%200'/%3E%3Cpath%20d='M18%208A6%206%200%200%200%206%208c0%207-3%207-3%209h18c0-2-3-2-3-9'/%3E%3Cpath%20d='M12%202v2'/%3E%3C/svg%3E") center / contain no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2.3'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M10.3%2021a2%202%200%200%200%203.4%200'/%3E%3Cpath%20d='M18%208A6%206%200%200%200%206%208c0%207-3%207-3%209h18c0-2-3-2-3-9'/%3E%3Cpath%20d='M12%202v2'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2.3'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M10.3%2021a2%202%200%200%200%203.4%200'/%3E%3Cpath%20d='M18%208A6%206%200%200%200%206%208c0%207-3%207-3%209h18c0-2-3-2-3-9'/%3E%3Cpath%20d='M12%202v2'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2.3'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M10.3%2021a2%202%200%200%200%203.4%200'/%3E%3Cpath%20d='M18%208A6%206%200%200%200%206%208c0%207-3%207-3%209h18c0-2-3-2-3-9'/%3E%3Cpath%20d='M12%202v2'/%3E%3C/svg%3E")
+    center / contain no-repeat;
 }
 .bell:after {
   content: "";
@@ -999,8 +1005,19 @@ body.login-page {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at calc(100% - 26px) -32px, rgba(7, 166, 79, 0.08) 0 56px, transparent 57px),
-    linear-gradient(115deg, transparent 0%, transparent 34%, rgba(255, 255, 255, 0.62) 46%, transparent 58%, transparent 100%);
+    radial-gradient(
+      circle at calc(100% - 26px) -32px,
+      rgba(7, 166, 79, 0.08) 0 56px,
+      transparent 57px
+    ),
+    linear-gradient(
+      115deg,
+      transparent 0%,
+      transparent 34%,
+      rgba(255, 255, 255, 0.62) 46%,
+      transparent 58%,
+      transparent 100%
+    );
   transform: translateX(-130%);
   animation: statShine 4.6s ease-in-out infinite;
   pointer-events: none;
@@ -1372,7 +1389,11 @@ body.login-page {
   overflow: hidden;
   background:
     radial-gradient(circle at 96% 0%, rgba(7, 166, 79, 0.08), transparent 30%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 253, 250, 0.98));
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.98),
+      rgba(248, 253, 250, 0.98)
+    );
 }
 .activity-head {
   min-height: 92px;
@@ -1863,7 +1884,11 @@ th {
   gap: 22px;
   color: white;
   background:
-    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, 0.2), transparent 28%),
+    radial-gradient(
+      circle at 88% 18%,
+      rgba(255, 255, 255, 0.2),
+      transparent 28%
+    ),
     linear-gradient(135deg, #058846 0%, #08ad57 50%, #1676a4 100%);
   box-shadow: 0 20px 42px rgba(5, 136, 70, 0.22);
   overflow: hidden;
@@ -1952,7 +1977,11 @@ th {
   border-radius: 18px;
   background:
     radial-gradient(circle at 96% 0%, rgba(7, 166, 79, 0.08), transparent 34%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 253, 250, 0.98));
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.98),
+      rgba(248, 253, 250, 0.98)
+    );
   box-shadow: 0 16px 36px rgba(24, 56, 36, 0.08);
   padding: 22px;
   display: flex;
@@ -2046,7 +2075,11 @@ th {
   border-radius: 20px;
   padding: 24px 26px;
   background:
-    linear-gradient(135deg, rgba(246, 253, 249, 0.98), rgba(255, 255, 255, 0.98)),
+    linear-gradient(
+      135deg,
+      rgba(246, 253, 249, 0.98),
+      rgba(255, 255, 255, 0.98)
+    ),
     white;
   border: 1px solid rgba(225, 235, 229, 0.9);
   box-shadow: 0 16px 36px rgba(24, 56, 36, 0.07);
