@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
@@ -10,44 +10,46 @@
     <div class="app">
       <aside class="sidebar">
         <div class="side-logo">
-          <div class="side-mark">🌿</div>
+          <div class="side-mark">
+            <img src="../assets/Logo_hydrotech.png" alt="Logo Hydrotech" />
+          </div>
           <div class="side-brand">
             <strong>Hydrotech</strong><span>Dashboard Admin</span>
           </div>
         </div>
         <nav class="nav">
           <a class="nav-item active" href="dashboard.html"
-            ><span class="ico">▦</span>Dashboard</a
+            ><span class="ico">D</span>Dashboard</a
           >
           <div class="nav-dropdown">
             <button class="nav-item" onclick="toggleDropdown()">
-              <span class="ico">⚙</span>Fitur <span class="chev">⌄</span>
+              <span class="ico">F</span>Fitur <span class="chev">v</span>
             </button>
             <div class="dropdown-menu" id="dropdownMenu">
               <a
                 href="pengaturan-ppm.html"
                 class="dropdown-item"
-                onclick="navigateToPage('pengaturan-ppm.html')"
+                onclick="navigateToPage(event, 'pengaturan-ppm.html')"
                 >Pengaturan PPM</a
               >
               <a
                 href="pengaturan-ph.html"
                 class="dropdown-item"
-                onclick="navigateToPage('pengaturan-ph.html')"
+                onclick="navigateToPage(event, 'pengaturan-ph.html')"
                 >Pengaturan pH</a
               >
               <a
                 href="pengaturan-dithane.html"
                 class="dropdown-item"
-                onclick="navigateToPage('pengaturan-dithane.html')"
+                onclick="navigateToPage(event, 'pengaturan-dithane.html')"
                 >Pengaturan Dithane</a
               >
             </div>
           </div>
           <a class="nav-item" href="history.html"
-            ><span class="ico">◷</span>History</a
+            ><span class="ico">H</span>History</a
           ><a class="nav-item" href="profile.html"
-            ><span class="ico">♟</span>Profile</a
+            ><span class="ico">P</span>Profile</a
           >
         </nav>
         <a class="logout" href="popup-logout.html">↳ Log out</a>
@@ -59,7 +61,7 @@
             <p>Selamat datang kembali, Admin</p>
           </div>
           <div class="admin">
-            <div class="bell">🔔</div>
+            <div class="bell" aria-label="Notifikasi"></div>
             <div class="admin-card">
               <div class="admin-a">A</div>
               <div>
@@ -70,66 +72,172 @@
           </div>
         </header>
         <div class="content">
+          <section class="dashboard-hero">
+            <div>
+              <span class="hero-kicker">Live Hydroponic Control</span>
+              <h2>Monitoring tanaman berjalan stabil</h2>
+              <p>
+                Nutrisi, pH, dan penyemprotan Dithane berada dalam rentang aman
+                untuk siklus hari ini.
+              </p>
+            </div>
+            <div class="hero-metrics">
+              <div>
+                <small>Status Sistem</small>
+                <b>Aktif</b>
+              </div>
+              <div>
+                <small>Update Terakhir</small>
+                <b>2 menit lalu</b>
+              </div>
+            </div>
+          </section>
           <section class="stats">
-            <div class="stat">
+            <div class="stat stat-ppm">
               <div class="mini-ico">▥</div>
               <div class="pill">OPTIMAL</div>
               <div class="stat-title">PPM Level</div>
               <div class="stat-num">863</div>
+              <div class="stat-note">Target 800 - 1000 PPM</div>
               <div class="bar"><span style="width: 72%"></span></div>
             </div>
-            <div class="stat">
+            <div class="stat stat-ph">
               <div class="mini-ico">♙</div>
               <div class="pill">BAIK</div>
               <div class="stat-title">Level pH</div>
-              <div class="stat-num">71%</div>
+              <div class="stat-num">7.1</div>
+              <div class="stat-note">Rentang aman 5.5 - 6.5 pH</div>
               <div class="bar"><span style="width: 71%"></span></div>
             </div>
-            <div class="stat">
-              <div class="mini-ico">◴</div>
+            <div class="stat stat-dithane">
+              <div class="mini-ico">▴</div>
               <div class="pill">TERJADWAL</div>
               <div class="stat-title">Penyemprotan Dithane</div>
               <div class="stat-num">14:00</div>
-              <div class="stat-title">setiap hari pada pukul 14.00</div>
+              <div class="stat-note">setiap hari pada pukul 14.00</div>
             </div>
           </section>
           <section class="dashboard-grid">
             <div class="card chart-card">
-              <svg class="chart" viewBox="0 0 420 170">
-                <line x1="20" y1="140" x2="400" y2="140" stroke="#ddd" />
-                <line x1="20" y1="105" x2="400" y2="105" stroke="#eee" />
-                <line x1="20" y1="70" x2="400" y2="70" stroke="#eee" />
-                <line x1="20" y1="35" x2="400" y2="35" stroke="#eee" />
-                <polyline
-                  points="40,125 80,118 120,88 160,58 200,74 240,91 280,117 320,133"
-                  fill="none"
-                  stroke="#ff7777"
-                  stroke-width="5" />
-                <polyline
-                  points="40,139 80,126 120,82 160,35 200,50 240,77 280,111 320,136"
-                  fill="none"
-                  stroke="#6c63ff"
-                  stroke-width="5" />
-                <text x="160" y="14" fill="#ff7777" font-size="11">PH</text>
-                <text x="235" y="14" fill="#6c63ff" font-size="11">PPM</text>
+              <div class="chart-head">
+                <div>
+                  <div class="section-title">Monitoring Nutrisi</div>
+                  <p>Perbandingan pH dan PPM hari ini</p>
+                </div>
+                <div class="chart-legend">
+                  <span><i class="legend-ph"></i>pH</span>
+                  <span><i class="legend-ppm"></i>PPM</span>
+                </div>
+              </div>
+              <div class="chart-summary">
+                <div>
+                  <small>pH saat ini</small>
+                  <b>7.1</b>
+                </div>
+                <div>
+                  <small>PPM saat ini</small>
+                  <b>863</b>
+                </div>
+              </div>
+              <svg
+                class="chart"
+                viewBox="0 0 520 230"
+                role="img"
+                aria-label="Grafik pH dan PPM">
+                <defs>
+                  <linearGradient id="phFill" x1="0" x2="0" y1="0" y2="1">
+                    <stop
+                      offset="0%"
+                      stop-color="#ff7777"
+                      stop-opacity="0.28" />
+                    <stop offset="100%" stop-color="#ff7777" stop-opacity="0" />
+                  </linearGradient>
+                  <linearGradient id="ppmFill" x1="0" x2="0" y1="0" y2="1">
+                    <stop
+                      offset="0%"
+                      stop-color="#07a64f"
+                      stop-opacity="0.24" />
+                    <stop offset="100%" stop-color="#07a64f" stop-opacity="0" />
+                  </linearGradient>
+                  <filter
+                    id="pointShadow"
+                    x="-30%"
+                    y="-30%"
+                    width="160%"
+                    height="160%">
+                    <feDropShadow
+                      dx="0"
+                      dy="4"
+                      stdDeviation="4"
+                      flood-color="#183225"
+                      flood-opacity="0.18" />
+                  </filter>
+                </defs>
+                <g class="chart-grid">
+                  <line x1="56" y1="34" x2="488" y2="34" />
+                  <line x1="56" y1="74" x2="488" y2="74" />
+                  <line x1="56" y1="114" x2="488" y2="114" />
+                  <line x1="56" y1="154" x2="488" y2="154" />
+                  <line x1="56" y1="194" x2="488" y2="194" />
+                </g>
+                <g class="chart-axis">
+                  <text x="20" y="38">900</text>
+                  <text x="20" y="78">750</text>
+                  <text x="20" y="118">600</text>
+                  <text x="20" y="158">450</text>
+                  <text x="25" y="198">300</text>
+                  <text x="56" y="220">08.00</text>
+                  <text x="174" y="220">10.00</text>
+                  <text x="292" y="220">12.00</text>
+                  <text x="410" y="220">14.00</text>
+                </g>
+                <path
+                  class="chart-area ph-area"
+                  d="M56 172 C92 162 116 160 145 138 C174 115 194 70 224 64 C254 58 278 100 306 112 C336 126 360 142 388 154 C420 168 448 171 488 160 L488 194 L56 194 Z" />
+                <path
+                  class="chart-area ppm-area"
+                  d="M56 184 C88 174 116 156 145 122 C174 88 194 46 224 42 C256 38 274 68 306 78 C338 90 360 116 388 138 C422 162 452 181 488 170 L488 194 L56 194 Z" />
+                <path
+                  class="chart-line ph-line"
+                  d="M56 172 C92 162 116 160 145 138 C174 115 194 70 224 64 C254 58 278 100 306 112 C336 126 360 142 388 154 C420 168 448 171 488 160" />
+                <path
+                  class="chart-line ppm-line"
+                  d="M56 184 C88 174 116 156 145 122 C174 88 194 46 224 42 C256 38 274 68 306 78 C338 90 360 116 388 138 C422 162 452 181 488 170" />
+                <g class="chart-points" filter="url(#pointShadow)">
+                  <circle class="ph-dot" cx="224" cy="64" r="5" />
+                  <circle class="ppm-dot" cx="224" cy="42" r="5" />
+                  <circle class="ph-dot" cx="388" cy="154" r="5" />
+                  <circle class="ppm-dot" cx="388" cy="138" r="5" />
+                  <circle class="ph-dot active" cx="488" cy="160" r="6" />
+                  <circle class="ppm-dot active" cx="488" cy="170" r="6" />
+                </g>
+                <g class="chart-tooltip">
+                  <rect x="386" y="58" width="96" height="54" rx="10" />
+                  <text x="402" y="79">14.00</text>
+                  <text x="402" y="98">pH 7.1 PPM 863</text>
+                </g>
               </svg>
             </div>
             <div class="card notif">
-              <div class="section-title">
-                Notifikasi Sistem <span class="new-badge">2 Baru</span>
+              <div class="notif-head">
+                <div>
+                  <div class="section-title">Notifikasi Sistem</div>
+                  <p>Aktivitas sensor dan jadwal otomatis</p>
+                </div>
+                <span class="new-badge">2 Baru</span>
               </div>
               <div class="notif-item">
-                <span class="nicon">⌁</span>
+                <span class="nicon">✓</span>
                 <div><b>pH optimal tercapai</b><small>5 menit lalu</small></div>
               </div>
               <div class="notif-item">
-                <span class="nicon">⌁</span>
+                <span class="nicon">✓</span>
                 <div>
                   <b>PPM optimal tercapai</b><small>8 menit lalu</small>
                 </div>
               </div>
               <div class="notif-item">
-                <span class="nicon">⌁</span>
+                <span class="nicon">✓</span>
                 <div>
                   <b>Jadwal penyemprotan dalam 2 jam</b
                   ><small>10 menit lalu</small>
@@ -137,31 +245,90 @@
               </div>
             </div>
           </section>
-          <section class="card activity">
-            <div class="section-title">
-              Riwayat Aktivitas Sistem
-              <div class="tabs">
-                <span class="active">Semua</span><span>PPM</span><span>pH</span
-                ><span>Dithane</span>
+          <section class="card activity" data-activity-section>
+            <div class="activity-head">
+              <div>
+                <div class="section-title">Riwayat Aktivitas Sistem</div>
+                <p>
+                  Aktivitas terbaru dari sensor, nutrisi, pH, dan jadwal
+                  penyemprotan.
+                </p>
+              </div>
+              <div class="activity-filter-dropdown" data-activity-dropdown>
+                <button
+                  class="activity-filter-toggle"
+                  type="button"
+                  data-activity-toggle
+                  aria-expanded="false">
+                  <span data-activity-label>Semua</span>
+                  <i></i>
+                </button>
+                <div class="activity-filter-menu" data-activity-menu>
+                  <button
+                    class="active"
+                    type="button"
+                    data-activity-filter="all">
+                    Semua
+                  </button>
+                  <button type="button" data-activity-filter="ppm">PPM</button>
+                  <button type="button" data-activity-filter="ph">pH</button>
+                  <button type="button" data-activity-filter="dithane">
+                    Dithane
+                  </button>
+                </div>
               </div>
             </div>
-            <div class="activity-row">
-              <span class="nicon">▥</span>
-              <div>
-                <b>Penyesuaian PPM</b
-                ><small>PPM disesuaikan dari 845 ke 863</small>
+            <div class="activity-list">
+              <div class="activity-row" data-activity-type="ppm">
+                <span class="nicon">PPM</span>
+                <div>
+                  <b>Penyesuaian PPM</b>
+                  <small>PPM disesuaikan dari 845 ke 863</small>
+                </div>
+                <span class="status">Berhasil</span>
+                <span class="ago">2 jam lalu</span>
               </div>
-              <span class="status">Berhasil</span
-              ><span class="ago">2 jam lalu</span>
+              <div class="activity-row" data-activity-type="ph">
+                <span class="nicon">pH</span>
+                <div>
+                  <b>Kalibrasi pH</b><small>pH dikalibrasi ke level 7.1</small>
+                </div>
+                <span class="status">Berhasil</span>
+                <span class="ago">2 jam lalu</span>
+              </div>
+              <div class="activity-row" data-activity-type="dithane">
+                <span class="nicon">DT</span>
+                <div>
+                  <b>Jadwal Dithane Aktif</b>
+                  <small>Penyemprotan berikutnya pukul 14.00</small>
+                </div>
+                <span class="status wait">Terjadwal</span>
+                <span class="ago">35 menit lalu</span>
+              </div>
+              <div class="activity-row" data-activity-type="ppm">
+                <span class="nicon">PPM</span>
+                <div>
+                  <b>Sensor Nutrisi Dibaca</b>
+                  <small>Nilai PPM masuk dalam rentang aman</small>
+                </div>
+                <span class="status">Normal</span>
+                <span class="ago">12 menit lalu</span>
+              </div>
+              <div class="activity-row" data-activity-type="ph">
+                <span class="nicon">pH</span>
+                <div>
+                  <b>pH Mulai Naik</b>
+                  <small>Sistem memantau perubahan pH secara otomatis</small>
+                </div>
+                <span class="status warn">Dipantau</span>
+                <span class="ago">baru saja</span>
+              </div>
             </div>
-            <div class="activity-row">
-              <span class="nicon">⌘</span>
-              <div>
-                <b>Kalibrasi pH</b
-                ><small>pH dikalibrasi ke level optimal 71%</small>
-              </div>
-              <span class="status">Berhasil</span
-              ><span class="ago">2 jam lalu</span>
+            <div class="activity-empty" data-activity-empty>
+              Tidak ada aktivitas pada kategori ini.
+            </div>
+            <div class="activity-foot">
+              <span data-activity-count>Menampilkan 5 aktivitas</span>
             </div>
           </section>
         </div>
@@ -170,15 +337,30 @@
     <script>
       function toggleDropdown() {
         const dropdownMenu = document.getElementById("dropdownMenu");
+        const dropdownButton = document.querySelector(
+          ".nav-dropdown .nav-item",
+        );
+        if (!dropdownMenu) return;
         dropdownMenu.classList.toggle("show");
+        if (dropdownButton) {
+          dropdownButton.classList.toggle(
+            "open",
+            dropdownMenu.classList.contains("show"),
+          );
+        }
       }
 
       function closeDropdown() {
         const dropdownMenu = document.getElementById("dropdownMenu");
-        dropdownMenu.classList.remove("show");
+        const dropdownButton = document.querySelector(
+          ".nav-dropdown .nav-item",
+        );
+        if (dropdownMenu) dropdownMenu.classList.remove("show");
+        if (dropdownButton) dropdownButton.classList.remove("open");
       }
 
-      function navigateToPage(pageUrl) {
+      function navigateToPage(event, pageUrl) {
+        event.preventDefault();
         closeDropdown();
         setTimeout(function () {
           window.location.href = pageUrl;
@@ -189,9 +371,12 @@
       document.addEventListener("click", function (event) {
         const dropdown = document.querySelector(".nav-dropdown");
         if (!dropdown.contains(event.target)) {
-          document.getElementById("dropdownMenu").classList.remove("show");
+          closeDropdown();
         }
       });
     </script>
+    <script src="../assets/confirm-modal.js"></script>
+    <script src="../assets/dashboard-activity.js"></script>
+    <script src="../assets/dashboard-live.js"></script>
   </body>
 </html>

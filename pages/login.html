@@ -24,6 +24,28 @@
         eyeIcon.classList.add("fa-eye");
       }
     }
+
+    function handleLogin(event) {
+      event.preventDefault();
+
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+      const message = document.getElementById("loginMessage");
+
+      if (username === "hydrotech" && password === "Admin123") {
+        message.textContent = "Login berhasil. Mengalihkan ke dashboard...";
+        message.classList.remove("error");
+        message.classList.add("success", "show");
+        setTimeout(function () {
+          window.location.href = "dashboard.html";
+        }, 450);
+        return;
+      }
+
+      message.textContent = "Username atau password salah.";
+      message.classList.remove("success");
+      message.classList.add("error", "show");
+    }
   </script>
   <body class="login-page">
     <div class="login-overlay"></div>
@@ -83,22 +105,27 @@
         <span>tech</span>
       </div>
 
-      <p class="sub">Masuk ke Akun Anda</p>
+      <p class="sub">Masuk ke Dashboard Admin</p>
 
       <div class="avatar-big">
         <div class="avatar-head"></div>
         <div class="avatar-body"></div>
       </div>
-      <form>
-        <!-- EMAIL / USER -->
+      <form onsubmit="handleLogin(event)">
+        <!-- USERNAME -->
         <label class="input-group">
           <span class="input-icon">
             <i class="fa-solid fa-user"></i>
           </span>
 
           <div class="input-content">
-            <small>Email</small>
-            <input type="text" id="email" placeholder="Masukkan email" />
+            <small>Username</small>
+            <input
+              type="text"
+              id="username"
+              placeholder="Masukkan username"
+              autocomplete="username"
+              required />
           </div>
         </label>
 
@@ -113,7 +140,9 @@
             <input
               type="password"
               id="password"
-              placeholder="Masukkan password" />
+              placeholder="Masukkan password"
+              autocomplete="current-password"
+              required />
           </div>
 
           <button
@@ -124,23 +153,17 @@
           </button>
         </label>
 
-        <div class="forgot">Forgot Your Password?</div>
+        <div class="login-hint">
+          <span><i class="fa-solid fa-shield-halved"></i></span>
+          Akses khusus admin Hydrotech
+        </div>
 
-        <button
-          type="button"
-          class="btn-login"
-          onclick="window.location.href = 'dashboard.html'">
+        <p class="login-message" id="loginMessage"></p>
+
+        <button type="submit" class="btn-login">
           Masuk
         </button>
       </form>
-
-      <div class="divider">
-        <span></span>
-        <p>atau</p>
-        <span></span>
-      </div>
-
-      <div class="register">Belum Punya Akun? <span>Daftar Sekarang</span></div>
     </main>
-  </body>
+  <script src="../assets/confirm-modal.js"></script></body>
 </html>

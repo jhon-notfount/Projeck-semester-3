@@ -1,27 +1,176 @@
-<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>History</title><link rel="stylesheet" href="../styles.css"></head><body><div class="app"><aside class="sidebar"><div class="side-logo"><div class="side-mark">🌿</div><div class="side-brand"><strong>Hydrotech</strong><span>Dashboard Admin</span></div></div><nav class="nav"><a class="nav-item" href="dashboard.html"><span class="ico">▦</span>Dashboard</a><div class="nav-dropdown"><button class="nav-item" onclick="toggleDropdown()"><span class="ico">⚙</span>Fitur <span class="chev">⌄</span></button><div class="dropdown-menu" id="dropdownMenu"><a href="pengaturan-ppm.html" class="dropdown-item" onclick="navigateToPage('pengaturan-ppm.html')">Pengaturan PPM</a><a href="pengaturan-ph.html" class="dropdown-item" onclick="navigateToPage('pengaturan-ph.html')">Pengaturan pH</a><a href="pengaturan-dithane.html" class="dropdown-item" onclick="navigateToPage('pengaturan-dithane.html')">Pengaturan Dithane</a></div></div><a class="nav-item active" href="history.html"><span class="ico">◷</span>History</a><a class="nav-item" href="profile.html"><span class="ico">♟</span>Profile</a></nav><a class="logout" href="popup-logout.html">↳ Log out</a></aside><main class="main"><header class="topbar"><div class="page-title"><h1>History</h1><p>Selamat datang kembali, Admin</p></div><div class="admin"><div class="bell">🔔</div><div class="admin-card"><div class="admin-a">A</div><div><div class="admin-name">Admin</div><div class="admin-email">admin@hydrotech.com</div></div></div></div></header><div class="content"><div class="history-card"><div class="filter-bar"><input placeholder="Cari data..."><select><option>Semua Tipe</option></select><select><option>Semua Hari</option></select><button>Reset</button><button class="export">↧ Ekspor</button></div><table><thead><tr><th>No</th><th>Hari</th><th>Waktu</th><th>Tipe</th><th>Status</th><th>Aksi</th></tr></thead><tbody><tr><td>1</td><td>Senin</td><td>07:00</td><td><span class="badge blue">pH</span></td><td><span class="badge normal">Normal</span></td><td class="trash">▣</td></tr><tr><td>2</td><td>Senin</td><td>12:00</td><td><span class="badge normal">PPM</span></td><td><span class="badge low">Rendah</span></td><td class="trash">▣</td></tr><tr><td>3</td><td>Selasa</td><td>07:30</td><td><span class="badge purple">Dithane</span></td><td><span class="badge normal">Normal</span></td><td class="trash">▣</td></tr><tr><td>4</td><td>Selasa</td><td>13:00</td><td><span class="badge blue">pH</span></td><td><span class="badge high">Tinggi</span></td><td class="trash">▣</td></tr><tr><td>5</td><td>Rabu</td><td>08:00</td><td><span class="badge normal">PPM</span></td><td><span class="badge normal">Normal</span></td><td class="trash">▣</td></tr><tr><td>6</td><td>Rabu</td><td>14:00</td><td><span class="badge purple">Dithane</span></td><td><span class="badge low">Rendah</span></td><td class="trash">▣</td></tr><tr><td>7</td><td>Kamis</td><td>07:00</td><td><span class="badge blue">pH</span></td><td><span class="badge normal">Normal</span></td><td class="trash">▣</td></tr><tr><td>8</td><td>Kamis</td><td>11:30</td><td><span class="badge normal">PPM</span></td><td><span class="badge high">Tinggi</span></td><td class="trash">▣</td></tr><tr><td>9</td><td>Jumat</td><td>09:00</td><td><span class="badge purple">Dithane</span></td><td><span class="badge normal">Normal</span></td><td class="trash">▣</td></tr><tr><td>10</td><td>Jumat</td><td>15:00</td><td><span class="badge blue">pH</span></td><td><span class="badge low">Rendah</span></td><td class="trash">▣</td></tr></tbody></table><div class="showing" style="margin-left:14px">Menampilkan</div><div class="pagination" style="padding:10px 14px"><span>‹</span><span class="current">1</span><span>2</span><span>›</span></div></div></div></main></div><script>
-function toggleDropdown() {
-  const dropdownMenu = document.getElementById('dropdownMenu');
-  dropdownMenu.classList.toggle('show');
-}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>History</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="side-logo">
+        <div class="side-mark"><img src="../assets/Logo_hydrotech.png" alt="Logo Hydrotech"></div>
+        <div class="side-brand"><strong>Hydrotech</strong><span>Dashboard Admin</span></div>
+      </div>
+      <nav class="nav">
+        <a class="nav-item" href="dashboard.html"><span class="ico">D</span>Dashboard</a>
+        <div class="nav-dropdown">
+          <button class="nav-item" onclick="toggleDropdown()"><span class="ico">F</span>Fitur <span class="chev">v</span></button>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="pengaturan-ppm.html" class="dropdown-item" onclick="navigateToPage(event, 'pengaturan-ppm.html')">Pengaturan PPM</a>
+            <a href="pengaturan-ph.html" class="dropdown-item" onclick="navigateToPage(event, 'pengaturan-ph.html')">Pengaturan pH</a>
+            <a href="pengaturan-dithane.html" class="dropdown-item" onclick="navigateToPage(event, 'pengaturan-dithane.html')">Pengaturan Dithane</a>
+          </div>
+        </div>
+        <a class="nav-item active" href="history.html"><span class="ico">H</span>History</a>
+        <a class="nav-item" href="profile.html"><span class="ico">P</span>Profile</a>
+      </nav>
+      <a class="logout" href="popup-logout.html">Log out</a>
+    </aside>
 
-function closeDropdown() {
-  const dropdownMenu = document.getElementById('dropdownMenu');
-  dropdownMenu.classList.remove('show');
-}
+    <main class="main">
+      <header class="topbar">
+        <div class="page-title">
+          <h1>History</h1>
+          <p>Selamat datang kembali, Admin</p>
+        </div>
+        <div class="admin">
+          <div class="bell" aria-label="Notifikasi"></div>
+          <div class="admin-card">
+            <div class="admin-a">A</div>
+            <div>
+              <div class="admin-name">Admin</div>
+              <div class="admin-email">admin@hydrotech.com</div>
+            </div>
+          </div>
+        </div>
+      </header>
 
-function navigateToPage(pageUrl) {
-  closeDropdown();
-  setTimeout(function() {
-    window.location.href = pageUrl;
-  }, 100);
-}
+      <div class="content">
+        <section class="history-card">
+          <div class="history-card-head">
+            <div>
+              <span class="history-kicker">Riwayat Monitoring</span>
+              <h2>Data Aktivitas Sistem</h2>
+              <p>Pantau perubahan pH, PPM, dan Dithane berdasarkan tanggal, bulan, jam, tipe, dan status.</p>
+            </div>
+            <button type="button" class="history-export" data-history-export>Ekspor CSV</button>
+          </div>
 
-// Close dropdown when clicking outside
-document.addEventListener('click', function(event) {
-  const dropdown = document.querySelector('.nav-dropdown');
-  if (!dropdown.contains(event.target)) {
-    document.getElementById('dropdownMenu').classList.remove('show');
-  }
-});
-</script>
-</body></html>
+          <div class="filter-bar history-filter">
+            <input data-history-search type="search" placeholder="Cari tanggal, tipe, status, hari, atau jam...">
+            <select data-history-type aria-label="Filter tipe">
+              <option value="">Semua Tipe</option>
+              <option value="ph">pH</option>
+              <option value="ppm">PPM</option>
+              <option value="dithane">Dithane</option>
+            </select>
+            <select data-history-day aria-label="Filter hari">
+              <option value="">Semua Hari</option>
+              <option value="senin">Senin</option>
+              <option value="selasa">Selasa</option>
+              <option value="rabu">Rabu</option>
+              <option value="kamis">Kamis</option>
+              <option value="jumat">Jumat</option>
+            </select>
+            <select data-history-month aria-label="Filter bulan">
+              <option value="">Semua Bulan</option>
+              <option value="januari">Januari</option>
+              <option value="februari">Februari</option>
+              <option value="maret">Maret</option>
+              <option value="april">April</option>
+              <option value="mei">Mei</option>
+              <option value="juni">Juni</option>
+              <option value="juli">Juli</option>
+              <option value="agustus">Agustus</option>
+              <option value="september">September</option>
+              <option value="oktober">Oktober</option>
+              <option value="november">November</option>
+              <option value="desember">Desember</option>
+            </select>
+            <select data-history-status aria-label="Filter status">
+              <option value="">Semua Status</option>
+              <option value="normal">Normal</option>
+              <option value="rendah">Rendah</option>
+              <option value="tinggi">Tinggi</option>
+            </select>
+            <button type="button" data-history-reset>Reset</button>
+          </div>
+
+          <div class="history-table-wrap">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Hari</th>
+                  <th>Tanggal</th>
+                  <th>Jam</th>
+                  <th>Tipe</th>
+                  <th>Status</th>
+                  <th>Keterangan</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-id="history-1"><td></td><td>Senin</td><td>12 Januari 2026</td><td>07:00</td><td><span class="badge blue">pH</span></td><td><span class="badge normal">Normal</span></td><td>Nilai pH stabil</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
+                <tr data-id="history-2"><td></td><td>Senin</td><td>16 Februari 2026</td><td>12:00</td><td><span class="badge normal">PPM</span></td><td><span class="badge low">Rendah</span></td><td>Nutrisi perlu ditambah</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
+                <tr data-id="history-3"><td></td><td>Selasa</td><td>10 Maret 2026</td><td>07:30</td><td><span class="badge purple">Dithane</span></td><td><span class="badge normal">Normal</span></td><td>Penyemprotan selesai</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
+                <tr data-id="history-4"><td></td><td>Selasa</td><td>14 April 2026</td><td>13:00</td><td><span class="badge blue">pH</span></td><td><span class="badge high">Tinggi</span></td><td>pH perlu diturunkan</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
+                <tr data-id="history-5"><td></td><td>Rabu</td><td>6 Mei 2026</td><td>08:00</td><td><span class="badge normal">PPM</span></td><td><span class="badge normal">Normal</span></td><td>Nilai PPM stabil</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
+                <tr data-id="history-6"><td></td><td>Rabu</td><td>18 Juni 2026</td><td>14:00</td><td><span class="badge purple">Dithane</span></td><td><span class="badge low">Rendah</span></td><td>Jadwal semprot menunggu</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
+                <tr data-id="history-7"><td></td><td>Kamis</td><td>9 Juli 2026</td><td>07:00</td><td><span class="badge blue">pH</span></td><td><span class="badge normal">Normal</span></td><td>Nilai pH stabil</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
+                <tr data-id="history-8"><td></td><td>Kamis</td><td>20 Agustus 2026</td><td>11:30</td><td><span class="badge normal">PPM</span></td><td><span class="badge high">Tinggi</span></td><td>Nutrisi perlu dikurangi</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
+                <tr data-id="history-9"><td></td><td>Jumat</td><td>11 September 2026</td><td>09:00</td><td><span class="badge purple">Dithane</span></td><td><span class="badge normal">Normal</span></td><td>Penyemprotan selesai</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
+                <tr data-id="history-10"><td></td><td>Jumat</td><td>23 Oktober 2026</td><td>15:00</td><td><span class="badge blue">pH</span></td><td><span class="badge low">Rendah</span></td><td>pH perlu dinaikkan</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
+              </tbody>
+            </table>
+            <div class="history-empty" data-history-empty>Data tidak ditemukan.</div>
+          </div>
+
+          <div class="history-footer">
+            <div class="showing" data-history-showing>Menampilkan 0 data</div>
+            <div class="pagination" data-history-pagination></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function toggleDropdown() {
+      const dropdownMenu = document.getElementById("dropdownMenu");
+      const dropdownButton = document.querySelector(".nav-dropdown .nav-item");
+      if (!dropdownMenu) return;
+      dropdownMenu.classList.toggle("show");
+      if (dropdownButton) {
+        dropdownButton.classList.toggle("open", dropdownMenu.classList.contains("show"));
+      }
+    }
+
+    function closeDropdown() {
+      const dropdownMenu = document.getElementById("dropdownMenu");
+      const dropdownButton = document.querySelector(".nav-dropdown .nav-item");
+      if (dropdownMenu) dropdownMenu.classList.remove("show");
+      if (dropdownButton) dropdownButton.classList.remove("open");
+    }
+
+    function navigateToPage(event, pageUrl) {
+      event.preventDefault();
+      closeDropdown();
+      setTimeout(function () {
+        window.location.href = pageUrl;
+      }, 100);
+    }
+
+    document.addEventListener("click", function (event) {
+      const dropdown = document.querySelector(".nav-dropdown");
+      if (dropdown && !dropdown.contains(event.target)) {
+        closeDropdown();
+      }
+    });
+  </script>
+  <script src="../assets/confirm-modal.js"></script>
+  <script src="../assets/history.js"></script>
+</body>
+</html>

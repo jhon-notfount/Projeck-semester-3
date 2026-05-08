@@ -1,27 +1,213 @@
-<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Profile</title><link rel="stylesheet" href="../styles.css"></head><body><div class="app"><aside class="sidebar"><div class="side-logo"><div class="side-mark">🌿</div><div class="side-brand"><strong>Hydrotech</strong><span>Dashboard Admin</span></div></div><nav class="nav"><a class="nav-item" href="dashboard.html"><span class="ico">▦</span>Dashboard</a><div class="nav-dropdown"><button class="nav-item" onclick="toggleDropdown()"><span class="ico">⚙</span>Fitur <span class="chev">⌄</span></button><div class="dropdown-menu" id="dropdownMenu"><a href="pengaturan-ppm.html" class="dropdown-item" onclick="navigateToPage('pengaturan-ppm.html')">Pengaturan PPM</a><a href="pengaturan-ph.html" class="dropdown-item" onclick="navigateToPage('pengaturan-ph.html')">Pengaturan pH</a><a href="pengaturan-dithane.html" class="dropdown-item" onclick="navigateToPage('pengaturan-dithane.html')">Pengaturan Dithane</a></div></div><a class="nav-item" href="history.html"><span class="ico">◷</span>History</a><a class="nav-item active" href="profile.html"><span class="ico">♟</span>Profile</a></nav><a class="logout" href="popup-logout.html">↳ Log out</a></aside><main class="main"><header class="topbar"><div class="page-title"><h1>Profile</h1><p>Selamat datang kembali, Admin</p></div><div class="admin"><div class="bell">🔔</div><div class="admin-card"><div class="admin-a">A</div><div><div class="admin-name">Admin</div><div class="admin-email">admin@hydrotech.com</div></div></div></div></header><div class="profile-wrap"><section class="card profile-box"><div class="profile-hero"><div class="hero-left"><span class="hero-icon">▣</span><div><h2>SMART HYDROCARE, DASHBOARD IOT</h2><p>Tentang Sistem</p></div></div><a class="form-chip" href="input-ppm.html">Form Input</a></div><div class="profile-cards"><div class="info-card"><div class="round-user">♟</div><div><h3>Data Pemilik</h3><div class="info-line"><span class="li">♟</span><div><small>Nama Pemilik</small><b>Edi Setiawan</b></div></div><div class="info-line"><span class="li">✉</span><div><small>Email</small><b>EdiSetiawan@gmail.com</b></div></div><div class="info-line"><span class="li">☎</span><div><small>WhatsApp</small><b>0856-4584-2028</b></div></div><div class="info-line"><span class="li">⌖</span><div><small>Lokasi</small><b>Jl. Raung, Gumuk Kerang<br>Ajung, Jember</b></div></div></div></div><div class="info-card"><div class="round-code">‹›</div><div><h3>Tim Pengembang</h3><div class="info-line"><span class="li">♟</span><div><small>Nama Team</small><b>Kelompok 1 (Hydrotech)</b></div></div><div class="info-line"><span class="li">♟</span><div><small>Peran</small><b>Web Developer</b></div></div><div class="info-line"><span class="li">☎</span><div><small>Kontak</small><b>0815-1533-4689</b></div></div><div class="info-line"><span class="li">⌖</span><div><small>Alamat</small><b>Sumber sari Jember</b></div></div></div></div></div><div class="closing"><h2>Pesan Penutup</h2><p>Terima kasih banyak atas perhatian, waktu, dan dukungan yang telah diberikan. Semoga informasi dan tampilan website ini dapat memberikan manfaat, memudahkan pengguna dalam memahami sistem, serta membantu proses monitoring dan pengelolaan dengan lebih baik.</p></div></section></div></main></div><script>
-function toggleDropdown() {
-  const dropdownMenu = document.getElementById('dropdownMenu');
-  dropdownMenu.classList.toggle('show');
-}
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Profile</title>
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="side-logo">
+          <div class="side-mark">
+            <img src="../assets/Logo_hydrotech.png" alt="Logo Hydrotech" />
+          </div>
+          <div class="side-brand">
+            <strong>Hydrotech</strong><span>Dashboard Admin</span>
+          </div>
+        </div>
+        <nav class="nav">
+          <a class="nav-item" href="dashboard.html"
+            ><span class="ico">D</span>Dashboard</a
+          >
+          <div class="nav-dropdown">
+            <button class="nav-item" onclick="toggleDropdown()">
+              <span class="ico">F</span>Fitur <span class="chev">v</span>
+            </button>
+            <div class="dropdown-menu" id="dropdownMenu">
+              <a
+                href="pengaturan-ppm.html"
+                class="dropdown-item"
+                onclick="navigateToPage(event, 'pengaturan-ppm.html')"
+                >Pengaturan PPM</a
+              >
+              <a
+                href="pengaturan-ph.html"
+                class="dropdown-item"
+                onclick="navigateToPage(event, 'pengaturan-ph.html')"
+                >Pengaturan pH</a
+              >
+              <a
+                href="pengaturan-dithane.html"
+                class="dropdown-item"
+                onclick="navigateToPage(event, 'pengaturan-dithane.html')"
+                >Pengaturan Dithane</a
+              >
+            </div>
+          </div>
+          <a class="nav-item" href="history.html"
+            ><span class="ico">H</span>History</a
+          >
+          <a class="nav-item active" href="profile.html"
+            ><span class="ico">P</span>Profile</a
+          >
+        </nav>
+        <a class="logout" href="popup-logout.html">Log out</a>
+      </aside>
 
-function closeDropdown() {
-  const dropdownMenu = document.getElementById('dropdownMenu');
-  dropdownMenu.classList.remove('show');
-}
+      <main class="main">
+        <header class="topbar">
+          <div class="page-title">
+            <h1>Profile</h1>
+            <p>Selamat datang kembali, Admin</p>
+          </div>
+          <div class="admin">
+            <div class="bell" aria-label="Notifikasi"></div>
+            <div class="admin-card">
+              <div class="admin-a">A</div>
+              <div>
+                <div class="admin-name">Admin</div>
+                <div class="admin-email">admin@hydrotech.com</div>
+              </div>
+            </div>
+          </div>
+        </header>
 
-function navigateToPage(pageUrl) {
-  closeDropdown();
-  setTimeout(function() {
-    window.location.href = pageUrl;
-  }, 100);
-}
+        <div class="profile-wrap">
+          <section class="profile-hero">
+            <div class="profile-hero-copy">
+              <span class="profile-kicker">SMART HYDROCARE</span>
+              <h2>Dashboard IoT Hydrotech</h2>
+              <p>
+                Profil sistem monitoring hidroponik untuk memantau nutrisi, pH,
+                penyemprotan, dan informasi pengelola dalam satu dashboard
+                admin.
+              </p>
+            </div>
+            <div class="profile-hero-panel">
+              <img src="../assets/Logo_hydrotech.png" alt="Logo Hydrotech" />
+              <div>
+                <strong>Hydrotech</strong>
+                <span>IoT Monitoring System</span>
+              </div>
+            </div>
+          </section>
 
-// Close dropdown when clicking outside
-document.addEventListener('click', function(event) {
-  const dropdown = document.querySelector('.nav-dropdown');
-  if (!dropdown.contains(event.target)) {
-    document.getElementById('dropdownMenu').classList.remove('show');
-  }
-});
-</script>
-</body></html>
+          <section class="profile-cards">
+            <article class="info-card owner-card">
+              <div class="profile-card-head">
+                <div class="round-user">A</div>
+                <div>
+                  <span>Informasi Pengelola</span>
+                  <h3>Data Pemilik</h3>
+                </div>
+              </div>
+              <div class="info-line">
+                <span class="li">N</span>
+                <div><small>Nama Pemilik</small><b>Edi Setiawan</b></div>
+              </div>
+              <div class="info-line">
+                <span class="li">@</span>
+                <div><small>Email</small><b>EdiSetiawan@gmail.com</b></div>
+              </div>
+              <div class="info-line">
+                <span class="li">WA</span>
+                <div><small>WhatsApp</small><b>0856-4584-2028</b></div>
+              </div>
+              <div class="info-line">
+                <span class="li">L</span>
+                <div>
+                  <small>Lokasi</small
+                  ><b>Jl. Raung, Gumuk Kerang, Ajung, Jember</b>
+                </div>
+              </div>
+            </article>
+
+            <article class="info-card team-card">
+              <div class="profile-card-head">
+                <div class="round-code">&lt;/&gt;</div>
+                <div>
+                  <span>Informasi Sistem</span>
+                  <h3>Tim Pengembang</h3>
+                </div>
+              </div>
+              <div class="info-line">
+                <span class="li">T</span>
+                <div><small>Nama Team</small><b>Kelompok 1 (Hydrotech)</b></div>
+              </div>
+              <div class="info-line">
+                <span class="li">R</span>
+                <div><small>Peran</small><b>Web Developer</b></div>
+              </div>
+              <div class="info-line">
+                <span class="li">K</span>
+                <div><small>Kontak</small><b>0815-1533-4689</b></div>
+              </div>
+              <div class="info-line">
+                <span class="li">A</span>
+                <div><small>Alamat</small><b>Sumber sari Jember</b></div>
+              </div>
+            </article>
+          </section>
+
+          <section class="profile-summary">
+            <div>
+              <span class="profile-kicker">Pesan Penutup</span>
+              <h2>Terima kasih telah menggunakan Hydrotech</h2>
+              <p>
+                Semoga dashboard ini membantu proses monitoring dan pengelolaan
+                sistem hidroponik menjadi lebih mudah, rapi, dan efisien.
+              </p>
+            </div>
+            <a class="profile-action" href="dashboard.html"
+              >Kembali ke Dashboard</a
+            >
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      function toggleDropdown() {
+        const dropdownMenu = document.getElementById("dropdownMenu");
+        const dropdownButton = document.querySelector(
+          ".nav-dropdown .nav-item",
+        );
+        if (!dropdownMenu) return;
+        dropdownMenu.classList.toggle("show");
+        if (dropdownButton) {
+          dropdownButton.classList.toggle(
+            "open",
+            dropdownMenu.classList.contains("show"),
+          );
+        }
+      }
+
+      function closeDropdown() {
+        const dropdownMenu = document.getElementById("dropdownMenu");
+        const dropdownButton = document.querySelector(
+          ".nav-dropdown .nav-item",
+        );
+        if (dropdownMenu) dropdownMenu.classList.remove("show");
+        if (dropdownButton) dropdownButton.classList.remove("open");
+      }
+
+      function navigateToPage(event, pageUrl) {
+        event.preventDefault();
+        closeDropdown();
+        setTimeout(function () {
+          window.location.href = pageUrl;
+        }, 100);
+      }
+
+      document.addEventListener("click", function (event) {
+        const dropdown = document.querySelector(".nav-dropdown");
+        if (dropdown && !dropdown.contains(event.target)) {
+          closeDropdown();
+        }
+      });
+    </script>
+    <script src="../assets/confirm-modal.js"></script>
+  </body>
+</html>
