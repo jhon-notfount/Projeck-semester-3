@@ -308,36 +308,67 @@ body.login-page {
   color: #5f6e65;
   font-weight: 600;
 }
-.avatar-big {
-  width: 76px;
-  height: 76px;
+.login-card .avatar-big {
+  width: 84px;
+  height: 84px;
   border-radius: 24px;
-  background: linear-gradient(135deg, var(--green), #27c66b);
+  background: #e8f7ef;
   box-shadow:
-    0 0 0 12px #e6f9ec,
-    0 18px 30px rgba(7, 166, 79, 0.24);
+    0 0 0 3px rgba(7, 166, 79, 0.12),
+    0 10px 24px rgba(7, 166, 79, 0.16);
   margin: 0 auto 30px;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.avatar-big:before {
-  content: "";
+.login-card .avatar-head {
   position: absolute;
-  top: 14px;
-  left: 23px;
-  width: 22px;
-  height: 22px;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: white;
+  background: #0f8b4f;
 }
-.avatar-big:after {
+.login-card .avatar-neck {
+  position: absolute;
+  top: 42px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 10px;
+  background: #0f8b4f;
+  border-radius: 6px;
+}
+.login-card .avatar-body {
+  position: absolute;
+  top: 54px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 34px;
+  border-radius: 24px 24px 18px 18px;
+  background: #0f8b4f;
+}
+.login-card .avatar-body:before {
   content: "";
   position: absolute;
-  bottom: 12px;
-  left: 14px;
-  width: 40px;
-  height: 19px;
-  background: white;
-  border-radius: 40px 40px 7px 7px;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 42px;
+  height: 14px;
+  border-radius: 50%;
+  background: #0f8b4f;
+}
+.login-card .avatar-big::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.35), transparent 60%);
 }
 .input-group {
   width: 100%;
