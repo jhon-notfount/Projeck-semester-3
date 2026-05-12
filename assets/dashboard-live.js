@@ -1,24 +1,16 @@
 (function () {
-  const chart = document.querySelector(".chart");
+  const chartCanvas = document.getElementById("dashboardNutrientChart");
   const ppmStat = document.querySelector(".stat-ppm .stat-num");
   const phStat = document.querySelector(".stat-ph .stat-num");
   const ppmBar = document.querySelector(".stat-ppm .bar span");
   const phBar = document.querySelector(".stat-ph .bar span");
   const phSummary = document.querySelector(".chart-summary div:first-child b");
   const ppmSummary = document.querySelector(".chart-summary div:last-child b");
-  const phLine = document.querySelector(".ph-line");
-  const ppmLine = document.querySelector(".ppm-line");
-  const phArea = document.querySelector(".ph-area");
-  const ppmArea = document.querySelector(".ppm-area");
-  const phDots = Array.from(document.querySelectorAll(".ph-dot"));
-  const ppmDots = Array.from(document.querySelectorAll(".ppm-dot"));
-  const tooltipTexts = document.querySelectorAll(".chart-tooltip text");
   const updateText = document.querySelector(".hero-metrics div:last-child b");
-  const notificationItems = Array.from(document.querySelectorAll(".notif-item"));
 
-  if (!chart || !ppmStat || !phStat || !phLine || !ppmLine) return;
+  if (!chartCanvas || !ppmStat || !phStat || typeof Chart === "undefined") return;
 
-  const xs = [56, 118, 180, 242, 304, 366, 428, 488];
+  const timeLabels = ["08.00", "09.00", "10.00", "11.00", "12.00", "13.00", "14.00", "Live"];
   let ppmValues = [845, 858, 874, 862, 892, 876, 864, 863];
   let phValues = [6.4, 6.6, 6.9, 7.0, 6.8, 6.7, 6.9, 7.1];
   let tick = 0;
@@ -47,80 +39,172 @@
     requestAnimationFrame(frame);
   }
 
-  function mapValue(value, min, max) {
-    const chartTop = 34;
-    const chartBottom = 194;
-    const ratio = (value - min) / (max - min);
-    return chartBottom - clamp(ratio, 0, 1) * (chartBottom - chartTop);
+  function makeGradient(context, color) {
+    const gradient = context.createLinearGradient(0, 0, 0, 220);
+    gradient.addColorStop(0, color.replace(")", ", 0.26)").replace("rgb", "rgba"));
+    gradient.addColorStop(1, color.replace(")", ", 0.02)").replace("rgb", "rgba"));
+    return gradient;
   }
 
-  function makeLinePath(values, min, max) {
-    const points = values.map((value, index) => ({
-      x: xs[index],
-      y: mapValue(value, min, max),
-    }));
-
-    return points
-      .map((point, index) => {
-        if (index === 0) return `M${point.x} ${point.y.toFixed(1)}`;
-        const previous = points[index - 1];
-        const controlDistance = (point.x - previous.x) / 2;
-        return `C${(previous.x + controlDistance).toFixed(1)} ${previous.y.toFixed(1)} ${(point.x - controlDistance).toFixed(1)} ${point.y.toFixed(1)} ${point.x} ${point.y.toFixed(1)}`;
-      })
-      .join(" ");
-  }
-
-  function makeAreaPath(values, min, max) {
-    const line = makeLinePath(values, min, max);
-    return `${line} L488 194 L56 194 Z`;
-  }
-
-  function updateDots(dots, values, min, max) {
-    if (!dots.length) return;
-    const dotIndexes = [2, 5, 7];
-
-    dots.forEach((dot, index) => {
-      const sourceIndex = dotIndexes[index] || values.length - 1;
-      dot.setAttribute("cx", xs[sourceIndex]);
-      dot.setAttribute("cy", mapValue(values[sourceIndex], min, max).toFixed(1));
-    });
-  }
-
-  function updateNotification(ppm, ph) {
-    const messages = [
-      {
-        title: ph >= 6.8 ? "pH bergerak naik" : "pH kembali stabil",
-        time: "baru saja",
-      },
-      {
-        title: ppm >= 880 ? "PPM naik mengikuti nutrisi" : "PPM turun ke rentang aman",
-        time: "1 menit lalu",
-      },
-      {
-        title: tick % 2 ? "Sensor membaca data baru" : "Grafik sensor bergerak live",
-        time: "beberapa detik lalu",
-      },
-    ];
-
-    notificationItems.forEach((item, index) => {
-      const title = item.querySelector("b");
-      const time = item.querySelector("small");
-      if (!title || !time) return;
-      title.textContent = messages[index].title;
-      time.textContent = messages[index].time;
-    });
-
-    const activeItem = notificationItems[tick % notificationItems.length];
-    activeItem?.classList.add("live-pulse");
-    window.setTimeout(() => activeItem?.classList.remove("live-pulse"), 850);
-
+  function updateActivityPulse() {
     const visibleActivityRows = Array.from(
       document.querySelectorAll(".activity-row:not([hidden])"),
     );
+    if (!visibleActivityRows.length) return;
     const activeRow = visibleActivityRows[tick % visibleActivityRows.length];
     activeRow?.classList.add("live-pulse");
     window.setTimeout(() => activeRow?.classList.remove("live-pulse"), 850);
   }
+
+  const context = chartCanvas.getContext("2d");
+  const chart = new Chart(chartCanvas, {
+    type: "line",
+    data: {
+      labels: timeLabels,
+      datasets: [
+        {
+          label: "pH",
+          data: phValues,
+          yAxisID: "yPh",
+          borderColor: "#ff7777",
+          backgroundColor: makeGradient(context, "rgb(255, 119, 119)"),
+          borderWidth: 4,
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          pointBackgroundColor: "#ffffff",
+          pointBorderColor: "#ff7777",
+          pointBorderWidth: 3,
+          tension: 0.42,
+          fill: true,
+        },
+        {
+          label: "PPM",
+          data: ppmValues,
+          yAxisID: "yPpm",
+          borderColor: "#07a64f",
+          backgroundColor: makeGradient(context, "rgb(7, 166, 79)"),
+          borderWidth: 4,
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          pointBackgroundColor: "#ffffff",
+          pointBorderColor: "#07a64f",
+          pointBorderWidth: 3,
+          tension: 0.42,
+          fill: true,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: 760,
+        easing: "easeOutCubic",
+      },
+      interaction: {
+        intersect: false,
+        mode: "index",
+      },
+      layout: {
+        padding: {
+          top: 8,
+          right: 8,
+          bottom: 0,
+        },
+      },
+      plugins: {
+        legend: {
+          display: false,
+        },
+        tooltip: {
+          backgroundColor: "rgba(255, 255, 255, 0.96)",
+          titleColor: "#203428",
+          bodyColor: "#203428",
+          borderColor: "#dfe8e2",
+          borderWidth: 1,
+          padding: 12,
+          displayColors: true,
+          titleFont: {
+            size: 11,
+            weight: "800",
+          },
+          bodyFont: {
+            size: 11,
+            weight: "800",
+          },
+          callbacks: {
+            label: function (tooltipItem) {
+              const unit = tooltipItem.dataset.label === "PPM" ? " PPM" : "";
+              return `${tooltipItem.dataset.label}: ${tooltipItem.parsed.y}${unit}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false,
+          },
+          ticks: {
+            color: "#7b8a81",
+            font: {
+              size: 10,
+              weight: "700",
+            },
+          },
+        },
+        yPh: {
+          position: "left",
+          min: 4.5,
+          max: 8,
+          ticks: {
+            color: "#d95f5f",
+            font: {
+              size: 10,
+              weight: "800",
+            },
+          },
+          grid: {
+            color: "rgba(111, 134, 120, 0.14)",
+            borderDash: [4, 8],
+          },
+          title: {
+            display: true,
+            text: "pH",
+            color: "#d95f5f",
+            font: {
+              size: 10,
+              weight: "900",
+            },
+          },
+        },
+        yPpm: {
+          position: "right",
+          min: 300,
+          max: 1000,
+          ticks: {
+            color: "#078d43",
+            font: {
+              size: 10,
+              weight: "800",
+            },
+          },
+          grid: {
+            drawOnChartArea: false,
+          },
+          title: {
+            display: true,
+            text: "PPM",
+            color: "#078d43",
+            font: {
+              size: 10,
+              weight: "900",
+            },
+          },
+        },
+      },
+    },
+  });
 
   function render() {
     tick += 1;
@@ -145,26 +229,18 @@
       number.classList.add("live-number");
       window.setTimeout(() => number.classList.remove("live-number"), 620);
     });
-    chart.classList.add("live-refresh");
-    window.setTimeout(() => chart.classList.remove("live-refresh"), 900);
+    chartCanvas.classList.add("live-refresh");
+    window.setTimeout(() => chartCanvas.classList.remove("live-refresh"), 900);
 
     if (ppmBar) ppmBar.style.width = `${clamp(((latestPpm - 700) / 350) * 100, 8, 100)}%`;
     if (phBar) phBar.style.width = `${clamp(((latestPh - 5) / 3) * 100, 8, 100)}%`;
 
-    ppmLine.setAttribute("d", makeLinePath(ppmValues, 300, 1000));
-    phLine.setAttribute("d", makeLinePath(phValues, 4.5, 8));
-    ppmArea?.setAttribute("d", makeAreaPath(ppmValues, 300, 1000));
-    phArea?.setAttribute("d", makeAreaPath(phValues, 4.5, 8));
-    updateDots(ppmDots, ppmValues, 300, 1000);
-    updateDots(phDots, phValues, 4.5, 8);
+    chart.data.datasets[0].data = phValues;
+    chart.data.datasets[1].data = ppmValues;
+    chart.update();
 
-    if (tooltipTexts.length >= 2) {
-      tooltipTexts[0].textContent = "Live";
-      tooltipTexts[1].textContent = `pH ${latestPh.toFixed(1)} PPM ${latestPpm}`;
-    }
     if (updateText) updateText.textContent = "baru saja";
-
-    updateNotification(latestPpm, latestPh);
+    updateActivityPulse();
   }
 
   render();

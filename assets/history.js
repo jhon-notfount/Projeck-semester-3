@@ -185,6 +185,231 @@
     URL.revokeObjectURL(url);
   }
 
+  const monthNames = [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ];
+  const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+  const chartTimes = ["07:00", "07:15", "07:00", "07:30", "07:10", "07:00", "08:00"];
+  let historyChart;
+
+  function getMonthlyChartData(monthIndex) {
+    const year = 2026;
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+
+    return Array.from({ length: daysInMonth }, function (_, index) {
+      const dateNumber = index + 1;
+      const date = new Date(year, monthIndex, dateNumber);
+      const monthOffset = monthIndex * 0.08;
+      const wave = Math.sin((dateNumber + monthIndex) * 0.74);
+      const ph = Number((6.05 + wave * 0.32 + monthOffset / 5).toFixed(1));
+      const ppm = Math.round(905 + wave * 48 + monthIndex * 4 + (index % 5) * 6);
+
+      return {
+        day: dayNames[date.getDay()],
+        date: `${dateNumber} ${monthNames[monthIndex]} ${year}`,
+        time: chartTimes[index % chartTimes.length],
+        ph,
+        ppm,
+      };
+    });
+  }
+
+  function getAverage(items, key, digits) {
+    const total = items.reduce((sum, item) => sum + item[key], 0);
+    return (total / items.length).toFixed(digits);
+  }
+
+  function getAxisRange(items, key, padding, roundTo) {
+    const values = items.map((item) => item[key]);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+
+    return {
+      min: Math.floor((min - padding) / roundTo) * roundTo,
+      max: Math.ceil((max + padding) / roundTo) * roundTo,
+    };
+  }
+
+  function renderHistoryChart() {
+    const canvas = document.getElementById("historyLineChart");
+    const monthFilter = document.querySelector("[data-history-chart-month]");
+    const selectedMonth = Number(monthFilter?.value || 4);
+    const data = getMonthlyChartData(selectedMonth);
+    const phRange = getAxisRange(data, "ph", 0.18, 0.1);
+    const ppmRange = getAxisRange(data, "ppm", 28, 25);
+    const periodText = document.querySelector("[data-history-chart-period]");
+    const averagePh = document.querySelector("[data-chart-average-ph]");
+    const averagePpm = document.querySelector("[data-chart-average-ppm]");
+    if (periodText) {
+      periodText.textContent = `Tren monitoring pH dan PPM selama ${monthNames[selectedMonth]} 2026, lengkap dengan hari, tanggal, dan jam pengukuran.`;
+    }
+    if (averagePh) averagePh.textContent = getAverage(data, "ph", 1);
+    if (averagePpm) averagePpm.textContent = `${getAverage(data, "ppm", 0)} PPM`;
+    if (!canvas || typeof Chart === "undefined") return;
+
+    if (historyChart) {
+      historyChart.destroy();
+    }
+
+    historyChart = new Chart(canvas, {
+      type: "line",
+      data: {
+        labels: data.map((item) => `${item.day}, ${item.date} ${item.time}`),
+        datasets: [
+          {
+            label: "pH",
+            data: data.map((item) => item.ph),
+            yAxisID: "yPh",
+            borderColor: "#0b8fff",
+            backgroundColor: "#0b8fff",
+            borderWidth: 3,
+            pointRadius: 4,
+            pointHoverRadius: 7,
+            pointBackgroundColor: "#102033",
+            pointBorderColor: "#0b8fff",
+            pointBorderWidth: 2,
+            tension: 0,
+            fill: false,
+          },
+          {
+            label: "PPM",
+            data: data.map((item) => item.ppm),
+            yAxisID: "yPpm",
+            borderColor: "#16a34a",
+            backgroundColor: "#16a34a",
+            borderWidth: 3,
+            pointRadius: 4,
+            pointHoverRadius: 7,
+            pointBackgroundColor: "#102033",
+            pointBorderColor: "#16a34a",
+            pointBorderWidth: 2,
+            tension: 0,
+            fill: false,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+          padding: {
+            top: 14,
+            right: 8,
+          },
+        },
+        interaction: {
+          intersect: false,
+          mode: "index",
+        },
+        plugins: {
+          legend: {
+            display: false,
+          },
+          tooltip: {
+            backgroundColor: "rgba(18, 40, 27, 0.94)",
+            borderColor: "rgba(255, 255, 255, 0.16)",
+            borderWidth: 1,
+            padding: 12,
+            titleFont: {
+              size: 12,
+              weight: "700",
+            },
+            bodyFont: {
+              size: 12,
+              weight: "700",
+            },
+            callbacks: {
+              label: function (context) {
+                const unit = context.dataset.label === "PPM" ? " PPM" : "";
+                return `${context.dataset.label}: ${context.parsed.y}${unit}`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            grid: {
+              display: false,
+            },
+            ticks: {
+              color: "#6b7c70",
+              font: {
+                size: 10,
+                weight: "700",
+              },
+              maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 8,
+              callback: function (value) {
+                const item = data[value];
+                return item ? `${item.date.split(" ").slice(0, 2).join(" ")} ${item.time}` : "";
+              },
+            },
+          },
+          yPh: {
+            position: "left",
+            min: phRange.min,
+            max: phRange.max,
+            ticks: {
+              color: "#0b73c9",
+              font: {
+                size: 10,
+                weight: "800",
+              },
+            },
+            title: {
+              display: true,
+              text: "pH",
+              color: "#0b73c9",
+              font: {
+                size: 11,
+                weight: "900",
+              },
+            },
+            grid: {
+              color: "rgba(82, 110, 92, 0.1)",
+            },
+          },
+          yPpm: {
+            position: "right",
+            min: ppmRange.min,
+            max: ppmRange.max,
+            ticks: {
+              color: "#11823f",
+              font: {
+                size: 10,
+                weight: "800",
+              },
+            },
+            title: {
+              display: true,
+              text: "PPM",
+              color: "#11823f",
+              font: {
+                size: 11,
+                weight: "900",
+              },
+            },
+            grid: {
+              drawOnChartArea: false,
+            },
+          },
+        },
+      },
+    });
+  }
+
   [searchInput, typeFilter, dayFilter, monthFilter, statusFilter].forEach((control) => {
     control?.addEventListener("input", function () {
       currentPage = 1;
@@ -242,6 +467,11 @@
     exportCsv();
   });
 
+  document.querySelector("[data-history-chart-month]")?.addEventListener("change", function () {
+    renderHistoryChart();
+  });
+
   removeDeletedRows();
   render();
+  renderHistoryChart();
 })();

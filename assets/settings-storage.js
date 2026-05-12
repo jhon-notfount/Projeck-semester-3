@@ -63,6 +63,8 @@
   }
 
   function showSuccessToast(message) {
+    if (window.HydrotechToast?.success(message)) return;
+
     let toast = document.querySelector(".settings-toast");
     if (!toast) {
       toast = document.createElement("div");
@@ -440,7 +442,9 @@
       });
 
       if (!isValid) {
-        alert("Semua field wajib diisi sebelum menyimpan.");
+        if (!window.HydrotechToast?.error("Semua field wajib diisi sebelum menyimpan.")) {
+          alert("Semua field wajib diisi sebelum menyimpan.");
+        }
         return;
       }
 

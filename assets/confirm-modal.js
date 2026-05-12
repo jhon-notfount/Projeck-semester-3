@@ -1,4 +1,89 @@
 (function () {
+  function updateFeatureLabel() {
+    const featureButton = document.querySelector(".nav-dropdown > .nav-item");
+    if (!featureButton) return;
+
+    const currentPage = window.location.pathname.split("/").pop();
+    const labels = {
+      "pengaturan-ppm.html": "Pengaturan PPM",
+      "pengaturan-ph.html": "Pengaturan pH",
+      "pengaturan-dithane.html": "Pengaturan Dithane",
+    };
+    const label = labels[currentPage] || "Fitur";
+
+    Array.from(featureButton.childNodes).forEach((node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        node.textContent = "";
+      }
+    });
+
+    let labelSpan = featureButton.querySelector("[data-feature-label]");
+    if (!labelSpan) {
+      labelSpan = document.createElement("span");
+      labelSpan.dataset.featureLabel = "";
+      const chevron = featureButton.querySelector(".chev");
+      featureButton.insertBefore(labelSpan, chevron || null);
+    }
+    labelSpan.textContent = label;
+
+    featureButton.classList.toggle("active", Boolean(labels[currentPage]));
+  }
+
+  function setupSmoothFeatureDropdown() {
+    const dropdownMenu = document.getElementById("dropdownMenu");
+    const dropdownButton = document.querySelector(".nav-dropdown > .nav-item");
+    if (!dropdownMenu || !dropdownButton) return;
+
+    function setOpen(isOpen) {
+      dropdownMenu.classList.toggle("show", isOpen);
+      dropdownButton.classList.toggle("open", isOpen);
+    }
+
+    window.toggleDropdown = function () {
+      const shouldOpen = !dropdownMenu.classList.contains("show");
+      requestAnimationFrame(() => setOpen(shouldOpen));
+    };
+
+    window.closeDropdown = function () {
+      setOpen(false);
+    };
+
+    window.navigateToPage = function (event, pageUrl) {
+      event.preventDefault();
+      window.location.href = pageUrl;
+    };
+  }
+
+  function getIcon(icon, variant) {
+    if (variant === "danger") return "warning";
+    if (icon === "R") return "question";
+    if (icon === "X") return "warning";
+    return "info";
+  }
+
+  function openSweetAlert(options) {
+    return Swal.fire({
+      icon: getIcon(options.icon, options.variant),
+      title: options.title || "Konfirmasi",
+      text: options.message || "Apakah Anda yakin?",
+      showCancelButton: true,
+      confirmButtonText: options.confirmText || "Ya, Lanjutkan",
+      cancelButtonText: options.cancelText || "Batal",
+      reverseButtons: true,
+      focusCancel: true,
+      buttonsStyling: false,
+      customClass: {
+        popup: "hydrotech-swal",
+        icon: "hydrotech-swal-icon",
+        title: "hydrotech-swal-title",
+        htmlContainer: "hydrotech-swal-text",
+        actions: "hydrotech-swal-actions",
+        confirmButton: `hydrotech-swal-confirm${options.variant === "danger" ? " danger" : ""}`,
+        cancelButton: "hydrotech-swal-cancel",
+      },
+    }).then((result) => result.isConfirmed);
+  }
+
   function ensureModal() {
     let modal = document.querySelector(".confirm-modal");
     if (modal) return modal;
@@ -23,6 +108,10 @@
   }
 
   function openConfirm(options) {
+    if (window.Swal) {
+      return openSweetAlert(options || {});
+    }
+
     const modal = ensureModal();
     const icon = modal.querySelector("#confirmModalIcon");
     const title = modal.querySelector("#confirmModalTitle");
@@ -72,6 +161,41 @@
   }
 
   window.HydrotechConfirm = { open: openConfirm };
+  window.HydrotechToast = {
+    success: function (message) {
+      if (!window.Swal) return false;
+      Swal.fire({
+        icon: "success",
+        title: "Berhasil",
+        text: message || "Data berhasil diperbarui.",
+        timer: 2200,
+        showConfirmButton: false,
+        toast: true,
+        position: "top-end",
+        customClass: {
+          popup: "hydrotech-toast",
+          title: "hydrotech-toast-title",
+          htmlContainer: "hydrotech-toast-text",
+        },
+      });
+      return true;
+    },
+    error: function (message) {
+      if (!window.Swal) return false;
+      Swal.fire({
+        icon: "error",
+        title: "Periksa kembali",
+        text: message || "Ada data yang belum sesuai.",
+        confirmButtonText: "Mengerti",
+        buttonsStyling: false,
+        customClass: {
+          popup: "hydrotech-swal",
+          confirmButton: "hydrotech-swal-confirm danger",
+        },
+      });
+      return true;
+    },
+  };
 
   document.addEventListener("click", async function (event) {
     const logout = event.target.closest(".logout");
@@ -134,4 +258,7 @@
       trashCell.closest("tr")?.remove();
     }
   });
+
+  updateFeatureLabel();
+  setupSmoothFeatureDropdown();
 })();
