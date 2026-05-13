@@ -136,36 +136,47 @@
           <section class="history-chart-panel" aria-labelledby="history-chart-title">
             <div class="history-chart-head">
               <div>
-                <span class="history-kicker">Grafik 1 Bulan</span>
+                <span class="history-kicker">Grafik Monitoring</span>
                 <h3 id="history-chart-title">History pH dan PPM</h3>
                 <p data-history-chart-period>Tren monitoring pH dan PPM selama Mei 2026, lengkap dengan hari, tanggal, dan jam pengukuran.</p>
               </div>
               <div class="history-chart-side">
-                <label class="history-chart-filter">
-                  <span>Bulan Grafik</span>
-                  <select data-history-chart-month aria-label="Filter bulan grafik">
-                    <option value="0">Januari</option>
-                    <option value="1">Februari</option>
-                    <option value="2">Maret</option>
-                    <option value="3">April</option>
-                    <option value="4" selected>Mei</option>
-                    <option value="5">Juni</option>
-                    <option value="6">Juli</option>
-                    <option value="7">Agustus</option>
-                    <option value="8">September</option>
-                    <option value="9">Oktober</option>
-                    <option value="10">November</option>
-                    <option value="11">Desember</option>
-                  </select>
-                </label>
+                <div class="history-chart-controls">
+                  <div class="history-chart-range" aria-label="Filter periode grafik">
+                    <button type="button" data-history-chart-range="7" aria-pressed="false">1 Minggu</button>
+                    <button type="button" data-history-chart-range="14" aria-pressed="false">2 Minggu</button>
+                    <button type="button" class="active" data-history-chart-range="month" aria-pressed="true">1 Bulan</button>
+                  </div>
+                  <label class="history-chart-filter">
+                    <span>Bulan Grafik</span>
+                    <select data-history-chart-month aria-label="Filter bulan grafik">
+                      <option value="0">Januari</option>
+                      <option value="1">Februari</option>
+                      <option value="2">Maret</option>
+                      <option value="3">April</option>
+                      <option value="4" selected>Mei</option>
+                      <option value="5">Juni</option>
+                      <option value="6">Juli</option>
+                      <option value="7">Agustus</option>
+                      <option value="8">September</option>
+                      <option value="9">Oktober</option>
+                      <option value="10">November</option>
+                      <option value="11">Desember</option>
+                    </select>
+                  </label>
+                </div>
                 <div class="history-chart-stats">
-                  <div>
+                  <div class="stat-ph">
+                    <i aria-hidden="true">pH</i>
                     <span>Rata-rata pH</span>
                     <strong data-chart-average-ph>0</strong>
+                    <small>Keasaman air</small>
                   </div>
-                  <div>
+                  <div class="stat-ppm">
+                    <i aria-hidden="true">PPM</i>
                     <span>Rata-rata PPM</span>
                     <strong data-chart-average-ppm>0</strong>
+                    <small>Nutrisi larutan</small>
                   </div>
                 </div>
               </div>

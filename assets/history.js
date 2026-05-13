@@ -17,7 +17,9 @@
   let currentPage = 1;
 
   function normalize(value) {
-    return String(value || "").trim().toLowerCase();
+    return String(value || "")
+      .trim()
+      .toLowerCase();
   }
 
   function readDeletedRows() {
@@ -116,7 +118,10 @@
 
   function render() {
     const filteredRows = getFilteredRows();
-    const totalPages = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
+    const totalPages = Math.max(
+      1,
+      Math.ceil(filteredRows.length / rowsPerPage),
+    );
     if (currentPage > totalPages) currentPage = totalPages;
 
     const pageStart = (currentPage - 1) * rowsPerPage;
@@ -165,10 +170,26 @@
 
   function exportCsv() {
     const rows = getFilteredRows();
-    const header = ["No", "Hari", "Tanggal", "Jam", "Tipe", "Status", "Keterangan"];
+    const header = [
+      "No",
+      "Hari",
+      "Tanggal",
+      "Jam",
+      "Tipe",
+      "Status",
+      "Keterangan",
+    ];
     const lines = rows.map((row, index) => {
       const data = getRowData(row);
-      return [index + 1, data.day, data.date, data.time, data.type, data.status, data.note]
+      return [
+        index + 1,
+        data.day,
+        data.date,
+        data.time,
+        data.type,
+        data.status,
+        data.note,
+      ]
         .map((value) => `"${String(value).replace(/"/g, '""')}"`)
         .join(",");
     });
@@ -199,9 +220,31 @@
     "November",
     "Desember",
   ];
-  const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-  const chartTimes = ["07:00", "07:15", "07:00", "07:30", "07:10", "07:00", "08:00"];
+  const dayNames = [
+    "Minggu",
+    "Senin",
+    "Selasa",
+    "Rabu",
+    "Kamis",
+    "Jumat",
+    "Sabtu",
+  ];
+  const chartTimes = [
+    "07:00",
+    "07:15",
+    "07:00",
+    "07:30",
+    "07:10",
+    "07:00",
+    "08:00",
+  ];
+  const chartRangeLabels = {
+    7: "1 minggu",
+    14: "2 minggu",
+    month: "1 bulan",
+  };
   let historyChart;
+  let selectedChartRange = "month";
 
   function getMonthlyChartData(monthIndex) {
     const year = 2026;
@@ -213,7 +256,9 @@
       const monthOffset = monthIndex * 0.08;
       const wave = Math.sin((dateNumber + monthIndex) * 0.74);
       const ph = Number((6.05 + wave * 0.32 + monthOffset / 5).toFixed(1));
-      const ppm = Math.round(905 + wave * 48 + monthIndex * 4 + (index % 5) * 6);
+      const ppm = Math.round(
+        905 + wave * 48 + monthIndex * 4 + (index % 5) * 6,
+      );
 
       return {
         day: dayNames[date.getDay()],
@@ -241,22 +286,45 @@
     };
   }
 
+  function getChartRangeData(items) {
+    if (selectedChartRange === "month") return items;
+
+    return items.slice(0, Number(selectedChartRange));
+  }
+
+  function getChartPeriodText(data, monthIndex) {
+    const rangeLabel = chartRangeLabels[selectedChartRange] || "1 bulan";
+    const startDate = data[0]?.date || monthNames[monthIndex];
+    const endDate = data[data.length - 1]?.date || monthNames[monthIndex];
+
+    return `Tren monitoring pH dan PPM periode ${rangeLabel} (${startDate} - ${endDate}), lengkap dengan hari, tanggal, dan jam pengukuran.`;
+  }
+
+  function makeHistoryGradient(context, color) {
+    const gradient = context.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, color.replace("rgb", "rgba").replace(")", ", 0.18)"));
+    gradient.addColorStop(1, color.replace("rgb", "rgba").replace(")", ", 0.02)"));
+    return gradient;
+  }
+
   function renderHistoryChart() {
     const canvas = document.getElementById("historyLineChart");
     const monthFilter = document.querySelector("[data-history-chart-month]");
     const selectedMonth = Number(monthFilter?.value || 4);
-    const data = getMonthlyChartData(selectedMonth);
+    const data = getChartRangeData(getMonthlyChartData(selectedMonth));
     const phRange = getAxisRange(data, "ph", 0.18, 0.1);
     const ppmRange = getAxisRange(data, "ppm", 28, 25);
     const periodText = document.querySelector("[data-history-chart-period]");
     const averagePh = document.querySelector("[data-chart-average-ph]");
     const averagePpm = document.querySelector("[data-chart-average-ppm]");
     if (periodText) {
-      periodText.textContent = `Tren monitoring pH dan PPM selama ${monthNames[selectedMonth]} 2026, lengkap dengan hari, tanggal, dan jam pengukuran.`;
+      periodText.textContent = getChartPeriodText(data, selectedMonth);
     }
     if (averagePh) averagePh.textContent = getAverage(data, "ph", 1);
-    if (averagePpm) averagePpm.textContent = `${getAverage(data, "ppm", 0)} PPM`;
+    if (averagePpm)
+      averagePpm.textContent = `${getAverage(data, "ppm", 0)} PPM`;
     if (!canvas || typeof Chart === "undefined") return;
+    const context = canvas.getContext("2d");
 
     if (historyChart) {
       historyChart.destroy();
@@ -271,31 +339,31 @@
             label: "pH",
             data: data.map((item) => item.ph),
             yAxisID: "yPh",
-            borderColor: "#0b8fff",
-            backgroundColor: "#0b8fff",
-            borderWidth: 3,
+            borderColor: "#ff7777",
+            backgroundColor: makeHistoryGradient(context, "rgb(255, 119, 119)"),
+            borderWidth: 4,
             pointRadius: 4,
             pointHoverRadius: 7,
-            pointBackgroundColor: "#102033",
-            pointBorderColor: "#0b8fff",
-            pointBorderWidth: 2,
-            tension: 0,
-            fill: false,
+            pointBackgroundColor: "#ffffff",
+            pointBorderColor: "#ff7777",
+            pointBorderWidth: 3,
+            tension: 0.42,
+            fill: true,
           },
           {
             label: "PPM",
             data: data.map((item) => item.ppm),
             yAxisID: "yPpm",
-            borderColor: "#16a34a",
-            backgroundColor: "#16a34a",
-            borderWidth: 3,
+            borderColor: "#07a64f",
+            backgroundColor: makeHistoryGradient(context, "rgb(7, 166, 79)"),
+            borderWidth: 4,
             pointRadius: 4,
             pointHoverRadius: 7,
-            pointBackgroundColor: "#102033",
-            pointBorderColor: "#16a34a",
-            pointBorderWidth: 2,
-            tension: 0,
-            fill: false,
+            pointBackgroundColor: "#ffffff",
+            pointBorderColor: "#07a64f",
+            pointBorderWidth: 3,
+            tension: 0.42,
+            fill: true,
           },
         ],
       },
@@ -317,17 +385,20 @@
             display: false,
           },
           tooltip: {
-            backgroundColor: "rgba(18, 40, 27, 0.94)",
-            borderColor: "rgba(255, 255, 255, 0.16)",
+            backgroundColor: "rgba(255, 255, 255, 0.96)",
+            titleColor: "#203428",
+            bodyColor: "#203428",
+            borderColor: "#dfe8e2",
             borderWidth: 1,
             padding: 12,
+            displayColors: true,
             titleFont: {
-              size: 12,
-              weight: "700",
+              size: 11,
+              weight: "800",
             },
             bodyFont: {
-              size: 12,
-              weight: "700",
+              size: 11,
+              weight: "800",
             },
             callbacks: {
               label: function (context) {
@@ -353,7 +424,9 @@
               maxTicksLimit: 8,
               callback: function (value) {
                 const item = data[value];
-                return item ? `${item.date.split(" ").slice(0, 2).join(" ")} ${item.time}` : "";
+                return item
+                  ? `${item.date.split(" ").slice(0, 2).join(" ")} ${item.time}`
+                  : "";
               },
             },
           },
@@ -362,7 +435,7 @@
             min: phRange.min,
             max: phRange.max,
             ticks: {
-              color: "#0b73c9",
+              color: "#d95f5f",
               font: {
                 size: 10,
                 weight: "800",
@@ -371,14 +444,15 @@
             title: {
               display: true,
               text: "pH",
-              color: "#0b73c9",
+              color: "#d95f5f",
               font: {
                 size: 11,
                 weight: "900",
               },
             },
             grid: {
-              color: "rgba(82, 110, 92, 0.1)",
+              color: "rgba(111, 134, 120, 0.14)",
+              borderDash: [4, 8],
             },
           },
           yPpm: {
@@ -386,7 +460,7 @@
             min: ppmRange.min,
             max: ppmRange.max,
             ticks: {
-              color: "#11823f",
+              color: "#078d43",
               font: {
                 size: 10,
                 weight: "800",
@@ -395,7 +469,7 @@
             title: {
               display: true,
               text: "PPM",
-              color: "#11823f",
+              color: "#078d43",
               font: {
                 size: 11,
                 weight: "900",
@@ -410,16 +484,18 @@
     });
   }
 
-  [searchInput, typeFilter, dayFilter, monthFilter, statusFilter].forEach((control) => {
-    control?.addEventListener("input", function () {
-      currentPage = 1;
-      render();
-    });
-    control?.addEventListener("change", function () {
-      currentPage = 1;
-      render();
-    });
-  });
+  [searchInput, typeFilter, dayFilter, monthFilter, statusFilter].forEach(
+    (control) => {
+      control?.addEventListener("input", function () {
+        currentPage = 1;
+        render();
+      });
+      control?.addEventListener("change", function () {
+        currentPage = 1;
+        render();
+      });
+    },
+  );
 
   resetButton?.addEventListener("click", async function (event) {
     event.preventDefault();
@@ -450,14 +526,17 @@
       const confirmed = await window.HydrotechConfirm.open({
         icon: "X",
         title: "Hapus data history?",
-        message: "Data ini akan dihapus dari tabel history dan tetap hilang setelah halaman di-refresh.",
+        message:
+          "Data ini akan dihapus dari tabel history dan tetap hilang setelah halaman di-refresh.",
         confirmText: "Ya, Hapus",
         variant: "danger",
       });
       if (!confirmed) return;
     }
 
-    const nextDeletedRows = Array.from(new Set([...readDeletedRows(), row.dataset.id]));
+    const nextDeletedRows = Array.from(
+      new Set([...readDeletedRows(), row.dataset.id]),
+    );
     writeDeletedRows(nextDeletedRows);
     row.remove();
     render();
@@ -467,8 +546,22 @@
     exportCsv();
   });
 
-  document.querySelector("[data-history-chart-month]")?.addEventListener("change", function () {
-    renderHistoryChart();
+  document
+    .querySelector("[data-history-chart-month]")
+    ?.addEventListener("change", function () {
+      renderHistoryChart();
+    });
+
+  document.querySelectorAll("[data-history-chart-range]").forEach((button) => {
+    button.addEventListener("click", function () {
+      selectedChartRange = button.dataset.historyChartRange || "month";
+      document.querySelectorAll("[data-history-chart-range]").forEach((item) => {
+        const isActive = item === button;
+        item.classList.toggle("active", isActive);
+        item.setAttribute("aria-pressed", String(isActive));
+      });
+      renderHistoryChart();
+    });
   });
 
   removeDeletedRows();

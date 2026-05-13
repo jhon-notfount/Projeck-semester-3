@@ -54,6 +54,56 @@
     };
   }
 
+  function setupSidebarClock() {
+    const sidebar = document.querySelector(".sidebar");
+    const logout = sidebar?.querySelector(".logout");
+    if (!sidebar || !logout || sidebar.querySelector("[data-sidebar-clock]")) {
+      return;
+    }
+
+    const clock = document.createElement("section");
+    clock.className = "sidebar-clock";
+    clock.dataset.sidebarClock = "";
+    clock.setAttribute("aria-label", "Tanggal dan waktu WIB");
+    clock.innerHTML = `
+      <div class="sidebar-clock-icon" aria-hidden="true">
+        <span></span>
+      </div>
+      <div>
+        <span data-sidebar-date>Memuat tanggal...</span>
+        <strong data-sidebar-time>--:--:-- WIB</strong>
+      </div>
+    `;
+
+    sidebar.insertBefore(clock, logout);
+
+    const dateText = clock.querySelector("[data-sidebar-date]");
+    const timeText = clock.querySelector("[data-sidebar-time]");
+    const dateFormatter = new Intl.DateTimeFormat("id-ID", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "Asia/Jakarta",
+    });
+    const timeFormatter = new Intl.DateTimeFormat("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+      timeZone: "Asia/Jakarta",
+    });
+
+    function renderClock() {
+      const now = new Date();
+      if (dateText) dateText.textContent = dateFormatter.format(now);
+      if (timeText) timeText.textContent = `${timeFormatter.format(now)} WIB`;
+    }
+
+    renderClock();
+    window.setInterval(renderClock, 1000);
+  }
+
   function getIcon(icon, variant) {
     if (variant === "danger") return "warning";
     if (icon === "R") return "question";
@@ -261,4 +311,5 @@
 
   updateFeatureLabel();
   setupSmoothFeatureDropdown();
+  setupSidebarClock();
 })();
