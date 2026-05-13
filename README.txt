@@ -3,7 +3,7 @@ Hydrotech HTML & CSS
 File HTML dipisah per halaman:
 - index.html -> redirect ke pages/login.html
 - pages/login.html
-- pages/dashboard.html
+- pages/hydrotech-dashboard-panel-2026.html
 - pages/profile.html
 - pages/pengaturan-ppm.html
 - pages/pengaturan-ph.html
@@ -19,3 +19,4 @@ CSS utama:
 - styles.css
 
 Font menggunakan Poppins dari Google Fonts melalui @import di styles.css.
+
