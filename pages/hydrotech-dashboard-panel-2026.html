@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hydrotech Admin Panel</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Poppins", Arial, sans-serif;
+        background:
+          radial-gradient(circle at 24% 12%, rgba(7, 166, 79, 0.12), transparent 28%),
+          linear-gradient(135deg, #f5faf7 0%, #eef8f2 52%, #ffffff 100%);
+        color: #275D29;
+      }
+      .admin-secure-shell {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+      .admin-secure-card {
+        width: min(420px, 100%);
+        border: 1px solid rgba(206, 226, 214, 0.92);
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow:
+          0 22px 52px rgba(24, 56, 36, 0.12),
+          inset 0 1px 0 rgba(255, 255, 255, 0.88);
+        padding: 28px;
+        text-align: center;
+      }
+      .admin-secure-mark {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 16px;
+        border-radius: 18px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #e7faec, #d9f9dc);
+        color: #07a64f;
+        font-size: 24px;
+        font-weight: 900;
+        box-shadow: 0 14px 28px rgba(7, 166, 79, 0.14);
+      }
+      .admin-secure-card h1 {
+        margin: 0;
+        color: #275D29;
+        font-size: 24px;
+        line-height: 1.2;
+      }
+      .admin-secure-card p {
+        margin: 10px 0 20px;
+        color: #66766c;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .admin-secure-card label {
+        display: block;
+        text-align: left;
+        color: #275D29;
+        font-size: 11px;
+        font-weight: 900;
+        margin-bottom: 8px;
+      }
+      .admin-secure-card input {
+        width: 100%;
+        height: 46px;
+        border: 1px solid rgba(184, 210, 197, 0.92);
+        border-radius: 14px;
+        background: #f8fffb;
+        color: #275D29;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 0 14px;
+        outline: 0;
+      }
+      .admin-secure-card input:focus {
+        border-color: rgba(7, 166, 79, 0.72);
+        box-shadow: 0 0 0 4px rgba(7, 166, 79, 0.12);
+      }
+      .admin-secure-card button,
+      .admin-panel-link {
+        width: 100%;
+        height: 46px;
+        margin-top: 14px;
+        border: 0;
+        border-radius: 14px;
+        background: #07a64f;
+        color: white;
+        display: inline-grid;
+        place-items: center;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 900;
+        cursor: pointer;
+        box-shadow: 0 14px 26px rgba(7, 166, 79, 0.18);
+      }
+      .admin-secure-message {
+        min-height: 20px;
+        margin-top: 12px;
+        color: #d70404;
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .admin-dashboard {
+        display: none;
+      }
+      body.admin-unlocked .admin-secure-shell {
+        display: none;
+      }
+      body.admin-unlocked .admin-dashboard {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+      .admin-denied .admin-secure-card form,
+      .admin-denied .admin-secure-card p {
+        display: none;
+      }
+      .admin-denied .admin-secure-card h1 {
+        color: #d70404;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="admin-secure-shell" aria-labelledby="admin-secure-title">
+      <section class="admin-secure-card">
+        <div class="admin-secure-mark" aria-hidden="true">H</div>
+        <h1 id="admin-secure-title">Admin Hydrotech</h1>
+        <p>Masukkan password untuk membuka panel dashboard admin.</p>
+        <form data-admin-auth>
+          <label for="adminPassword">Password Admin</label>
+          <input
+            id="adminPassword"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Masukkan password"
+            required />
+          <button type="submit">Buka Panel Admin</button>
+          <div class="admin-secure-message" data-admin-message></div>
+        </form>
+      </section>
+    </main>
+
+    <section class="admin-dashboard" aria-label="Panel admin Hydrotech">
+      <div class="admin-secure-card">
+        <div class="admin-secure-mark" aria-hidden="true">✓</div>
+        <h1>Akses diterima</h1>
+        <p>Panel admin sudah terbuka. Lanjutkan ke dashboard Hydrotech.</p>
+        <a class="admin-panel-link" href="dashboard.html">Masuk Dashboard</a>
+      </div>
+    </section>
+
+    <script>
+      (function () {
+        const adminPassword = "Hydrotechadmin";
+        const form = document.querySelector("[data-admin-auth]");
+        const message = document.querySelector("[data-admin-message]");
+
+        function denyAccess() {
+          document.body.classList.add("admin-denied");
+          if (message) message.textContent = "Akses ditolak";
+          document.querySelector(".admin-dashboard")?.remove();
+          document.querySelector("#admin-secure-title").textContent = "Akses ditolak";
+        }
+
+        form?.addEventListener("submit", function (event) {
+          event.preventDefault();
+          const value = document.getElementById("adminPassword")?.value || "";
+
+          if (value !== adminPassword) {
+            denyAccess();
+            return;
+          }
+
+          document.body.classList.add("admin-unlocked");
+        });
+      })();
+    </script>
+  </body>
+</html>
