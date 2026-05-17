@@ -282,7 +282,6 @@
               <p>Perbarui nilai sistem, lalu simpan untuk menerapkan perubahan.</p>
             </div>
           </div>
-          <button type="button" class="settings-modal-close" data-close-modal>&times;</button>
         </div>
         <div class="settings-modal-body">
           ${fields}
