@@ -3207,6 +3207,24 @@ th {
   background: #f0f5f2;
   color: #516357;
 }
+.history-export-swal .swal2-select {
+  width: 100%;
+  height: 46px;
+  margin: 18px 0 0;
+  border: 1px solid #dbe9e1;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #275D29;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 0 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.history-export-swal .swal2-select:focus {
+  border-color: rgba(7, 141, 67, 0.48);
+  box-shadow: 0 0 0 4px rgba(7, 141, 67, 0.12);
+  outline: none;
+}
 .hydrotech-toast {
   border-radius: 18px;
   border: 1px solid rgba(217, 235, 225, 0.9);
