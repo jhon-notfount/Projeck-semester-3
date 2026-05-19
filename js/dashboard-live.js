@@ -56,6 +56,30 @@
     window.setTimeout(() => activeRow?.classList.remove("live-pulse"), 850);
   }
 
+  function syncChartHeight() {
+    const wrapper = chartCanvas.closest(".dashboard-chart-wrap");
+    if (!wrapper) return;
+
+    if (window.matchMedia("(max-width: 760px)").matches) {
+      const targetHeight = window.matchMedia("(max-width: 380px)").matches
+        ? 176
+        : Math.min(190, Math.max(168, Math.round(window.innerWidth * 0.48)));
+
+      wrapper.style.height = `${targetHeight}px`;
+      wrapper.style.maxHeight = `${targetHeight}px`;
+      chartCanvas.style.height = "100%";
+      chartCanvas.style.maxHeight = `${targetHeight}px`;
+      return;
+    }
+
+    wrapper.style.height = "";
+    wrapper.style.maxHeight = "";
+    chartCanvas.style.height = "";
+    chartCanvas.style.maxHeight = "";
+  }
+
+  syncChartHeight();
+
   const context = chartCanvas.getContext("2d");
   const chart = new Chart(chartCanvas, {
     type: "line",
@@ -204,6 +228,11 @@
         },
       },
     },
+  });
+
+  window.addEventListener("resize", () => {
+    syncChartHeight();
+    chart.resize();
   });
 
   function render() {

@@ -1606,6 +1606,7 @@ body:not(.login-page):not(.popup-body) .content > :nth-child(5) {
   }
 
   .chart-card {
+    display: block;
     min-height: 0;
     padding: 16px 14px 14px;
     overflow: visible;
@@ -1627,8 +1628,17 @@ body:not(.login-page):not(.popup-body) .content > :nth-child(5) {
   }
 
   .dashboard-chart-wrap {
-    height: 190px;
-    min-height: 190px;
+    flex: 0 0 auto;
+    height: clamp(168px, 48vw, 190px) !important;
+    min-height: 0 !important;
+    max-height: 190px;
+    overflow: hidden;
+  }
+
+  .dashboard-chart-wrap .chart {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 190px !important;
   }
 
   .dashboard-activity-card {
@@ -1682,8 +1692,12 @@ body:not(.login-page):not(.popup-body) .content > :nth-child(5) {
   }
 
   .dashboard-chart-wrap {
-    height: 176px;
-    min-height: 176px;
+    height: 176px !important;
+    max-height: 176px;
+  }
+
+  .dashboard-chart-wrap .chart {
+    max-height: 176px !important;
   }
 }
 
