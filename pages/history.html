@@ -1,240 +1,485 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>History</title>
-  <link rel="stylesheet" href="../styles.css">
-</head>
-<body>
-  <div class="app">
-    <aside class="sidebar">
-      <div class="side-logo">
-        <div class="side-mark"><img src="../assets/Logo_hydrotech.png" alt="Logo Hydrotech"></div>
-        <div class="side-brand"><strong>Hydrotech</strong><span>Dashboard Admin</span></div>
-      </div>
-      <nav class="nav">
-        <a class="nav-item" href="hydrotech-dashboard-panel-2026.html"><span class="ico ico-dashboard" aria-hidden="true"></span>Dashboard</a>
-        <div class="nav-dropdown">
-          <button class="nav-item" onclick="toggleDropdown()"><span class="ico ico-features" aria-hidden="true"></span>Fitur <span class="chev">v</span></button>
-          <div class="dropdown-menu" id="dropdownMenu">
-            <a href="pengaturan-ppm.html" class="dropdown-item" onclick="navigateToPage(event, 'pengaturan-ppm.html')">Pengaturan PPM</a>
-            <a href="pengaturan-ph.html" class="dropdown-item" onclick="navigateToPage(event, 'pengaturan-ph.html')">Pengaturan pH</a>
-            <a href="pengaturan-dithane.html" class="dropdown-item" onclick="navigateToPage(event, 'pengaturan-dithane.html')">Pengaturan Dithane</a>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>History</title>
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="side-logo">
+          <div class="side-mark">
+            <img src="../assets/Logo_hydrotech.png" alt="Logo Hydrotech" />
+          </div>
+          <div class="side-brand">
+            <strong>Hydrotech</strong><span>Dashboard Admin</span>
           </div>
         </div>
-        <a class="nav-item active" href="history.html"><span class="ico ico-history" aria-hidden="true"></span>History</a>
-        <a class="nav-item" href="profile.html"><span class="ico ico-profile" aria-hidden="true"></span>Profile</a>
-      </nav>
-      <a class="logout" href="popup-logout.html">Log out</a>
-    </aside>
-
-    <main class="main">
-      <header class="topbar">
-        <div class="page-title">
-          <h1>History</h1>
-          <p>Selamat datang kembali, Admin</p>
-        </div>
-        <div class="admin">
-          <div class="bell" aria-label="Notifikasi"></div>
-          <div class="admin-card">
-            <div class="admin-a">A</div>
-            <div>
-              <div class="admin-name">Admin</div>
-              <div class="admin-email">admin@hydrotech.com</div>
+        <nav class="nav">
+          <a class="nav-item" href="hydrotech-dashboard-panel-2026.html"
+            ><span class="ico ico-dashboard" aria-hidden="true"></span
+            >Dashboard</a
+          >
+          <div class="nav-dropdown">
+            <button class="nav-item" onclick="toggleDropdown()">
+              <span class="ico ico-features" aria-hidden="true"></span>Fitur
+              <span class="chev">v</span>
+            </button>
+            <div class="dropdown-menu" id="dropdownMenu">
+              <a
+                href="pengaturan-ppm.html"
+                class="dropdown-item"
+                onclick="navigateToPage(event, 'pengaturan-ppm.html')"
+                >Pengaturan PPM</a
+              >
+              <a
+                href="pengaturan-ph.html"
+                class="dropdown-item"
+                onclick="navigateToPage(event, 'pengaturan-ph.html')"
+                >Pengaturan pH</a
+              >
+              <a
+                href="pengaturan-dithane.html"
+                class="dropdown-item"
+                onclick="navigateToPage(event, 'pengaturan-dithane.html')"
+                >Pengaturan Dithane</a
+              >
             </div>
           </div>
-        </div>
-      </header>
+          <a class="nav-item active" href="history.html"
+            ><span class="ico ico-history" aria-hidden="true"></span>History</a
+          >
+          <a class="nav-item" href="profile.html"
+            ><span class="ico ico-profile" aria-hidden="true"></span>Profile</a
+          >
+        </nav>
+        <a class="logout" href="popup-logout.html">Log out</a>
+      </aside>
 
-      <div class="content">
-        <section class="history-card">
-          <div class="history-card-head">
-            <div>
-              <span class="history-kicker">Riwayat Monitoring</span>
-              <h2>Data Aktivitas Sistem</h2>
-              <p>Pantau perubahan pH, PPM, dan Dithane berdasarkan tanggal, bulan, jam, tipe, dan status.</p>
-            </div>
-            <button type="button" class="history-export" data-history-export>Ekspor PDF</button>
+      <main class="main">
+        <header class="topbar">
+          <div class="page-title">
+            <h1>History</h1>
+            <p>Selamat datang kembali, Admin</p>
           </div>
-
-          <div class="filter-bar history-filter">
-            <input data-history-search type="search" placeholder="Cari tanggal, tipe, status, hari, atau jam...">
-            <select data-history-type aria-label="Filter tipe">
-              <option value="">Semua Tipe</option>
-              <option value="ph">pH</option>
-              <option value="ppm">PPM</option>
-              <option value="dithane">Dithane</option>
-            </select>
-            <select data-history-day aria-label="Filter hari">
-              <option value="">Semua Hari</option>
-              <option value="senin">Senin</option>
-              <option value="selasa">Selasa</option>
-              <option value="rabu">Rabu</option>
-              <option value="kamis">Kamis</option>
-              <option value="jumat">Jumat</option>
-            </select>
-            <select data-history-month aria-label="Filter bulan">
-              <option value="">Semua Bulan</option>
-              <option value="januari">Januari</option>
-              <option value="februari">Februari</option>
-              <option value="maret">Maret</option>
-              <option value="april">April</option>
-              <option value="mei">Mei</option>
-              <option value="juni">Juni</option>
-              <option value="juli">Juli</option>
-              <option value="agustus">Agustus</option>
-              <option value="september">September</option>
-              <option value="oktober">Oktober</option>
-              <option value="november">November</option>
-              <option value="desember">Desember</option>
-            </select>
-            <select data-history-status aria-label="Filter status">
-              <option value="">Semua Status</option>
-              <option value="normal">Normal</option>
-              <option value="rendah">Rendah</option>
-              <option value="tinggi">Tinggi</option>
-            </select>
-            <button type="button" data-history-reset>Reset</button>
-          </div>
-
-          <div class="history-table-wrap">
-            <table class="history-table">
-              <thead>
-                <tr>
-                  <th>No</th>
-                  <th>Hari</th>
-                  <th>Tanggal</th>
-                  <th>Jam</th>
-                  <th>Tipe</th>
-                  <th>Status</th>
-                  <th>Keterangan</th>
-                  <th>Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr data-id="history-1"><td></td><td>Senin</td><td>12 Januari 2026</td><td>07:00</td><td><span class="badge blue">pH</span></td><td><span class="badge normal">Normal</span></td><td>Nilai pH stabil</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
-                <tr data-id="history-2"><td></td><td>Senin</td><td>16 Februari 2026</td><td>12:00</td><td><span class="badge normal">PPM</span></td><td><span class="badge low">Rendah</span></td><td>Nutrisi perlu ditambah</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
-                <tr data-id="history-3"><td></td><td>Selasa</td><td>10 Maret 2026</td><td>07:30</td><td><span class="badge purple">Dithane</span></td><td><span class="badge normal">Normal</span></td><td>Penyemprotan selesai</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
-                <tr data-id="history-4"><td></td><td>Selasa</td><td>14 April 2026</td><td>13:00</td><td><span class="badge blue">pH</span></td><td><span class="badge high">Tinggi</span></td><td>pH perlu diturunkan</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
-                <tr data-id="history-5"><td></td><td>Rabu</td><td>6 Mei 2026</td><td>08:00</td><td><span class="badge normal">PPM</span></td><td><span class="badge normal">Normal</span></td><td>Nilai PPM stabil</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
-                <tr data-id="history-6"><td></td><td>Rabu</td><td>18 Juni 2026</td><td>14:00</td><td><span class="badge purple">Dithane</span></td><td><span class="badge low">Rendah</span></td><td>Jadwal semprot menunggu</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
-                <tr data-id="history-7"><td></td><td>Kamis</td><td>9 Juli 2026</td><td>07:00</td><td><span class="badge blue">pH</span></td><td><span class="badge normal">Normal</span></td><td>Nilai pH stabil</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
-                <tr data-id="history-8"><td></td><td>Kamis</td><td>20 Agustus 2026</td><td>11:30</td><td><span class="badge normal">PPM</span></td><td><span class="badge high">Tinggi</span></td><td>Nutrisi perlu dikurangi</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
-                <tr data-id="history-9"><td></td><td>Jumat</td><td>11 September 2026</td><td>09:00</td><td><span class="badge purple">Dithane</span></td><td><span class="badge normal">Normal</span></td><td>Penyemprotan selesai</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
-                <tr data-id="history-10"><td></td><td>Jumat</td><td>23 Oktober 2026</td><td>15:00</td><td><span class="badge blue">pH</span></td><td><span class="badge low">Rendah</span></td><td>pH perlu dinaikkan</td><td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td></tr>
-              </tbody>
-            </table>
-            <div class="history-empty" data-history-empty>Data tidak ditemukan.</div>
-          </div>
-
-          <div class="history-footer">
-            <div class="showing" data-history-showing>Menampilkan 0 data</div>
-            <div class="pagination" data-history-pagination></div>
-          </div>
-
-          <section class="history-chart-panel" aria-labelledby="history-chart-title">
-            <div class="history-chart-head">
+          <div class="admin">
+            <div class="bell" aria-label="Notifikasi"></div>
+            <div class="admin-card">
+              <div class="admin-a">A</div>
               <div>
-                <span class="history-kicker">Grafik Monitoring</span>
-                <h3 id="history-chart-title">History pH dan PPM</h3>
-                <p data-history-chart-period>Tren monitoring pH dan PPM selama Mei 2026, lengkap dengan hari, tanggal, dan jam pengukuran.</p>
+                <div class="admin-name">Admin</div>
+                <div class="admin-email">admin@hydrotech.com</div>
               </div>
-              <div class="history-chart-side">
-                <div class="history-chart-controls">
-                  <div class="history-chart-range" aria-label="Filter periode grafik">
-                    <button type="button" data-history-chart-range="7" aria-pressed="false">1 Minggu</button>
-                    <button type="button" data-history-chart-range="14" aria-pressed="false">2 Minggu</button>
-                    <button type="button" class="active" data-history-chart-range="month" aria-pressed="true">1 Bulan</button>
-                  </div>
-                  <label class="history-chart-filter">
-                    <span>Bulan Grafik</span>
-                    <select data-history-chart-month aria-label="Filter bulan grafik">
-                      <option value="0">Januari</option>
-                      <option value="1">Februari</option>
-                      <option value="2">Maret</option>
-                      <option value="3">April</option>
-                      <option value="4" selected>Mei</option>
-                      <option value="5">Juni</option>
-                      <option value="6">Juli</option>
-                      <option value="7">Agustus</option>
-                      <option value="8">September</option>
-                      <option value="9">Oktober</option>
-                      <option value="10">November</option>
-                      <option value="11">Desember</option>
-                    </select>
-                  </label>
+            </div>
+          </div>
+        </header>
+
+        <div class="content">
+          <section class="history-card">
+            <div class="history-card-head">
+              <div>
+                <span class="history-kicker">Riwayat Monitoring</span>
+                <h2>Data Aktivitas Sistem</h2>
+                <p>
+                  Pantau perubahan pH, PPM, dan Dithane berdasarkan tanggal,
+                  bulan, jam, tipe, dan status.
+                </p>
+              </div>
+              <button type="button" class="history-export" data-history-export>
+                Ekspor PDF
+              </button>
+            </div>
+
+            <div class="history-table-panel">
+              <div class="filter-bar history-filter">
+                <input
+                  data-history-search
+                  type="search"
+                  placeholder="Cari tanggal, tipe, status, hari, atau jam..." />
+                <span class="filter-select">
+                  <select data-history-type aria-label="Filter tipe">
+                    <option value="">Semua Tipe</option>
+                    <option value="ph">pH</option>
+                    <option value="ppm">PPM</option>
+                    <option value="dithane">Dithane</option>
+                  </select>
+                </span>
+                <span class="filter-select">
+                  <select data-history-day aria-label="Filter hari">
+                    <option value="">Semua Hari</option>
+                    <option value="senin">Senin</option>
+                    <option value="selasa">Selasa</option>
+                    <option value="rabu">Rabu</option>
+                    <option value="kamis">Kamis</option>
+                    <option value="jumat">Jumat</option>
+                  </select>
+                </span>
+                <span class="filter-select">
+                  <select data-history-month aria-label="Filter bulan">
+                    <option value="">Semua Bulan</option>
+                    <option value="januari">Januari</option>
+                    <option value="februari">Februari</option>
+                    <option value="maret">Maret</option>
+                    <option value="april">April</option>
+                    <option value="mei">Mei</option>
+                    <option value="juni">Juni</option>
+                    <option value="juli">Juli</option>
+                    <option value="agustus">Agustus</option>
+                    <option value="september">September</option>
+                    <option value="oktober">Oktober</option>
+                    <option value="november">November</option>
+                    <option value="desember">Desember</option>
+                  </select>
+                </span>
+                <span class="filter-select">
+                  <select data-history-status aria-label="Filter status">
+                    <option value="">Semua Status</option>
+                    <option value="normal">Normal</option>
+                    <option value="rendah">Rendah</option>
+                    <option value="tinggi">Tinggi</option>
+                  </select>
+                </span>
+                <button type="button" data-history-reset>Reset</button>
+              </div>
+
+              <div class="history-table-wrap">
+                <table class="history-table">
+                  <thead>
+                    <tr>
+                      <th>No</th>
+                      <th>Hari</th>
+                      <th>Tanggal</th>
+                      <th>Jam</th>
+                      <th>Tipe</th>
+                      <th>Status</th>
+                      <th>Keterangan</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr data-id="history-1">
+                      <td></td>
+                      <td>Senin</td>
+                      <td>12 Januari 2026</td>
+                      <td>07:00</td>
+                      <td><span class="badge blue">pH</span></td>
+                      <td><span class="badge normal">Normal</span></td>
+                      <td>Nilai pH stabil</td>
+                      <td class="trash">
+                        <button
+                          type="button"
+                          class="trash-btn"
+                          aria-label="Hapus data">
+                          &#128465;
+                        </button>
+                      </td>
+                    </tr>
+                    <tr data-id="history-2">
+                      <td></td>
+                      <td>Senin</td>
+                      <td>16 Februari 2026</td>
+                      <td>12:00</td>
+                      <td><span class="badge normal">PPM</span></td>
+                      <td><span class="badge low">Rendah</span></td>
+                      <td>Nutrisi perlu ditambah</td>
+                      <td class="trash">
+                        <button
+                          type="button"
+                          class="trash-btn"
+                          aria-label="Hapus data">
+                          &#128465;
+                        </button>
+                      </td>
+                    </tr>
+                    <tr data-id="history-3">
+                      <td></td>
+                      <td>Selasa</td>
+                      <td>10 Maret 2026</td>
+                      <td>07:30</td>
+                      <td><span class="badge purple">Dithane</span></td>
+                      <td><span class="badge normal">Normal</span></td>
+                      <td>Penyemprotan selesai</td>
+                      <td class="trash">
+                        <button
+                          type="button"
+                          class="trash-btn"
+                          aria-label="Hapus data">
+                          &#128465;
+                        </button>
+                      </td>
+                    </tr>
+                    <tr data-id="history-4">
+                      <td></td>
+                      <td>Selasa</td>
+                      <td>14 April 2026</td>
+                      <td>13:00</td>
+                      <td><span class="badge blue">pH</span></td>
+                      <td><span class="badge high">Tinggi</span></td>
+                      <td>pH perlu diturunkan</td>
+                      <td class="trash">
+                        <button
+                          type="button"
+                          class="trash-btn"
+                          aria-label="Hapus data">
+                          &#128465;
+                        </button>
+                      </td>
+                    </tr>
+                    <tr data-id="history-5">
+                      <td></td>
+                      <td>Rabu</td>
+                      <td>6 Mei 2026</td>
+                      <td>08:00</td>
+                      <td><span class="badge normal">PPM</span></td>
+                      <td><span class="badge normal">Normal</span></td>
+                      <td>Nilai PPM stabil</td>
+                      <td class="trash">
+                        <button
+                          type="button"
+                          class="trash-btn"
+                          aria-label="Hapus data">
+                          &#128465;
+                        </button>
+                      </td>
+                    </tr>
+                    <tr data-id="history-6">
+                      <td></td>
+                      <td>Rabu</td>
+                      <td>18 Juni 2026</td>
+                      <td>14:00</td>
+                      <td><span class="badge purple">Dithane</span></td>
+                      <td><span class="badge low">Rendah</span></td>
+                      <td>Jadwal semprot menunggu</td>
+                      <td class="trash">
+                        <button
+                          type="button"
+                          class="trash-btn"
+                          aria-label="Hapus data">
+                          &#128465;
+                        </button>
+                      </td>
+                    </tr>
+                    <tr data-id="history-7">
+                      <td></td>
+                      <td>Kamis</td>
+                      <td>9 Juli 2026</td>
+                      <td>07:00</td>
+                      <td><span class="badge blue">pH</span></td>
+                      <td><span class="badge normal">Normal</span></td>
+                      <td>Nilai pH stabil</td>
+                      <td class="trash">
+                        <button
+                          type="button"
+                          class="trash-btn"
+                          aria-label="Hapus data">
+                          &#128465;
+                        </button>
+                      </td>
+                    </tr>
+                    <tr data-id="history-8">
+                      <td></td>
+                      <td>Kamis</td>
+                      <td>20 Agustus 2026</td>
+                      <td>11:30</td>
+                      <td><span class="badge normal">PPM</span></td>
+                      <td><span class="badge high">Tinggi</span></td>
+                      <td>Nutrisi perlu dikurangi</td>
+                      <td class="trash">
+                        <button
+                          type="button"
+                          class="trash-btn"
+                          aria-label="Hapus data">
+                          &#128465;
+                        </button>
+                      </td>
+                    </tr>
+                    <tr data-id="history-9">
+                      <td></td>
+                      <td>Jumat</td>
+                      <td>11 September 2026</td>
+                      <td>09:00</td>
+                      <td><span class="badge purple">Dithane</span></td>
+                      <td><span class="badge normal">Normal</span></td>
+                      <td>Penyemprotan selesai</td>
+                      <td class="trash">
+                        <button
+                          type="button"
+                          class="trash-btn"
+                          aria-label="Hapus data">
+                          &#128465;
+                        </button>
+                      </td>
+                    </tr>
+                    <tr data-id="history-10">
+                      <td></td>
+                      <td>Jumat</td>
+                      <td>23 Oktober 2026</td>
+                      <td>15:00</td>
+                      <td><span class="badge blue">pH</span></td>
+                      <td><span class="badge low">Rendah</span></td>
+                      <td>pH perlu dinaikkan</td>
+                      <td class="trash">
+                        <button
+                          type="button"
+                          class="trash-btn"
+                          aria-label="Hapus data">
+                          &#128465;
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="history-empty" data-history-empty>
+                  Data tidak ditemukan.
                 </div>
-                <div class="history-chart-stats">
-                  <div class="stat-ph">
-                    <i aria-hidden="true">pH</i>
-                    <span>Rata-rata pH</span>
-                    <strong data-chart-average-ph>0</strong>
-                    <small>Keasaman air</small>
-                  </div>
-                  <div class="stat-ppm">
-                    <i aria-hidden="true">PPM</i>
-                    <span>Rata-rata PPM</span>
-                    <strong data-chart-average-ppm>0</strong>
-                    <small>Nutrisi larutan</small>
-                  </div>
+              </div>
+
+              <div class="history-footer">
+                <div class="showing" data-history-showing>
+                  Menampilkan 0 data
                 </div>
+                <div class="pagination" data-history-pagination></div>
               </div>
             </div>
 
-            <div class="history-chart-legend" aria-label="Legenda grafik">
-              <span><i class="legend-dot ph"></i>pH</span>
-              <span><i class="legend-dot ppm"></i>PPM</span>
-            </div>
+            <section
+              class="history-chart-panel"
+              aria-labelledby="history-chart-title">
+              <div class="history-chart-head">
+                <div>
+                  <span class="history-kicker">Grafik Monitoring</span>
+                  <h3 id="history-chart-title">History pH dan PPM</h3>
+                  <p data-history-chart-period>
+                    Tren monitoring pH dan PPM selama Mei 2026, lengkap dengan
+                    hari, tanggal, dan jam pengukuran.
+                  </p>
+                </div>
+                <div class="history-chart-side">
+                  <div class="history-chart-controls">
+                    <div
+                      class="history-chart-range"
+                      aria-label="Filter periode grafik">
+                      <button
+                        type="button"
+                        data-history-chart-range="7"
+                        aria-pressed="false">
+                        1 Minggu
+                      </button>
+                      <button
+                        type="button"
+                        data-history-chart-range="14"
+                        aria-pressed="false">
+                        2 Minggu
+                      </button>
+                      <button
+                        type="button"
+                        class="active"
+                        data-history-chart-range="month"
+                        aria-pressed="true">
+                        1 Bulan
+                      </button>
+                    </div>
+                    <label class="history-chart-filter">
+                      <span>Bulan Grafik</span>
+                      <select
+                        data-history-chart-month
+                        aria-label="Filter bulan grafik">
+                        <option value="0">Januari</option>
+                        <option value="1">Februari</option>
+                        <option value="2">Maret</option>
+                        <option value="3">April</option>
+                        <option value="4" selected>Mei</option>
+                        <option value="5">Juni</option>
+                        <option value="6">Juli</option>
+                        <option value="7">Agustus</option>
+                        <option value="8">September</option>
+                        <option value="9">Oktober</option>
+                        <option value="10">November</option>
+                        <option value="11">Desember</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div class="history-chart-stats">
+                    <div class="stat-ph">
+                      <div class="mini-ico icon-ph" aria-hidden="true"></div>
+                      <span>Rata-rata pH</span>
+                      <strong data-chart-average-ph>0</strong>
+                      <small>Keasaman air</small>
+                    </div>
+                    <div class="stat-ppm">
+                      <div class="mini-ico icon-ppm" aria-hidden="true"></div>
+                      <span>Rata-rata PPM</span>
+                      <strong data-chart-average-ppm>0</strong>
+                      <small>Nutrisi larutan</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-            <div class="history-chart-wrap">
-              <canvas id="historyLineChart" aria-label="Diagram garis history pH dan PPM selama satu bulan" role="img"></canvas>
-            </div>
+              <div class="history-chart-legend" aria-label="Legenda grafik">
+                <span><i class="legend-dot ph"></i>pH</span>
+                <span><i class="legend-dot ppm"></i>PPM</span>
+              </div>
+
+              <div class="history-chart-wrap">
+                <canvas
+                  id="historyLineChart"
+                  aria-label="Diagram garis history pH dan PPM selama satu bulan"
+                  role="img"></canvas>
+              </div>
+            </section>
           </section>
-        </section>
-      </div>
-    </main>
-  </div>
+        </div>
+      </main>
+    </div>
 
-  <script>
-    function toggleDropdown() {
-      const dropdownMenu = document.getElementById("dropdownMenu");
-      const dropdownButton = document.querySelector(".nav-dropdown .nav-item");
-      if (!dropdownMenu) return;
-      dropdownMenu.classList.toggle("show");
-      if (dropdownButton) {
-        dropdownButton.classList.toggle("open", dropdownMenu.classList.contains("show"));
+    <script>
+      function toggleDropdown() {
+        const dropdownMenu = document.getElementById("dropdownMenu");
+        const dropdownButton = document.querySelector(
+          ".nav-dropdown .nav-item",
+        );
+        if (!dropdownMenu) return;
+        dropdownMenu.classList.toggle("show");
+        if (dropdownButton) {
+          dropdownButton.classList.toggle(
+            "open",
+            dropdownMenu.classList.contains("show"),
+          );
+        }
       }
-    }
 
-    function closeDropdown() {
-      const dropdownMenu = document.getElementById("dropdownMenu");
-      const dropdownButton = document.querySelector(".nav-dropdown .nav-item");
-      if (dropdownMenu) dropdownMenu.classList.remove("show");
-      if (dropdownButton) dropdownButton.classList.remove("open");
-    }
+      function closeDropdown() {
+        const dropdownMenu = document.getElementById("dropdownMenu");
+        const dropdownButton = document.querySelector(
+          ".nav-dropdown .nav-item",
+        );
+        if (dropdownMenu) dropdownMenu.classList.remove("show");
+        if (dropdownButton) dropdownButton.classList.remove("open");
+      }
 
-    function navigateToPage(event, pageUrl) {
-      event.preventDefault();
-      closeDropdown();
-      setTimeout(function () {
-        window.location.href = pageUrl;
-      }, 100);
-    }
-
-    document.addEventListener("click", function (event) {
-      const dropdown = document.querySelector(".nav-dropdown");
-      if (dropdown && !dropdown.contains(event.target)) {
+      function navigateToPage(event, pageUrl) {
+        event.preventDefault();
         closeDropdown();
+        setTimeout(function () {
+          window.location.href = pageUrl;
+        }, 100);
       }
-    });
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="../assets/confirm-modal.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
-  <script src="../assets/history.js"></script>
-</body>
-</html>
 
+      document.addEventListener("click", function (event) {
+        const dropdown = document.querySelector(".nav-dropdown");
+        if (dropdown && !dropdown.contains(event.target)) {
+          closeDropdown();
+        }
+      });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../assets/confirm-modal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+    <script src="../assets/history.js"></script>
+  </body>
+</html>
