@@ -235,18 +235,22 @@
       .map((field) => {
         const value =
           field.key === "start"
-            ? String(settings[field.key] || "").replace(":", ".")
+            ? String(settings[field.key] || "").replace(".", ":")
             : settings[field.key] || "";
-        const type = "text";
-        const inputMode = field.key === "start" ? "numeric" : "decimal";
+        const isTimeField = field.key === "start";
+        const type = isTimeField ? "time" : "text";
+        const inputMode = isTimeField ? "" : "decimal";
         const fieldClass =
-          field.key === "start"
+          isTimeField
             ? "settings-modal-field time-field"
             : "settings-modal-field";
         const clockIcon =
-          field.key === "start" ? '<span class="settings-modal-clock">◷</span>' : "";
+          isTimeField ? '<span class="settings-modal-clock">◷</span>' : "";
         const placeholder =
-          field.key === "start" ? "08.00" : `Masukkan ${field.label.toLowerCase()}`;
+          isTimeField ? "08:00" : `Masukkan ${field.label.toLowerCase()}`;
+        const timeAttributes = isTimeField
+          ? 'step="60" data-time-picker="true"'
+          : "";
 
         return `
           <label class="${fieldClass}">
@@ -259,7 +263,7 @@
                 data-setting-key="${field.key}"
                 value="${value}"
                 placeholder="${placeholder}"
-                ${field.key === "start" ? 'maxlength="5"' : ""}
+                ${timeAttributes}
               />
               <small>${field.unit}</small>
             </div>
@@ -309,12 +313,23 @@
     const timeInput = modal.querySelector('[data-setting-key="start"]');
 
     if (timeInput) {
-      timeInput.addEventListener("input", function () {
-        const digits = timeInput.value.replace(/\D/g, "").slice(0, 4);
-        timeInput.value =
-          digits.length > 2
-            ? `${digits.slice(0, 2)}.${digits.slice(2)}`
-            : digits;
+      function openTimePicker() {
+        if (typeof timeInput.showPicker === "function") {
+          try {
+            timeInput.showPicker();
+          } catch (error) {
+            timeInput.focus();
+          }
+        }
+      }
+
+      timeInput.addEventListener("click", openTimePicker);
+      timeInput.addEventListener("focus", openTimePicker);
+      timeInput.addEventListener("keydown", function (event) {
+        const allowedKeys = ["Tab", "Shift", "Escape", "Enter"];
+        if (allowedKeys.includes(event.key)) return;
+        event.preventDefault();
+        openTimePicker();
       });
     }
 
@@ -324,7 +339,7 @@
         const key = input.dataset.settingKey;
         input.value =
           key === "start"
-            ? String(latestSettings[key] || "").replace(":", ".")
+            ? String(latestSettings[key] || "").replace(".", ":")
             : latestSettings[key] || "";
       });
       message.textContent = "";
