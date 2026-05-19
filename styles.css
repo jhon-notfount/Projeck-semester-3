@@ -3263,47 +3263,31 @@ th {
   box-shadow: 0 0 0 4px rgba(7, 141, 67, 0.12);
   outline: none;
 }
-.hydrotech-toast {
-  border-radius: 18px;
-  border: 1px solid rgba(217, 235, 225, 0.9);
-  box-shadow: 0 18px 44px rgba(24, 56, 36, 0.13);
-}
-.hydrotech-toast-title {
-  color: #275d29;
-  font-size: 14px;
-  font-weight: 900;
-}
-.hydrotech-toast-text {
-  color: #607368;
-  font-size: 12px;
-  font-weight: 700;
-}
-
 .settings-toast {
   position: fixed;
-  top: 22px;
-  right: 24px;
+  top: 50%;
+  left: 50%;
   z-index: 60;
-  min-width: 310px;
-  max-width: min(390px, calc(100vw - 32px));
-  min-height: 74px;
-  padding: 14px 18px 14px 14px;
+  width: min(320px, calc(100vw - 32px));
+  min-height: 240px;
+  padding: 28px 24px 24px;
   border: 1px solid rgba(255, 255, 255, 0.78);
-  border-radius: 20px;
+  border-radius: 26px;
   background:
-    radial-gradient(circle at 92% 0%, rgba(7, 166, 79, 0.14), transparent 36%),
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.98),
-      rgba(246, 255, 250, 0.98)
-    );
-  box-shadow: 0 22px 52px rgba(12, 45, 24, 0.18);
-  display: flex;
+    radial-gradient(circle at 50% 0%, rgba(7, 166, 79, 0.16), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 255, 249, 0.98));
+  box-shadow:
+    0 30px 80px rgba(12, 45, 24, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(18px);
+  display: grid;
   align-items: center;
-  gap: 13px;
+  justify-items: center;
+  gap: 16px;
+  text-align: center;
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-16px) scale(0.96);
+  transform: translate(-50%, -48%) scale(0.9);
   pointer-events: none;
   transition:
     opacity 0.28s ease,
@@ -3313,34 +3297,105 @@ th {
 .settings-toast.show {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0) scale(1);
+  transform: translate(-50%, -50%) scale(1);
 }
 .settings-toast-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 15px;
-  background: linear-gradient(135deg, var(--green), #23c96a);
-  color: white;
+  position: relative;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.34), transparent 32%),
+    linear-gradient(135deg, var(--green), #25c86d);
   display: grid;
   place-items: center;
-  font-size: 11px;
-  font-weight: 900;
-  box-shadow: 0 12px 24px rgba(7, 166, 79, 0.24);
-  flex: 0 0 auto;
+  font-size: 0;
+  box-shadow:
+    0 18px 34px rgba(7, 166, 79, 0.28),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.26);
+  transform: scale(0.7);
+  opacity: 0;
+}
+.settings-toast.show .settings-toast-icon {
+  animation: toastIconPop 0.52s cubic-bezier(0.18, 1.45, 0.34, 1) 0.08s both;
+}
+.settings-toast-icon::after {
+  content: "";
+  position: absolute;
+  inset: -9px;
+  border: 2px solid rgba(7, 166, 79, 0.16);
+  border-radius: 50%;
+  transform: scale(0.72);
+  opacity: 0;
+}
+.settings-toast.show .settings-toast-icon::after {
+  animation: toastRingPulse 0.72s ease-out 0.1s both;
+}
+.settings-toast-icon::before {
+  content: "";
+  width: 33px;
+  height: 18px;
+  border-left: 5px solid #ffffff;
+  border-bottom: 5px solid #ffffff;
+  border-radius: 0 0 0 4px;
+  transform: rotate(-45deg) scale(0);
+  transform-origin: 35% 70%;
+}
+.settings-toast.show .settings-toast-icon::before {
+  animation: toastCheckDraw 0.36s cubic-bezier(0.18, 0.9, 0.32, 1.2) 0.34s both;
 }
 .settings-toast strong {
   display: block;
-  margin-bottom: 3px;
-  color: #275d29;
-  font-size: 13px;
+  margin-bottom: 6px;
+  color: #123f24;
+  font-size: 20px;
   font-weight: 900;
+  line-height: 1.2;
 }
 .settings-toast p {
   margin: 0;
-  color: #607368;
-  font-size: 11px;
-  line-height: 1.45;
-  font-weight: 700;
+  color: #5f7167;
+  font-size: 12px;
+  line-height: 1.55;
+  font-weight: 800;
+}
+
+@keyframes toastIconPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.68);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes toastRingPulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+  45% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.18);
+  }
+}
+@keyframes toastCheckDraw {
+  0% {
+    opacity: 0;
+    transform: rotate(-45deg) scale(0);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(-45deg) scale(1);
+  }
 }
 
 /* History */
@@ -4337,10 +4392,10 @@ th {
     grid-template-columns: 1fr;
   }
   .settings-toast {
-    top: 14px;
-    right: 12px;
-    left: 12px;
-    min-width: 0;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    width: min(300px, calc(100vw - 24px));
     max-width: none;
   }
   .history-card-head {

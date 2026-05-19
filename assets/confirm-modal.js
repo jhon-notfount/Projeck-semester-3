@@ -213,21 +213,39 @@
   window.HydrotechConfirm = { open: openConfirm };
   window.HydrotechToast = {
     success: function (message) {
-      if (!window.Swal) return false;
-      Swal.fire({
-        icon: "success",
-        title: "Berhasil",
-        text: message || "Data berhasil diperbarui.",
-        timer: 2200,
-        showConfirmButton: false,
-        toast: true,
-        position: "top-end",
-        customClass: {
-          popup: "hydrotech-toast",
-          title: "hydrotech-toast-title",
-          htmlContainer: "hydrotech-toast-text",
-        },
+      let toast = document.querySelector(".settings-toast");
+      if (!toast) {
+        toast = document.createElement("div");
+        toast.className = "settings-toast";
+
+        const icon = document.createElement("span");
+        icon.className = "settings-toast-icon";
+        icon.setAttribute("aria-hidden", "true");
+
+        const copy = document.createElement("div");
+        const title = document.createElement("strong");
+        const text = document.createElement("p");
+
+        title.textContent = "Berhasil";
+        copy.append(title, text);
+        toast.append(icon, copy);
+        document.body.appendChild(toast);
+      }
+
+      const text = toast.querySelector("p");
+      if (text) text.textContent = message || "Data berhasil diperbarui.";
+
+      toast.classList.remove("show");
+      window.clearTimeout(toast.hideTimer);
+
+      requestAnimationFrame(() => {
+        toast.classList.add("show");
       });
+
+      toast.hideTimer = window.setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2400);
+
       return true;
     },
     error: function (message) {
