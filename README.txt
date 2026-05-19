@@ -23,5 +23,18 @@ File HTML dipisah per halaman:
 CSS utama:
 - styles.css
 
+Folder JavaScript:
+- js/confirm-modal.js
+- js/dashboard-activity.js
+- js/dashboard-live.js
+- js/history.js
+- js/settings-storage.js
+
+Folder aset gambar:
+- assets/Background.png
+- assets/Logo_hydrotech.png
+- assets/Logo_Polije.png
+- assets/Logo_TRK.png
+
 Font menggunakan Poppins dari Google Fonts melalui @import di styles.css.
 
