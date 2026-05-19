@@ -825,15 +825,21 @@ select {
   gap: 14px;
 }
 .settings-modal-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 15px;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
   background: linear-gradient(135deg, var(--green), #24c96a);
   color: white;
   display: grid;
   place-items: center;
   box-shadow: 0 14px 28px rgba(7, 166, 79, 0.28);
   flex: 0 0 auto;
+}
+.settings-modal-head .settings-modal-icon {
+  color: white;
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1;
 }
 .settings-modal-head span {
   color: #078d43;
@@ -852,6 +858,11 @@ select {
   font-size: 11px;
   line-height: 1.55;
   max-width: 360px;
+}
+@media (max-width: 760px) {
+  .settings-modal-head .settings-modal-icon {
+    font-size: 24px;
+  }
 }
 .settings-modal-close {
   width: 38px;

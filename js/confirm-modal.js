@@ -409,7 +409,8 @@
     const confirmed = await openConfirm({
       icon: "!",
       title: "Keluar dari Hydrotech?",
-      message: "Anda akan keluar dari dashboard dan perlu login kembali untuk masuk.",
+      message:
+        "Anda akan keluar dari dashboard dan perlu login kembali untuk masuk.",
       confirmText: "Ya, Log out",
       variant: "danger",
     });
@@ -421,7 +422,11 @@
 
   document.addEventListener("click", async function (event) {
     const resetButton = event.target.closest(".filter-bar button");
-    if (!resetButton || resetButton.textContent.trim().toLowerCase() !== "reset") return;
+    if (
+      !resetButton ||
+      resetButton.textContent.trim().toLowerCase() !== "reset"
+    )
+      return;
 
     event.preventDefault();
     const confirmed = await openConfirm({

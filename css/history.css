@@ -269,12 +269,15 @@
   margin: 0;
   border: 0;
   border-radius: 0;
-  overflow-x: hidden;
+  overflow-x: auto;
   background: white;
 }
 .history-table {
-  min-width: 0;
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
   table-layout: fixed;
+  background: white;
 }
 .history-table thead th {
   height: 42px;
@@ -295,7 +298,7 @@
 .history-card table th,
 .history-card table td {
   height: 50px;
-  border-color: #e7eee9;
+  border: 1px solid #e7eee9;
   color: #275d29;
   font-size: 10px;
   line-height: 1.35;
@@ -303,6 +306,8 @@
   overflow-wrap: anywhere;
   word-break: normal;
   white-space: normal;
+  text-align: center;
+  vertical-align: middle;
 }
 .history-card table th:nth-child(1),
 .history-card table td:nth-child(1) {
@@ -341,6 +346,69 @@
   color: #6b7c70;
   text-align: left;
   padding: 8px 10px;
+}
+.history-card .badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 58px;
+  min-height: 24px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+.history-card .normal {
+  background: #dff9e5;
+  color: #0e9d4a;
+}
+.history-card .low {
+  background: #fff0d0;
+  color: #d58705;
+}
+.history-card .high {
+  background: #ffe8e8;
+  color: #d70404;
+}
+.history-card .purple {
+  background: #f8e4fb;
+  color: #8d3bc7;
+}
+.history-card .blue {
+  background: #e2f2ff;
+  color: #1976d2;
+}
+.history-card .trash {
+  text-align: center;
+}
+.history-card .trash-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #ffd7d7;
+  border-radius: 10px;
+  background: #fff2f2;
+  color: #d70404;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.history-card .trash-btn:hover {
+  background: #d70404;
+  color: white;
+  box-shadow: 0 10px 18px rgba(215, 4, 4, 0.2);
+  transform: translateY(-2px);
+}
+.history-card .trash-btn:active {
+  transform: translateY(0);
 }
 .history-empty {
   display: none;
@@ -636,6 +704,12 @@
 .history-chart-stats .stat-ppm .mini-ico {
   background: linear-gradient(135deg, var(--green), #27c66b);
   box-shadow: 0 8px 16px rgba(7, 166, 79, 0.2);
+}
+.history-chart-stats .icon-ph {
+  --stat-icon: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2.3'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M14%202v6.5l5.2%205.2a5%205%200%201%201-7.1%207.1L6.9%2015.6A5%205%200%200%201%208.5%207.4L11%204.9V2'/%3E%3Cpath%20d='M9%202h7'/%3E%3Cpath%20d='M8%2014h8'/%3E%3Cpath%20d='M11%2017h3'/%3E%3C/svg%3E");
+}
+.history-chart-stats .icon-ppm {
+  --stat-icon: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2.3'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M9%202v6.5L4.4%2017a3.2%203.2%200%200%200%202.8%205h9.6a3.2%203.2%200%200%200%202.8-5L15%208.5V2'/%3E%3Cpath%20d='M8%202h8'/%3E%3Cpath%20d='M6.8%2016h10.4'/%3E%3Cpath%20d='M9%2019h6'/%3E%3C/svg%3E");
 }
 .history-chart-stats span {
   display: block;
