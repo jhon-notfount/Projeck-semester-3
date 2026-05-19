@@ -1,0 +1,1387 @@
+@import url("./global.css");
+
+/* Dashboard */
+/* DASHBOARD HEADER: hero/header utama dashboard. */
+.dashboard-hero {
+  margin: 6px 10px 18px;
+  min-height: 146px;
+  border-radius: 20px;
+  padding: 24px 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  color: white;
+  background:
+    radial-gradient(
+      circle at 82% 24%,
+      rgba(255, 255, 255, 0.22),
+      transparent 28%
+    ),
+    linear-gradient(135deg, #058846 0%, #08ad57 48%, #1676a4 100%);
+  box-shadow: 0 18px 38px rgba(5, 136, 70, 0.22);
+  position: relative;
+  overflow: hidden;
+}
+.dashboard-hero:after {
+  content: "";
+  position: absolute;
+  right: -42px;
+  bottom: -64px;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  border: 34px solid rgba(255, 255, 255, 0.12);
+}
+.dashboard-hero > div {
+  position: relative;
+  z-index: 1;
+}
+.hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 26px;
+  border-radius: 20px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #eafff1;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.hero-kicker:before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #9cffb5;
+  box-shadow: 0 0 0 0 rgba(156, 255, 181, 0.6);
+  animation: liveDot 1.4s ease-out infinite;
+}
+.dashboard-hero h2 {
+  margin: 12px 0 6px;
+  font-size: 26px;
+  line-height: 1.15;
+}
+.dashboard-hero p {
+  margin: 0;
+  max-width: 560px;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 12px;
+  line-height: 1.65;
+}
+/* HEADER METRICS: ringkasan kecil di dalam hero dashboard. */
+.hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+  gap: 10px;
+  min-width: 280px;
+}
+.hero-metrics div {
+  min-height: 76px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 14px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px);
+}
+.hero-metrics small {
+  display: block;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 9px;
+  margin-bottom: 8px;
+}
+.hero-metrics b {
+  display: block;
+  font-size: 18px;
+}
+/* STATISTIC CARDS: kartu PPM, pH, dan Dithane. */
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.35fr;
+  gap: 16px;
+  margin: 0 10px 18px;
+}
+.stat {
+  min-height: 154px;
+  padding: 18px;
+  border: 1px solid rgba(225, 235, 229, 0.82);
+  border-radius: 16px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.96),
+      rgba(248, 252, 250, 0.98)
+    ),
+    white;
+  box-shadow: 0 12px 30px rgba(22, 49, 32, 0.08);
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.stat:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      circle at calc(100% - 26px) -32px,
+      rgba(7, 166, 79, 0.08) 0 56px,
+      transparent 57px
+    ),
+    linear-gradient(
+      115deg,
+      transparent 0%,
+      transparent 34%,
+      rgba(255, 255, 255, 0.62) 46%,
+      transparent 58%,
+      transparent 100%
+    );
+  transform: translateX(-130%);
+  animation: statShine 4.6s ease-in-out infinite;
+  pointer-events: none;
+}
+.stat:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 36px rgba(22, 49, 32, 0.12);
+}
+.stat .mini-ico {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, var(--green), #27c66b);
+  color: white;
+  display: grid;
+  place-items: center;
+  margin-bottom: 10px;
+  box-shadow: 0 10px 18px rgba(7, 166, 79, 0.24);
+  position: relative;
+  z-index: 1;
+}
+.stat .mini-ico:before {
+  content: "";
+  width: 22px;
+  height: 22px;
+  background: currentColor;
+  -webkit-mask: var(--stat-icon) center / contain no-repeat;
+  mask: var(--stat-icon) center / contain no-repeat;
+}
+.icon-ppm {
+  --stat-icon: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2.3'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M9%202v6.5L4.4%2017a3.2%203.2%200%200%200%202.8%205h9.6a3.2%203.2%200%200%200%202.8-5L15%208.5V2'/%3E%3Cpath%20d='M8%202h8'/%3E%3Cpath%20d='M6.8%2016h10.4'/%3E%3Cpath%20d='M9%2019h6'/%3E%3C/svg%3E");
+}
+.icon-ph {
+  --stat-icon: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2.3'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M14%202v6.5l5.2%205.2a5%205%200%201%201-7.1%207.1L6.9%2015.6A5%205%200%200%201%208.5%207.4L11%204.9V2'/%3E%3Cpath%20d='M9%202h7'/%3E%3Cpath%20d='M8%2014h8'/%3E%3Cpath%20d='M11%2017h3'/%3E%3C/svg%3E");
+}
+.icon-dithane {
+  --stat-icon: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2.3'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M7%208h7l3%203v8a3%203%200%200%201-3%203H7a3%203%200%200%201-3-3v-8l3-3Z'/%3E%3Cpath%20d='M9%208V4h4v4'/%3E%3Cpath%20d='M8%204h6'/%3E%3Cpath%20d='M17%2011h3'/%3E%3Cpath%20d='M20%208v6'/%3E%3Cpath%20d='M7%2015h7'/%3E%3Cpath%20d='M7%2018h4'/%3E%3C/svg%3E");
+}
+.stat-ph .mini-ico {
+  background: linear-gradient(135deg, #ff7777, #f2a151);
+  box-shadow: 0 10px 18px rgba(255, 119, 119, 0.2);
+}
+.stat-dithane .mini-ico {
+  background: linear-gradient(135deg, #1676a4, #15b4a5);
+  box-shadow: 0 10px 18px rgba(22, 118, 164, 0.2);
+}
+.stat .pill {
+  position: absolute;
+  right: 14px;
+  top: 20px;
+  background: #e6f9ec;
+  color: #038d43;
+  font-size: 8px;
+  font-weight: 700;
+  border-radius: 20px;
+  padding: 5px 10px;
+  z-index: 1;
+}
+.stat-title {
+  font-size: 10px;
+  color: #657267;
+  position: relative;
+  z-index: 1;
+}
+.stat-num {
+  font-size: 29px;
+  font-weight: 800;
+  line-height: 1.1;
+  position: relative;
+  z-index: 1;
+  transition:
+    color 0.25s ease,
+    transform 0.25s ease;
+}
+.stat-num.live-number {
+  color: #078d43;
+  text-shadow: 0 10px 22px rgba(7, 141, 67, 0.18);
+  transform: translateY(-3px) scale(1.07);
+}
+.stat-note {
+  margin-top: 6px;
+  color: #7b8780;
+  font-size: 9px;
+  position: relative;
+  z-index: 1;
+}
+.bar {
+  height: 7px;
+  background: #e9eee9;
+  border-radius: 6px;
+  margin-top: 13px;
+  position: relative;
+  z-index: 1;
+}
+.bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #0ca24d, #7ee092);
+  border-radius: 6px;
+  transition: width 0.75s ease;
+}
+/* DASHBOARD GRID: pembungkus chart dan aktivitas. */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+  gap: 16px;
+  margin: 0 10px;
+  align-items: stretch;
+}
+/* MONITORING CHART: kartu grafik monitoring realtime. */
+.chart-card {
+  min-height: 344px;
+  padding: 20px 22px 16px;
+  overflow: hidden;
+  border: 1px solid rgba(229, 236, 231, 0.75);
+  background:
+    radial-gradient(circle at 90% 8%, rgba(7, 166, 79, 0.08), transparent 24%),
+    linear-gradient(
+      180deg,
+      rgba(244, 252, 247, 0.9),
+      rgba(255, 255, 255, 0.96)
+    ),
+    white;
+}
+.chart-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+.chart-head .section-title {
+  margin-bottom: 2px;
+}
+.chart-head p {
+  margin: 0;
+  color: #6e7b72;
+  font-size: 10px;
+}
+.chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #5d6c62;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.chart-legend span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.chart-legend i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.legend-ph {
+  background: #ff7777;
+}
+.legend-ppm {
+  background: var(--green);
+}
+.chart-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.chart-summary div {
+  min-height: 58px;
+  border: 1px solid #e3eee8;
+  border-radius: 12px;
+  padding: 10px 13px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+.chart-summary small {
+  display: block;
+  color: #77857d;
+  font-size: 9px;
+}
+.chart-summary b {
+  color: #143820;
+  font-size: 20px;
+  line-height: 1.2;
+}
+.dashboard-chart-wrap {
+  position: relative;
+  width: 100%;
+  height: 214px;
+}
+.chart {
+  width: 100%;
+  height: 100%;
+  display: block;
+  transition:
+    filter 0.3s ease,
+    transform 0.3s ease;
+}
+.chart.live-refresh {
+  filter: drop-shadow(0 10px 18px rgba(7, 166, 79, 0.14));
+  transform: translateY(-1px);
+}
+.section-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.activity-row.live-pulse {
+  animation: livePulse 0.85s ease;
+}
+@keyframes liveDot {
+  0% {
+    box-shadow: 0 0 0 0 rgba(156, 255, 181, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0 9px rgba(156, 255, 181, 0);
+  }
+}
+@keyframes statShine {
+  0%,
+  58% {
+    transform: translateX(-130%);
+  }
+  82%,
+  100% {
+    transform: translateX(130%);
+  }
+}
+@keyframes livePulse {
+  0% {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+  45% {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 24px rgba(7, 166, 79, 0.12);
+  }
+  100% {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+}
+/* ACTIVITY PANEL: daftar aktivitas terbaru dan filter aktivitas. */
+.activity {
+  margin: 22px 10px 0;
+  padding: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 96% 0%, rgba(7, 166, 79, 0.08), transparent 30%),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.98),
+      rgba(248, 253, 250, 0.98)
+    );
+}
+.dashboard-activity-card {
+  margin: 0;
+  min-height: 344px;
+  display: flex;
+  flex-direction: column;
+}
+.dashboard-activity-card .activity-head {
+  min-height: 84px;
+  padding: 18px 18px 14px;
+  gap: 12px;
+}
+.dashboard-activity-card .activity-filter-dropdown {
+  min-width: 132px;
+}
+.dashboard-activity-card .activity-list {
+  flex: 1;
+  padding: 6px 12px 0;
+}
+.dashboard-activity-card .activity-row {
+  align-items: flex-start;
+  min-height: 0;
+  padding: 11px 6px;
+  flex-wrap: wrap;
+}
+.dashboard-activity-card .activity-row .nicon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+}
+.dashboard-activity-card .activity-row > div {
+  flex: 1 1 170px;
+  min-width: 0;
+}
+.dashboard-activity-card .activity-row .status {
+  margin-left: 48px;
+}
+.dashboard-activity-card .activity-row .ago {
+  min-width: 0;
+  margin-left: auto;
+}
+.dashboard-activity-card .activity-foot {
+  padding: 0 18px;
+}
+.activity-head {
+  min-height: 92px;
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid #e4ebe7;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+.activity-head .section-title {
+  margin: 0 0 4px;
+}
+.activity-head p {
+  margin: 0;
+  color: #6d7a72;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.activity-filter-dropdown {
+  position: relative;
+  min-width: 158px;
+}
+.activity-filter-toggle {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid #dcebe3;
+  border-radius: 14px;
+  padding: 0 13px;
+  background: white;
+  color: #214331;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 900;
+  box-shadow: 0 10px 18px rgba(24, 56, 36, 0.06);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.activity-filter-toggle:hover {
+  transform: translateY(-1px);
+  border-color: rgba(7, 166, 79, 0.32);
+  box-shadow: 0 14px 22px rgba(7, 166, 79, 0.1);
+}
+.activity-filter-toggle i {
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid #0b8e45;
+  border-bottom: 2px solid #0b8e45;
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 0.22s ease;
+}
+.activity-filter-dropdown.open .activity-filter-toggle i {
+  transform: rotate(225deg) translate(-1px, -1px);
+}
+.activity-filter-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 12;
+  width: 100%;
+  border: 1px solid rgba(224, 236, 229, 0.96);
+  border-radius: 14px;
+  padding: 7px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 18px 34px rgba(25, 54, 36, 0.16);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px) scale(0.97);
+  transform-origin: top right;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease,
+    transform 0.2s ease;
+}
+.activity-filter-dropdown.open .activity-filter-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+.activity-filter-menu button {
+  width: 100%;
+  min-height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #42564a;
+  cursor: pointer;
+  text-align: left;
+  padding: 0 10px;
+  font-size: 10px;
+  font-weight: 900;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+.activity-filter-menu button:hover {
+  background: #f0faf4;
+  color: #0b8e45;
+  transform: translateX(2px);
+}
+.activity-filter-menu button.active {
+  background: #e2f8e7;
+  color: #0b8e45;
+}
+.activity-list {
+  padding: 6px 14px 0;
+}
+.activity-row {
+  min-height: 68px;
+  border-bottom: 1px solid #e4ebe7;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 8px;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+.activity-row:hover {
+  background: rgba(242, 250, 245, 0.72);
+  transform: translateX(3px);
+}
+.activity-row .nicon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #e8f8ee, #f7fffa);
+  color: #0a9c49;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 900;
+  flex: 0 0 auto;
+  box-shadow: inset 0 0 0 1px #dcebe3;
+}
+.activity-row b {
+  display: block;
+  color: #275d29;
+  font-size: 12px;
+  margin-bottom: 3px;
+}
+.activity-row small {
+  display: block;
+  color: #7b8780;
+  font-size: 10px;
+  line-height: 1.35;
+}
+.activity-row .status {
+  margin-left: auto;
+  background: #dffae4;
+  color: #0c9549;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.activity-row .status.wait {
+  background: #eaf2ff;
+  color: #1676a4;
+}
+.activity-row .status.warn {
+  background: #fff3d6;
+  color: #b57a00;
+}
+.activity-row .ago {
+  min-width: 74px;
+  font-size: 9px;
+  margin-left: 10px;
+  color: #797f7a;
+  text-align: right;
+}
+.activity-row[hidden],
+.activity-row.activity-hidden {
+  display: none;
+}
+.activity-empty {
+  display: none;
+  padding: 24px 18px;
+  text-align: center;
+  color: #6d7a72;
+  font-size: 11px;
+  font-weight: 800;
+}
+.activity-empty.show {
+  display: block;
+}
+[hidden] {
+  display: none !important;
+}
+.activity-foot {
+  min-height: 46px;
+  padding: 0 22px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  border-top: 1px solid #e4ebe7;
+  background: #fbfefc;
+  color: #6d7a72;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+/* DESKTOP LAYOUT: penyesuaian ukuran dashboard di layar besar. */
+@media (min-width: 900px) {
+  .main:has(.dashboard-hero) {
+    height: 100vh;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .main:has(.dashboard-hero) .content {
+    height: calc(100vh - 64px);
+    padding: 12px 18px 14px;
+    overflow: hidden;
+  }
+  /* DASHBOARD HEADER: hero/header utama dashboard. */
+.dashboard-hero {
+    min-height: 104px;
+    margin: 0 10px 10px;
+    padding: 16px 22px;
+  }
+  .dashboard-hero h2 {
+    margin: 7px 0 4px;
+    font-size: 22px;
+  }
+  .dashboard-hero p {
+    font-size: 11px;
+    line-height: 1.42;
+  }
+  .hero-kicker {
+    height: 23px;
+  }
+  .hero-metrics div {
+    min-height: 56px;
+    padding: 10px 12px;
+  }
+  .hero-metrics small {
+    margin-bottom: 4px;
+  }
+  .hero-metrics b {
+    font-size: 16px;
+  }
+  /* STATISTIC CARDS: kartu PPM, pH, dan Dithane. */
+.stats {
+    gap: 12px;
+    margin: 0 10px 10px;
+  }
+  .stat {
+    min-height: 106px;
+    padding: 13px 15px;
+  }
+  .stat .mini-ico {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 6px;
+  }
+  .stat .pill {
+    top: 13px;
+    right: 12px;
+    padding: 4px 9px;
+  }
+  .stat-num {
+    font-size: 23px;
+  }
+  .stat-note {
+    margin-top: 3px;
+  }
+  .bar {
+    height: 6px;
+    margin-top: 8px;
+  }
+  /* DASHBOARD GRID: pembungkus chart dan aktivitas. */
+.dashboard-grid {
+    gap: 12px;
+    margin: 0 10px;
+    height: calc(100vh - 322px);
+    min-height: 250px;
+  }
+  .chart-card,
+  .dashboard-activity-card {
+    min-height: 0;
+  }
+  /* MONITORING CHART: kartu grafik monitoring realtime. */
+.chart-card {
+    display: flex;
+    flex-direction: column;
+    padding: 14px 18px 12px;
+  }
+  .chart-head {
+    margin-bottom: 8px;
+  }
+  .chart-summary {
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .chart-summary div {
+    min-height: 44px;
+    padding: 7px 11px;
+  }
+  .chart-summary b {
+    font-size: 17px;
+  }
+  .dashboard-chart-wrap {
+    flex: 1;
+    height: auto;
+    min-height: 132px;
+  }
+  .dashboard-activity-card {
+    overflow: hidden;
+  }
+  .dashboard-activity-card .activity-head {
+    min-height: 68px;
+    padding: 13px 16px 10px;
+  }
+  .dashboard-activity-card .activity-head p {
+    line-height: 1.35;
+  }
+  .dashboard-activity-card .activity-list {
+    flex: 1;
+    overflow: hidden;
+    padding: 4px 10px 0;
+  }
+  .dashboard-activity-card .activity-row {
+    min-height: 0;
+    padding: 7px 6px;
+    gap: 9px;
+  }
+  .dashboard-activity-card .activity-row .nicon {
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+  }
+  .dashboard-activity-card .activity-row b {
+    font-size: 11px;
+    margin-bottom: 1px;
+  }
+  .dashboard-activity-card .activity-row small {
+    font-size: 9px;
+    line-height: 1.2;
+  }
+  .dashboard-activity-card .activity-row .status {
+    margin-left: 39px;
+    padding: 4px 9px;
+  }
+  .dashboard-activity-card .activity-row .ago {
+    font-size: 8px;
+  }
+  .dashboard-activity-card .activity-foot {
+    min-height: 34px;
+    padding: 0 16px;
+  }
+}
+
+/* RESPONSIVE TABLET: penyesuaian dashboard di layar sedang. */
+@media (max-width: 900px) {
+  .sidebar {
+    width: 190px;
+  }
+  .main {
+    margin-left: 190px;
+    width: calc(100% - 190px);
+  }
+  .side-logo {
+    padding: 0 14px;
+  }
+  .side-brand strong {
+    font-size: 16px;
+  }
+  .nav {
+    padding: 14px 10px;
+  }
+  .nav-item {
+    min-height: 38px;
+    padding: 0 10px;
+    font-size: 10.5px;
+  }
+  .dropdown-menu {
+    width: 170px;
+  }
+  .topbar {
+    padding: 0 16px;
+  }
+  .admin-card {
+    min-width: 160px;
+  }
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  /* DASHBOARD HEADER: hero/header utama dashboard. */
+.dashboard-hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .dashboard-hero h2 {
+    font-size: 22px;
+  }
+  /* HEADER METRICS: ringkasan kecil di dalam hero dashboard. */
+.hero-metrics {
+    min-width: 0;
+  }
+  .stats,
+  .dashboard-grid,
+  .profile-cards,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .profile-hero,
+  .profile-summary {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .profile-hero-panel {
+    min-width: 0;
+  }
+  .profile-action {
+    width: 100%;
+  }
+  /* MONITORING CHART: kartu grafik monitoring realtime. */
+.chart-card {
+    min-height: 330px;
+  }
+  .dashboard-chart-wrap {
+    height: 230px;
+  }
+  .chart-head {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .activity-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .activity-filter-dropdown {
+    width: 100%;
+  }
+  .chart-legend {
+    white-space: normal;
+  }
+  .login-card {
+    right: 24px;
+    width: 360px;
+    padding: 34px 30px;
+  }
+  .login-left {
+    left: 28px;
+    width: 320px;
+  }
+  .login-title {
+    font-size: 28px;
+  }
+  .login-features {
+    left: 28px;
+    gap: 10px;
+  }
+  .feature {
+    min-width: 128px;
+    padding: 10px;
+  }
+}
+
+/* RESPONSIVE MOBILE: penyesuaian dashboard di layar kecil. */
+@media (max-width: 760px) {
+  body.login-page {
+    min-height: auto;
+    overflow: auto;
+    padding: 102px 18px 28px;
+  }
+  .login-logos {
+    position: absolute;
+  }
+  .login-left,
+  .login-card,
+  .login-features {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    width: 100%;
+  }
+  .login-left {
+    margin-bottom: 22px;
+  }
+  .hydro-logo img {
+    width: 150px;
+  }
+  .login-title {
+    font-size: 30px;
+  }
+  .login-desc br {
+    display: none;
+  }
+  .login-card {
+    min-height: auto;
+    padding: 32px 24px;
+  }
+  .login-features {
+    flex-direction: column;
+    margin-top: 16px;
+  }
+  .feature {
+    min-width: 0;
+    width: 100%;
+  }
+  .settings-modal {
+    align-items: end;
+    padding: 12px;
+  }
+  .settings-modal-card {
+    width: 100%;
+    border-radius: 22px;
+  }
+  .settings-modal-head {
+    padding: 22px 20px 16px;
+  }
+  .settings-modal-title {
+    gap: 11px;
+  }
+  .settings-modal-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 13px;
+  }
+  .settings-modal-head h2 {
+    font-size: 20px;
+  }
+  .settings-modal-body {
+    padding: 20px 20px 8px;
+  }
+  .settings-modal-actions {
+    padding: 16px 20px 22px;
+    flex-direction: column-reverse;
+  }
+  .settings-modal-actions .btn-secondary,
+  .settings-modal-actions .btn-save {
+    width: 100%;
+  }
+  .confirm-modal {
+    align-items: end;
+    padding: 12px;
+  }
+  .confirm-modal-card {
+    width: 100%;
+    border-radius: 22px;
+    padding: 28px 22px 22px;
+  }
+  .confirm-modal-actions {
+    grid-template-columns: 1fr;
+  }
+  .settings-toast {
+    top: 50%;
+    left: 50%;
+    right: auto;
+    width: min(300px, calc(100vw - 24px));
+    max-width: none;
+  }
+  .history-card-head {
+    flex-direction: column;
+    padding: 22px 18px 18px;
+  }
+  .history-export {
+    width: 100%;
+  }
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter-bar input,
+  .filter-bar select,
+  .filter-bar button {
+    width: 100%;
+  }
+  .history-filter .filter-select {
+    width: 100%;
+  }
+  .history-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .history-footer .pagination {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .history-chart-panel {
+    padding: 18px 16px 20px;
+  }
+  .history-chart-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .history-chart-side {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .history-chart-controls {
+    flex: 1 1 250px;
+  }
+  .history-chart-filter {
+    width: 100%;
+  }
+  .history-chart-filter select {
+    flex: 1;
+    min-width: 118px;
+  }
+  .history-chart-stats {
+    flex: 2 1 250px;
+    width: 100%;
+    min-width: 0;
+  }
+  .history-chart-stats > div {
+    flex: 1;
+    min-width: 108px;
+  }
+  .history-chart-wrap {
+    height: 320px;
+    padding: 14px 10px 10px;
+    border-radius: 16px;
+  }
+  .profile-wrap {
+    padding: 16px 12px 26px;
+  }
+  .profile-hero {
+    min-height: auto;
+    padding: 24px 20px;
+    border-radius: 18px;
+  }
+  .profile-hero h2 {
+    font-size: 24px;
+  }
+  .profile-cards {
+    gap: 12px;
+  }
+  .info-card {
+    min-height: 0;
+    padding: 18px;
+  }
+  .profile-summary {
+    padding: 22px 18px;
+  }
+  .activity-list {
+    padding: 6px 10px 0;
+  }
+  .activity-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .activity-row .status {
+    margin-left: 54px;
+  }
+  .activity-row .ago {
+    min-width: 0;
+    margin-left: auto;
+  }
+  .table-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .status-filter-wrap {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .status-filter {
+    width: 100%;
+  }
+}
+
+/* PAGE HEADER CONSISTENCY: menyamakan tinggi header antar halaman. */
+/* Final page-header consistency */
+.main:has(.history-card) .content,
+.main:has(.content > .hero) .content {
+  padding: 12px 18px 14px;
+}
+.main:has(.profile-wrap) .profile-wrap {
+  padding: 12px 18px 14px;
+}
+:is(
+  .dashboard-hero,
+  .profile-hero,
+  .history-card-head,
+  .main .content > .hero
+) {
+  box-sizing: border-box;
+  height: 104px;
+  min-height: 104px;
+  max-height: 104px;
+  padding: 16px 22px;
+  border-radius: 20px;
+  align-items: center;
+  overflow: hidden;
+}
+.dashboard-hero,
+.profile-hero,
+.main .content > .hero {
+  margin: 0 10px 10px;
+}
+.history-card {
+  margin: 0 10px;
+}
+.history-card-head {
+  border-radius: 20px;
+}
+.profile-cards,
+.profile-summary {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+:is(.dashboard-hero, .profile-hero, .history-card-head, .main .content > .hero)
+  h2 {
+  margin: 7px 0 4px;
+  font-size: 22px;
+  line-height: 1.15;
+}
+:is(.dashboard-hero, .profile-hero, .history-card-head, .main .content > .hero)
+  p {
+  font-size: 11px;
+  line-height: 1.42;
+}
+:is(.hero-kicker, .profile-kicker, .history-card-head .history-kicker) {
+  box-sizing: border-box;
+  min-height: 23px;
+  height: 23px;
+  font-size: 10px;
+}
+.dashboard-hero > div:first-child,
+.profile-hero-copy,
+.history-card-head > div:first-child,
+.main .content > .hero .hero-left {
+  min-width: 0;
+}
+.hero-metrics div,
+.profile-hero-panel {
+  box-sizing: border-box;
+  min-height: 56px;
+  max-height: 56px;
+}
+.profile-hero-panel {
+  min-width: 220px;
+  padding: 10px 12px;
+}
+.profile-hero-panel img {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  padding: 5px;
+}
+.profile-hero-panel strong {
+  font-size: 17px;
+  line-height: 1.1;
+}
+.profile-hero-panel span {
+  margin-top: 2px;
+  font-size: 10px;
+}
+.history-export,
+.main .content > .hero .edit-btn {
+  box-sizing: border-box;
+  height: 38px;
+  min-height: 38px;
+}
+.main .content > .hero .hero-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  flex: 0 0 auto;
+}
+
+/* RESPONSIVE TABLET: penyesuaian dashboard di layar sedang. */
+@media (max-width: 900px) {
+  :is(
+    .dashboard-hero,
+    .profile-hero,
+    .history-card-head,
+    .main .content > .hero
+  ) {
+    height: 104px;
+    min-height: 104px;
+    max-height: 104px;
+    padding: 16px 22px;
+  }
+  :is(
+      .dashboard-hero,
+      .profile-hero,
+      .history-card-head,
+      .main .content > .hero
+    )
+    h2 {
+    font-size: 22px;
+  }
+}
+
+/* PAGE ENTRANCE: animasi masuk elemen dashboard. */
+/* Smooth page entrance */
+body:not(.login-page):not(.popup-body)
+  .content
+  > :not(.dashboard-grid):not(.stats):not(.summary-grid):not(.form-grid):not(
+    .profile-grid
+  ):not(.history-card),
+.profile-wrap > :not(.profile-cards) {
+  animation: pageRiseEnter 1.55s cubic-bezier(0.19, 1, 0.22, 1) both;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  will-change: opacity, transform;
+}
+body:not(.login-page):not(.popup-body) .content > :nth-child(1) {
+  animation-delay: 0.08s;
+}
+body:not(.login-page):not(.popup-body) .profile-wrap > :nth-child(1) {
+  animation-delay: 0.08s;
+}
+body:not(.login-page):not(.popup-body) .content > :nth-child(2) {
+  animation-delay: 0.24s;
+}
+body:not(.login-page):not(.popup-body) .profile-wrap > :nth-child(2) {
+  animation-delay: 0.24s;
+}
+body:not(.login-page):not(.popup-body) .content > :nth-child(3) {
+  animation-delay: 0.4s;
+}
+body:not(.login-page):not(.popup-body) .profile-wrap > :nth-child(3) {
+  animation-delay: 0.4s;
+}
+body:not(.login-page):not(.popup-body) .content > :nth-child(4) {
+  animation-delay: 0.56s;
+}
+body:not(.login-page):not(.popup-body) .content > :nth-child(5) {
+  animation-delay: 0.72s;
+}
+.dashboard-grid > *,
+.stats > *,
+.summary-grid > *,
+.form-grid > *,
+.profile-grid > *,
+.profile-cards > * {
+  animation: pageRiseEnter 1.55s cubic-bezier(0.19, 1, 0.22, 1) both;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  will-change: opacity, transform;
+}
+.dashboard-grid > :nth-child(1),
+.stats > :nth-child(1),
+.summary-grid > :nth-child(1),
+.form-grid > :nth-child(1),
+.profile-grid > :nth-child(1),
+.profile-cards > :nth-child(1) {
+  animation-delay: 0.24s;
+}
+.dashboard-grid > :nth-child(2),
+.stats > :nth-child(2),
+.summary-grid > :nth-child(2),
+.form-grid > :nth-child(2),
+.profile-grid > :nth-child(2),
+.profile-cards > :nth-child(2) {
+  animation-delay: 0.4s;
+}
+.stats > :nth-child(3),
+.summary-grid > :nth-child(3),
+.form-grid > :nth-child(3),
+.profile-grid > :nth-child(3) {
+  animation-delay: 0.56s;
+}
+.summary-grid > :nth-child(4),
+.profile-grid > :nth-child(4) {
+  animation-delay: 0.72s;
+}
+.history-card-head,
+.history-table-panel,
+.history-chart-panel {
+  animation: pageRiseEnter 1.55s cubic-bezier(0.19, 1, 0.22, 1) both;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  will-change: opacity, transform;
+}
+.history-card-head {
+  animation-delay: 0.08s;
+}
+.history-table-panel {
+  animation-delay: 0.22s;
+}
+.history-chart-panel {
+  animation-delay: 0.36s;
+}
+.form-page,
+.login-card,
+.delete-modal,
+.logout-modal {
+  animation: pageRiseEnter 1.45s cubic-bezier(0.19, 1, 0.22, 1) both;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+.main .content > .hero + .summary-grid {
+  width: auto;
+}
+
+
+.card,
+.stat,
+.info-card,
+.table-card,
+.history-card,
+.profile-summary,
+.sum-card {
+  border-color: rgba(214, 231, 221, 0.9);
+  box-shadow:
+    0 16px 38px rgba(24, 56, 36, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+:is(
+  .dashboard-hero,
+  .profile-hero,
+  .history-card-head,
+  .main .content > .hero
+) {
+  box-shadow:
+    0 18px 38px rgba(5, 136, 70, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+.activity-filter-toggle,
+.status-filter {
+  border-color: rgba(211, 231, 220, 0.95);
+  background: rgba(255, 255, 255, 0.92);
+}
+

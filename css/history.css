@@ -1,0 +1,1313 @@
+@import url("./global.css");
+
+/* History */
+/* HISTORY WRAPPER: container utama halaman history. */
+.history-card {
+  display: grid;
+  gap: 12px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+/* HISTORY HEADER: judul halaman, deskripsi, dan tombol export. */
+.history-card-head {
+  min-height: 126px;
+  padding: 24px 26px 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid rgba(226, 238, 231, 0.9);
+  background:
+    radial-gradient(
+      circle at 88% 18%,
+      rgba(255, 255, 255, 0.2),
+      transparent 28%
+    ),
+    linear-gradient(135deg, #058846 0%, #08ad57 52%, #1676a4 100%);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+.history-card-head:after {
+  content: "";
+  position: absolute;
+  right: -48px;
+  bottom: -76px;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  border: 34px solid rgba(255, 255, 255, 0.11);
+}
+.history-card-head > * {
+  position: relative;
+  z-index: 1;
+}
+.history-kicker {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 12px;
+  border-radius: 20px;
+  background: #e8f8ee;
+  color: #078d43;
+  font-size: 10px;
+  font-weight: 900;
+}
+.history-card-head .history-kicker {
+  background: rgba(255, 255, 255, 0.18);
+  color: #eafff1;
+}
+.history-card-head h2 {
+  margin: 12px 0 6px;
+  color: white;
+  font-size: 24px;
+  line-height: 1.2;
+}
+.history-card-head p {
+  margin: 0;
+  max-width: 560px;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 12px;
+  line-height: 1.65;
+}
+.history-export {
+  min-width: 124px;
+  height: 42px;
+  border: 0;
+  border-radius: 21px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #078d43;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 14px 24px rgba(0, 69, 31, 0.18);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.history-export:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 30px rgba(0, 69, 31, 0.22);
+}
+/* TABLE PANEL: area filter, tabel, empty state, dan pagination. */
+.history-table-panel {
+  overflow: hidden;
+  border: 1px solid rgba(225, 235, 229, 0.92);
+  border-radius: 16px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(248, 253, 250, 0.98)
+  );
+  box-shadow: 0 16px 38px rgba(24, 56, 36, 0.08);
+}
+/* FILTER BAR: input pencarian dan dropdown filter history. */
+.filter-bar {
+  min-height: 58px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(246, 252, 249, 0.96)
+  );
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #e2eee7;
+}
+.history-filter {
+  position: relative;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid rgba(205, 225, 215, 0.82);
+  border-radius: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.88);
+}
+.filter-bar input {
+  flex: 1;
+  min-width: 180px;
+  height: 38px;
+  border: 1px solid rgba(184, 210, 197, 0.92);
+  border-radius: 10px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(250, 255, 252, 0.94)
+  );
+  padding: 0 14px;
+  color: #275d29;
+  font-size: 11px;
+  font-weight: 700;
+  outline: 0;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 10px 24px rgba(24, 56, 36, 0.06);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+.filter-bar select,
+.filter-bar button {
+  height: 38px;
+  border: 1px solid rgba(184, 210, 197, 0.92);
+  border-radius: 10px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(250, 255, 252, 0.94)
+  );
+  font-size: 10px;
+  font-weight: 900;
+  padding: 0 14px;
+  color: #275d29;
+  outline: 0;
+  cursor: pointer;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 10px 24px rgba(24, 56, 36, 0.06);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+.filter-bar select {
+  min-width: 118px;
+  padding-right: 34px;
+  appearance: none;
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.98),
+      rgba(250, 255, 252, 0.94)
+    ),
+    url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.4 1.6 6 6.2l4.6-4.6' fill='none' stroke='%23078d43' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position:
+    0 0,
+    right 12px center;
+  background-repeat: no-repeat;
+  background-size:
+    auto,
+    12px 8px;
+}
+.history-filter .filter-select {
+  position: relative;
+  display: inline-flex;
+  min-width: 118px;
+}
+.history-filter .filter-select select {
+  width: 100%;
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(250, 255, 252, 0.94)
+  );
+  background-position: 0 0;
+  background-repeat: no-repeat;
+  background-size: auto;
+}
+.history-filter .filter-select::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid #078d43;
+  border-bottom: 2px solid #078d43;
+  pointer-events: none;
+  transform: translateY(-65%) rotate(45deg);
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+.history-filter .filter-select:hover::after,
+.history-filter .filter-select:focus-within::after {
+  border-color: #07a64f;
+  transform: translateY(-45%) rotate(45deg);
+}
+.filter-bar input:hover,
+.filter-bar select:hover,
+.filter-bar button:hover {
+  border-color: rgba(7, 141, 67, 0.45);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 12px 26px rgba(24, 56, 36, 0.1);
+  transform: translateY(-1px);
+}
+.filter-bar input:focus,
+.filter-bar select:focus,
+.filter-bar button:focus-visible {
+  border-color: rgba(7, 141, 67, 0.78);
+  box-shadow:
+    0 0 0 3px rgba(7, 166, 79, 0.14),
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 14px 30px rgba(24, 56, 36, 0.12);
+}
+.filter-bar .export {
+  background: #047a38;
+  color: white;
+}
+.filter-bar button {
+  border-color: rgba(244, 174, 174, 0.9);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 250, 250, 0.98),
+    rgba(255, 241, 241, 0.94)
+  );
+  color: #c33434;
+}
+/* HISTORY TABLE: ukuran kolom, hover row, dan style tabel. */
+.history-table-wrap {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  overflow-x: hidden;
+  background: white;
+}
+.history-table {
+  min-width: 0;
+  table-layout: fixed;
+}
+.history-table thead th {
+  height: 42px;
+  background: #f7fbf9;
+  color: #275d29;
+  border-color: #e7eee9;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+.history-table tbody tr {
+  transition:
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+.history-table tbody tr:hover {
+  background: #fbfffc;
+}
+.history-card table th,
+.history-card table td {
+  height: 50px;
+  border-color: #e7eee9;
+  color: #275d29;
+  font-size: 10px;
+  line-height: 1.35;
+  padding: 8px 7px;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  white-space: normal;
+}
+.history-card table th:nth-child(1),
+.history-card table td:nth-child(1) {
+  width: 5%;
+}
+.history-card table th:nth-child(2),
+.history-card table td:nth-child(2) {
+  width: 10%;
+}
+.history-card table th:nth-child(3),
+.history-card table td:nth-child(3) {
+  width: 17%;
+}
+.history-card table th:nth-child(4),
+.history-card table td:nth-child(4) {
+  width: 8%;
+}
+.history-card table th:nth-child(5),
+.history-card table td:nth-child(5) {
+  width: 10%;
+}
+.history-card table th:nth-child(6),
+.history-card table td:nth-child(6) {
+  width: 11%;
+}
+.history-card table th:nth-child(7),
+.history-card table td:nth-child(7) {
+  width: 30%;
+}
+.history-card table th:nth-child(8),
+.history-card table td:nth-child(8) {
+  width: 9%;
+}
+.history-card table td:nth-child(7) {
+  min-width: 0;
+  color: #6b7c70;
+  text-align: left;
+  padding: 8px 10px;
+}
+.history-empty {
+  display: none;
+  padding: 34px 20px;
+  text-align: center;
+  color: #6b7c70;
+  font-size: 12px;
+  font-weight: 800;
+}
+.history-empty.show {
+  display: block;
+}
+/* TABLE FOOTER: info jumlah data dan kontrol halaman. */
+.history-footer {
+  min-height: 58px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border: 0;
+  border-top: 1px solid #e7eee9;
+  border-radius: 0;
+  background: #fbfefc;
+}
+.history-footer .showing {
+  float: none;
+  margin: 0;
+  color: #6b7c70;
+  font-size: 10px;
+  font-weight: 800;
+}
+.history-footer .pagination {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pagination button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #dcebe3;
+  border-radius: 10px;
+  background: white;
+  color: #275d29;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 900;
+}
+.pagination button.current {
+  border-color: var(--green);
+  background: var(--green);
+  color: white;
+  box-shadow: 0 10px 18px rgba(7, 166, 79, 0.18);
+}
+.pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.history-chart-panel {
+  margin: 0;
+  padding: 16px 20px 18px;
+  background:
+    radial-gradient(
+      circle at 12% 10%,
+      rgba(42, 157, 143, 0.12),
+      transparent 30%
+    ),
+    linear-gradient(135deg, #f8fffb 0%, #eefaf5 52%, #f7fbff 100%);
+  border: 1px solid #e1eee8;
+  border-radius: 16px;
+}
+.history-chart-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+.history-chart-head h3 {
+  margin: 8px 0 4px;
+  color: #275d29;
+  font-size: 20px;
+  line-height: 1.2;
+}
+.history-chart-head p {
+  margin: 0;
+  max-width: 620px;
+  color: #66766c;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.history-chart-side {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+/* CHART CONTROLS: pilihan rentang dan bulan grafik. */
+.history-chart-controls {
+  display: grid;
+  gap: 8px;
+}
+.history-chart-range {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(70px, 1fr));
+  gap: 6px;
+}
+.history-chart-range button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(184, 210, 197, 0.92);
+  border-radius: 9px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(248, 254, 251, 0.94)
+  );
+  color: #587065;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.92) inset,
+    0 8px 18px rgba(24, 56, 36, 0.06);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+.history-chart-range button:hover {
+  border-color: rgba(7, 141, 67, 0.5);
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 11px 22px rgba(24, 56, 36, 0.1);
+}
+.history-chart-range button:focus-visible {
+  outline: 0;
+  border-color: rgba(7, 141, 67, 0.78);
+  box-shadow:
+    0 0 0 3px rgba(7, 166, 79, 0.14),
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 12px 26px rgba(24, 56, 36, 0.12);
+}
+.history-chart-range button.active {
+  border-color: var(--green);
+  background: linear-gradient(135deg, #078d43, #10a85a);
+  color: white;
+  box-shadow: 0 10px 18px rgba(7, 166, 79, 0.18);
+}
+.history-chart-filter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 58px;
+  padding: 10px 10px 10px 12px;
+  border: 1px solid rgba(184, 210, 197, 0.92);
+  border-radius: 12px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(249, 255, 252, 0.94)
+  );
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.92) inset,
+    0 10px 22px rgba(24, 56, 36, 0.07);
+}
+.history-chart-filter span {
+  color: #718177;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.history-chart-filter select {
+  width: 126px;
+  height: 30px;
+  border: 1px solid rgba(184, 210, 197, 0.92);
+  border-radius: 9px;
+  background: linear-gradient(180deg, #ffffff, #f8fffb);
+  color: #275d29;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 0 30px 0 10px;
+  outline: 0;
+  cursor: pointer;
+  appearance: none;
+  background-image:
+    linear-gradient(180deg, #ffffff, #f8fffb),
+    url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.4 1.6 6 6.2l4.6-4.6' fill='none' stroke='%23078d43' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position:
+    0 0,
+    right 10px center;
+  background-repeat: no-repeat;
+  background-size:
+    auto,
+    12px 8px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.history-chart-filter select:hover,
+.history-chart-filter select:focus {
+  border-color: rgba(7, 141, 67, 0.68);
+  box-shadow:
+    0 0 0 3px rgba(7, 166, 79, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.95) inset;
+}
+.history-chart-stats {
+  display: flex;
+  gap: 8px;
+}
+.history-chart-stats > div {
+  position: relative;
+  overflow: hidden;
+  min-width: 112px;
+  min-height: 76px;
+  padding: 11px 12px 10px 48px;
+  border: 1px solid rgba(213, 230, 221, 0.92);
+  border-radius: 12px;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.94),
+    rgba(246, 253, 249, 0.9)
+  );
+  box-shadow: 0 10px 22px rgba(24, 56, 36, 0.07);
+}
+.history-chart-stats > div:after {
+  content: "";
+  position: absolute;
+  right: -20px;
+  bottom: -26px;
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  background: rgba(7, 141, 67, 0.08);
+}
+.history-chart-stats i {
+  position: absolute;
+  top: 13px;
+  left: 12px;
+  z-index: 1;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 9px;
+  color: white;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: 0;
+  box-shadow: 0 8px 16px rgba(24, 56, 36, 0.13);
+}
+.history-chart-stats .stat-ph i {
+  background: linear-gradient(135deg, #ff7777, #ff9d9d);
+}
+.history-chart-stats .stat-ppm i {
+  background: linear-gradient(135deg, #07a64f, #4fc776);
+}
+.history-chart-stats .mini-ico {
+  position: absolute;
+  top: 13px;
+  left: 12px;
+  z-index: 1;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--green), #27c66b);
+  color: white;
+  box-shadow: 0 8px 16px rgba(24, 56, 36, 0.13);
+}
+.history-chart-stats .mini-ico:before {
+  content: "";
+  width: 17px;
+  height: 17px;
+  background: currentColor;
+  -webkit-mask: var(--stat-icon) center / contain no-repeat;
+  mask: var(--stat-icon) center / contain no-repeat;
+}
+.history-chart-stats .stat-ph .mini-ico {
+  background: linear-gradient(135deg, #ff7777, #f2a151);
+  box-shadow: 0 8px 16px rgba(255, 119, 119, 0.18);
+}
+.history-chart-stats .stat-ppm .mini-ico {
+  background: linear-gradient(135deg, var(--green), #27c66b);
+  box-shadow: 0 8px 16px rgba(7, 166, 79, 0.2);
+}
+.history-chart-stats span {
+  display: block;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 5px;
+  color: #718177;
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.history-chart-stats strong {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin-bottom: 4px;
+  color: #275d29;
+  font-size: 21px;
+  line-height: 1;
+}
+.history-chart-stats small {
+  position: relative;
+  z-index: 1;
+  display: block;
+  color: #7d8d83;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+.history-chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+  color: #275d29;
+  font-size: 11px;
+  font-weight: 900;
+}
+.history-chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.92);
+}
+.legend-dot.ph {
+  background: #ff7777;
+}
+.legend-dot.ppm {
+  background: #07a64f;
+}
+.history-chart-wrap {
+  position: relative;
+  height: 350px;
+  padding: 14px 14px 10px;
+  border: 1px solid rgba(210, 228, 218, 0.94);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 44px rgba(24, 56, 36, 0.1);
+}
+.history-chart-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* RESPONSIVE TABLET: layout history di layar sedang. */
+@media (max-width: 900px) {
+  .sidebar {
+    width: 190px;
+  }
+  .main {
+    margin-left: 190px;
+    width: calc(100% - 190px);
+  }
+  .side-logo {
+    padding: 0 14px;
+  }
+  .side-brand strong {
+    font-size: 16px;
+  }
+  .nav {
+    padding: 14px 10px;
+  }
+  .nav-item {
+    min-height: 38px;
+    padding: 0 10px;
+    font-size: 10.5px;
+  }
+  .dropdown-menu {
+    width: 170px;
+  }
+  .topbar {
+    padding: 0 16px;
+  }
+  .admin-card {
+    min-width: 160px;
+  }
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .dashboard-hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .dashboard-hero h2 {
+    font-size: 22px;
+  }
+  .hero-metrics {
+    min-width: 0;
+  }
+  .stats,
+  .dashboard-grid,
+  .profile-cards,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .profile-hero,
+  .profile-summary {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .profile-hero-panel {
+    min-width: 0;
+  }
+  .profile-action {
+    width: 100%;
+  }
+  .chart-card {
+    min-height: 330px;
+  }
+  .dashboard-chart-wrap {
+    height: 230px;
+  }
+  .chart-head {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .activity-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .activity-filter-dropdown {
+    width: 100%;
+  }
+  .chart-legend {
+    white-space: normal;
+  }
+  .login-card {
+    right: 24px;
+    width: 360px;
+    padding: 34px 30px;
+  }
+  .login-left {
+    left: 28px;
+    width: 320px;
+  }
+  .login-title {
+    font-size: 28px;
+  }
+  .login-features {
+    left: 28px;
+    gap: 10px;
+  }
+  .feature {
+    min-width: 128px;
+    padding: 10px;
+  }
+}
+
+/* RESPONSIVE MOBILE: layout history di layar kecil. */
+@media (max-width: 760px) {
+  body.login-page {
+    min-height: auto;
+    overflow: auto;
+    padding: 102px 18px 28px;
+  }
+  .login-logos {
+    position: absolute;
+  }
+  .login-left,
+  .login-card,
+  .login-features {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    width: 100%;
+  }
+  .login-left {
+    margin-bottom: 22px;
+  }
+  .hydro-logo img {
+    width: 150px;
+  }
+  .login-title {
+    font-size: 30px;
+  }
+  .login-desc br {
+    display: none;
+  }
+  .login-card {
+    min-height: auto;
+    padding: 32px 24px;
+  }
+  .login-features {
+    flex-direction: column;
+    margin-top: 16px;
+  }
+  .feature {
+    min-width: 0;
+    width: 100%;
+  }
+  .settings-modal {
+    align-items: end;
+    padding: 12px;
+  }
+  .settings-modal-card {
+    width: 100%;
+    border-radius: 22px;
+  }
+  .settings-modal-head {
+    padding: 22px 20px 16px;
+  }
+  .settings-modal-title {
+    gap: 11px;
+  }
+  .settings-modal-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 13px;
+  }
+  .settings-modal-head h2 {
+    font-size: 20px;
+  }
+  .settings-modal-body {
+    padding: 20px 20px 8px;
+  }
+  .settings-modal-actions {
+    padding: 16px 20px 22px;
+    flex-direction: column-reverse;
+  }
+  .settings-modal-actions .btn-secondary,
+  .settings-modal-actions .btn-save {
+    width: 100%;
+  }
+  .confirm-modal {
+    align-items: end;
+    padding: 12px;
+  }
+  .confirm-modal-card {
+    width: 100%;
+    border-radius: 22px;
+    padding: 28px 22px 22px;
+  }
+  .confirm-modal-actions {
+    grid-template-columns: 1fr;
+  }
+  .settings-toast {
+    top: 50%;
+    left: 50%;
+    right: auto;
+    width: min(300px, calc(100vw - 24px));
+    max-width: none;
+  }
+  /* HISTORY HEADER: judul halaman, deskripsi, dan tombol export. */
+.history-card-head {
+    flex-direction: column;
+    padding: 22px 18px 18px;
+  }
+  .history-export {
+    width: 100%;
+  }
+  /* FILTER BAR: input pencarian dan dropdown filter history. */
+.filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter-bar input,
+  .filter-bar select,
+  .filter-bar button {
+    width: 100%;
+  }
+  .history-filter .filter-select {
+    width: 100%;
+  }
+  /* TABLE FOOTER: info jumlah data dan kontrol halaman. */
+.history-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .history-footer .pagination {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .history-chart-panel {
+    padding: 18px 16px 20px;
+  }
+  .history-chart-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .history-chart-side {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  /* CHART CONTROLS: pilihan rentang dan bulan grafik. */
+.history-chart-controls {
+    flex: 1 1 250px;
+  }
+  .history-chart-filter {
+    width: 100%;
+  }
+  .history-chart-filter select {
+    flex: 1;
+    min-width: 118px;
+  }
+  .history-chart-stats {
+    flex: 2 1 250px;
+    width: 100%;
+    min-width: 0;
+  }
+  .history-chart-stats > div {
+    flex: 1;
+    min-width: 108px;
+  }
+  .history-chart-wrap {
+    height: 320px;
+    padding: 14px 10px 10px;
+    border-radius: 16px;
+  }
+  .profile-wrap {
+    padding: 16px 12px 26px;
+  }
+  .profile-hero {
+    min-height: auto;
+    padding: 24px 20px;
+    border-radius: 18px;
+  }
+  .profile-hero h2 {
+    font-size: 24px;
+  }
+  .profile-cards {
+    gap: 12px;
+  }
+  .info-card {
+    min-height: 0;
+    padding: 18px;
+  }
+  .profile-summary {
+    padding: 22px 18px;
+  }
+  .activity-list {
+    padding: 6px 10px 0;
+  }
+  .activity-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .activity-row .status {
+    margin-left: 54px;
+  }
+  .activity-row .ago {
+    min-width: 0;
+    margin-left: auto;
+  }
+  .table-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .status-filter-wrap {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .status-filter {
+    width: 100%;
+  }
+}
+
+/* Final page-header consistency */
+.main:has(.history-card) .content,
+.main:has(.content > .hero) .content {
+  padding: 12px 18px 14px;
+}
+.main:has(.profile-wrap) .profile-wrap {
+  padding: 12px 18px 14px;
+}
+:is(
+  .dashboard-hero,
+  .profile-hero,
+  .history-card-head,
+  .main .content > .hero
+) {
+  box-sizing: border-box;
+  height: 104px;
+  min-height: 104px;
+  max-height: 104px;
+  padding: 16px 22px;
+  border-radius: 20px;
+  align-items: center;
+  overflow: hidden;
+}
+.dashboard-hero,
+.profile-hero,
+.main .content > .hero {
+  margin: 0 10px 10px;
+}
+/* HISTORY WRAPPER: container utama halaman history. */
+.history-card {
+  margin: 0 10px;
+}
+/* HISTORY HEADER: judul halaman, deskripsi, dan tombol export. */
+.history-card-head {
+  border-radius: 20px;
+}
+.profile-cards,
+.profile-summary {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+:is(.dashboard-hero, .profile-hero, .history-card-head, .main .content > .hero)
+  h2 {
+  margin: 7px 0 4px;
+  font-size: 22px;
+  line-height: 1.15;
+}
+:is(.dashboard-hero, .profile-hero, .history-card-head, .main .content > .hero)
+  p {
+  font-size: 11px;
+  line-height: 1.42;
+}
+:is(.hero-kicker, .profile-kicker, .history-card-head .history-kicker) {
+  box-sizing: border-box;
+  min-height: 23px;
+  height: 23px;
+  font-size: 10px;
+}
+.dashboard-hero > div:first-child,
+.profile-hero-copy,
+.history-card-head > div:first-child,
+.main .content > .hero .hero-left {
+  min-width: 0;
+}
+.hero-metrics div,
+.profile-hero-panel {
+  box-sizing: border-box;
+  min-height: 56px;
+  max-height: 56px;
+}
+.profile-hero-panel {
+  min-width: 220px;
+  padding: 10px 12px;
+}
+.profile-hero-panel img {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  padding: 5px;
+}
+.profile-hero-panel strong {
+  font-size: 17px;
+  line-height: 1.1;
+}
+.profile-hero-panel span {
+  margin-top: 2px;
+  font-size: 10px;
+}
+.history-export,
+.main .content > .hero .edit-btn {
+  box-sizing: border-box;
+  height: 38px;
+  min-height: 38px;
+}
+.main .content > .hero .hero-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  flex: 0 0 auto;
+}
+
+/* RESPONSIVE TABLET: layout history di layar sedang. */
+@media (max-width: 900px) {
+  :is(
+    .dashboard-hero,
+    .profile-hero,
+    .history-card-head,
+    .main .content > .hero
+  ) {
+    height: 104px;
+    min-height: 104px;
+    max-height: 104px;
+    padding: 16px 22px;
+  }
+  :is(
+      .dashboard-hero,
+      .profile-hero,
+      .history-card-head,
+      .main .content > .hero
+    )
+    h2 {
+    font-size: 22px;
+  }
+}
+
+.history-export-swal .swal2-select {
+  width: 100%;
+  height: 46px;
+  margin: 18px 0 0;
+  border: 1px solid #dbe9e1;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #275d29;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 0 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.history-export-swal .swal2-select:focus {
+  border-color: rgba(7, 141, 67, 0.48);
+  box-shadow: 0 0 0 4px rgba(7, 141, 67, 0.12);
+  outline: none;
+}
+
+
+/* Smooth page entrance */
+body:not(.login-page):not(.popup-body)
+  .content
+  > :not(.dashboard-grid):not(.stats):not(.summary-grid):not(.form-grid):not(
+    .profile-grid
+  ):not(.history-card),
+.profile-wrap > :not(.profile-cards) {
+  animation: pageRiseEnter 1.55s cubic-bezier(0.19, 1, 0.22, 1) both;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  will-change: opacity, transform;
+}
+body:not(.login-page):not(.popup-body) .content > :nth-child(1) {
+  animation-delay: 0.08s;
+}
+body:not(.login-page):not(.popup-body) .profile-wrap > :nth-child(1) {
+  animation-delay: 0.08s;
+}
+body:not(.login-page):not(.popup-body) .content > :nth-child(2) {
+  animation-delay: 0.24s;
+}
+body:not(.login-page):not(.popup-body) .profile-wrap > :nth-child(2) {
+  animation-delay: 0.24s;
+}
+body:not(.login-page):not(.popup-body) .content > :nth-child(3) {
+  animation-delay: 0.4s;
+}
+body:not(.login-page):not(.popup-body) .profile-wrap > :nth-child(3) {
+  animation-delay: 0.4s;
+}
+body:not(.login-page):not(.popup-body) .content > :nth-child(4) {
+  animation-delay: 0.56s;
+}
+body:not(.login-page):not(.popup-body) .content > :nth-child(5) {
+  animation-delay: 0.72s;
+}
+.dashboard-grid > *,
+.stats > *,
+.summary-grid > *,
+.form-grid > *,
+.profile-grid > *,
+.profile-cards > * {
+  animation: pageRiseEnter 1.55s cubic-bezier(0.19, 1, 0.22, 1) both;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  will-change: opacity, transform;
+}
+.dashboard-grid > :nth-child(1),
+.stats > :nth-child(1),
+.summary-grid > :nth-child(1),
+.form-grid > :nth-child(1),
+.profile-grid > :nth-child(1),
+.profile-cards > :nth-child(1) {
+  animation-delay: 0.24s;
+}
+.dashboard-grid > :nth-child(2),
+.stats > :nth-child(2),
+.summary-grid > :nth-child(2),
+.form-grid > :nth-child(2),
+.profile-grid > :nth-child(2),
+.profile-cards > :nth-child(2) {
+  animation-delay: 0.4s;
+}
+.stats > :nth-child(3),
+.summary-grid > :nth-child(3),
+.form-grid > :nth-child(3),
+.profile-grid > :nth-child(3) {
+  animation-delay: 0.56s;
+}
+.summary-grid > :nth-child(4),
+.profile-grid > :nth-child(4) {
+  animation-delay: 0.72s;
+}
+.history-card-head,
+.history-table-panel,
+.history-chart-panel {
+  animation: pageRiseEnter 1.55s cubic-bezier(0.19, 1, 0.22, 1) both;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  will-change: opacity, transform;
+}
+/* HISTORY HEADER: judul halaman, deskripsi, dan tombol export. */
+.history-card-head {
+  animation-delay: 0.08s;
+}
+/* TABLE PANEL: area filter, tabel, empty state, dan pagination. */
+.history-table-panel {
+  animation-delay: 0.22s;
+}
+.history-chart-panel {
+  animation-delay: 0.36s;
+}
+.form-page,
+.login-card,
+.delete-modal,
+.logout-modal {
+  animation: pageRiseEnter 1.45s cubic-bezier(0.19, 1, 0.22, 1) both;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+.main .content > .hero + .summary-grid {
+  width: auto;
+}
+
+
+.card,
+.stat,
+.info-card,
+.table-card,
+.history-card,
+.profile-summary,
+.sum-card {
+  border-color: rgba(214, 231, 221, 0.9);
+  box-shadow:
+    0 16px 38px rgba(24, 56, 36, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+:is(
+  .dashboard-hero,
+  .profile-hero,
+  .history-card-head,
+  .main .content > .hero
+) {
+  box-shadow:
+    0 18px 38px rgba(5, 136, 70, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+.activity-filter-toggle,
+.status-filter {
+  border-color: rgba(211, 231, 220, 0.95);
+  background: rgba(255, 255, 255, 0.92);
+}
+

@@ -20,8 +20,25 @@ File HTML dipisah per halaman:
 - pages/popup-notifikasi.html
 - pages/popup-berhasil.html
 
-CSS utama:
-- styles.css
+CSS:
+- css/global.css
+- css/history.css
+- css/hydrotech-dashboard-panel-2026.css
+- css/input-dithane.css
+- css/input-ph.css
+- css/input-ppm.css
+- css/login.css
+- css/pengaturan-dithane.css
+- css/pengaturan-ph.css
+- css/pengaturan-ppm.css
+- css/popup-berhasil.css
+- css/popup-edit-pengaturan.css
+- css/popup-export-history.css
+- css/popup-hapus.css
+- css/popup-logout.css
+- css/popup-notifikasi.css
+- css/popup-reset.css
+- css/profile.css
 
 Folder JavaScript:
 - js/confirm-modal.js
@@ -36,5 +53,5 @@ Folder aset gambar:
 - assets/Logo_Polije.png
 - assets/Logo_TRK.png
 
-Font menggunakan Poppins dari Google Fonts melalui @import di styles.css.
+Font menggunakan Poppins dari Google Fonts melalui @import di css/global.css.
 

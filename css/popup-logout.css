@@ -1,0 +1,537 @@
+@import url("./global.css");
+
+/* Popups */
+/* POPUP PAGE BODY: posisi modal di tengah layar. */
+.popup-body {
+  min-height: 100vh;
+  background: white;
+  display: grid;
+  place-items: center;
+}
+/* DELETE POPUP: tampilan popup konfirmasi hapus. */
+.delete-modal {
+  width: 490px;
+  background: white;
+  border-radius: 12px;
+  text-align: center;
+  padding: 34px 32px;
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.18);
+}
+.delete-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #ffe8ed;
+  color: #d60000;
+  display: grid;
+  place-items: center;
+  font-size: 36px;
+  margin: 0 auto 22px;
+}
+.delete-modal h2 {
+  margin: 0 0 10px;
+  font-size: 24px;
+}
+.delete-modal p {
+  margin: 0 auto 25px;
+  width: 380px;
+  line-height: 1.45;
+}
+/* POPUP ACTIONS: susunan tombol batal dan konfirmasi. */
+.modal-actions {
+  display: flex;
+  gap: 16px;
+}
+.modal-actions button {
+  height: 46px;
+  border-radius: 7px;
+  border: 1px solid #ddd;
+  flex: 1;
+  font-weight: 700;
+}
+.modal-actions .danger {
+  background: #d70404;
+  color: white;
+  border-color: #d70404;
+}
+/* LOGOUT POPUP: tampilan popup konfirmasi keluar. */
+.logout-modal {
+  width: 239px;
+  min-height: 465px;
+  background: white;
+  border-radius: 8px;
+  text-align: center;
+  padding: 24px 22px;
+  box-shadow: 0 12px 55px rgba(0, 0, 0, 0.2);
+}
+.logout-modal .brand {
+  font-size: 25px;
+}
+.logout-modal h2 {
+  font-size: 17px;
+  margin: 22px 0 8px;
+  line-height: 1.25;
+}
+.logout-modal p {
+  font-size: 9px;
+  line-height: 1.5;
+  color: #5d635f;
+}
+.logout-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+.logout-buttons button {
+  height: 27px;
+  border-radius: 18px;
+  flex: 1;
+  font-size: 10px;
+  font-weight: 700;
+}
+.outline {
+  background: white;
+  border: 1px solid #089a49;
+  color: #089a49;
+}
+.green-btn {
+  background: var(--green);
+  border: 0;
+  color: white;
+}
+.safe {
+  font-size: 8px;
+  color: #98a29b;
+  margin-top: 26px;
+}
+.safe b {
+  color: #0eae55;
+}
+
+/* RESPONSIVE TABLET: layout popup di layar sedang. */
+@media (max-width: 900px) {
+  .sidebar {
+    width: 190px;
+  }
+  .main {
+    margin-left: 190px;
+    width: calc(100% - 190px);
+  }
+  .side-logo {
+    padding: 0 14px;
+  }
+  .side-brand strong {
+    font-size: 16px;
+  }
+  .nav {
+    padding: 14px 10px;
+  }
+  .nav-item {
+    min-height: 38px;
+    padding: 0 10px;
+    font-size: 10.5px;
+  }
+  .dropdown-menu {
+    width: 170px;
+  }
+  .topbar {
+    padding: 0 16px;
+  }
+  .admin-card {
+    min-width: 160px;
+  }
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .dashboard-hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .dashboard-hero h2 {
+    font-size: 22px;
+  }
+  .hero-metrics {
+    min-width: 0;
+  }
+  .stats,
+  .dashboard-grid,
+  .profile-cards,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .profile-hero,
+  .profile-summary {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .profile-hero-panel {
+    min-width: 0;
+  }
+  .profile-action {
+    width: 100%;
+  }
+  .chart-card {
+    min-height: 330px;
+  }
+  .dashboard-chart-wrap {
+    height: 230px;
+  }
+  .chart-head {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .activity-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .activity-filter-dropdown {
+    width: 100%;
+  }
+  .chart-legend {
+    white-space: normal;
+  }
+  .login-card {
+    right: 24px;
+    width: 360px;
+    padding: 34px 30px;
+  }
+  .login-left {
+    left: 28px;
+    width: 320px;
+  }
+  .login-title {
+    font-size: 28px;
+  }
+  .login-features {
+    left: 28px;
+    gap: 10px;
+  }
+  .feature {
+    min-width: 128px;
+    padding: 10px;
+  }
+}
+
+/* RESPONSIVE MOBILE: layout popup di layar kecil. */
+@media (max-width: 760px) {
+  body.login-page {
+    min-height: auto;
+    overflow: auto;
+    padding: 102px 18px 28px;
+  }
+  .login-logos {
+    position: absolute;
+  }
+  .login-left,
+  .login-card,
+  .login-features {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    width: 100%;
+  }
+  .login-left {
+    margin-bottom: 22px;
+  }
+  .hydro-logo img {
+    width: 150px;
+  }
+  .login-title {
+    font-size: 30px;
+  }
+  .login-desc br {
+    display: none;
+  }
+  .login-card {
+    min-height: auto;
+    padding: 32px 24px;
+  }
+  .login-features {
+    flex-direction: column;
+    margin-top: 16px;
+  }
+  .feature {
+    min-width: 0;
+    width: 100%;
+  }
+  .settings-modal {
+    align-items: end;
+    padding: 12px;
+  }
+  .settings-modal-card {
+    width: 100%;
+    border-radius: 22px;
+  }
+  .settings-modal-head {
+    padding: 22px 20px 16px;
+  }
+  .settings-modal-title {
+    gap: 11px;
+  }
+  .settings-modal-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 13px;
+  }
+  .settings-modal-head h2 {
+    font-size: 20px;
+  }
+  .settings-modal-body {
+    padding: 20px 20px 8px;
+  }
+  .settings-modal-actions {
+    padding: 16px 20px 22px;
+    flex-direction: column-reverse;
+  }
+  .settings-modal-actions .btn-secondary,
+  .settings-modal-actions .btn-save {
+    width: 100%;
+  }
+  .confirm-modal {
+    align-items: end;
+    padding: 12px;
+  }
+  .confirm-modal-card {
+    width: 100%;
+    border-radius: 22px;
+    padding: 28px 22px 22px;
+  }
+  .confirm-modal-actions {
+    grid-template-columns: 1fr;
+  }
+  .settings-toast {
+    top: 50%;
+    left: 50%;
+    right: auto;
+    width: min(300px, calc(100vw - 24px));
+    max-width: none;
+  }
+  .history-card-head {
+    flex-direction: column;
+    padding: 22px 18px 18px;
+  }
+  .history-export {
+    width: 100%;
+  }
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter-bar input,
+  .filter-bar select,
+  .filter-bar button {
+    width: 100%;
+  }
+  .history-filter .filter-select {
+    width: 100%;
+  }
+  .history-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .history-footer .pagination {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .history-chart-panel {
+    padding: 18px 16px 20px;
+  }
+  .history-chart-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .history-chart-side {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .history-chart-controls {
+    flex: 1 1 250px;
+  }
+  .history-chart-filter {
+    width: 100%;
+  }
+  .history-chart-filter select {
+    flex: 1;
+    min-width: 118px;
+  }
+  .history-chart-stats {
+    flex: 2 1 250px;
+    width: 100%;
+    min-width: 0;
+  }
+  .history-chart-stats > div {
+    flex: 1;
+    min-width: 108px;
+  }
+  .history-chart-wrap {
+    height: 320px;
+    padding: 14px 10px 10px;
+    border-radius: 16px;
+  }
+  .profile-wrap {
+    padding: 16px 12px 26px;
+  }
+  .profile-hero {
+    min-height: auto;
+    padding: 24px 20px;
+    border-radius: 18px;
+  }
+  .profile-hero h2 {
+    font-size: 24px;
+  }
+  .profile-cards {
+    gap: 12px;
+  }
+  .info-card {
+    min-height: 0;
+    padding: 18px;
+  }
+  .profile-summary {
+    padding: 22px 18px;
+  }
+  .activity-list {
+    padding: 6px 10px 0;
+  }
+  .activity-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .activity-row .status {
+    margin-left: 54px;
+  }
+  .activity-row .ago {
+    min-width: 0;
+    margin-left: auto;
+  }
+  .table-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .status-filter-wrap {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .status-filter {
+    width: 100%;
+  }
+}
+
+/* Smooth page entrance */
+body:not(.login-page):not(.popup-body)
+  .content
+  > :not(.dashboard-grid):not(.stats):not(.summary-grid):not(.form-grid):not(
+    .profile-grid
+  ):not(.history-card),
+.profile-wrap > :not(.profile-cards) {
+  animation: pageRiseEnter 1.55s cubic-bezier(0.19, 1, 0.22, 1) both;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  will-change: opacity, transform;
+}
+body:not(.login-page):not(.popup-body) .content > :nth-child(1) {
+  animation-delay: 0.08s;
+}
+body:not(.login-page):not(.popup-body) .profile-wrap > :nth-child(1) {
+  animation-delay: 0.08s;
+}
+body:not(.login-page):not(.popup-body) .content > :nth-child(2) {
+  animation-delay: 0.24s;
+}
+body:not(.login-page):not(.popup-body) .profile-wrap > :nth-child(2) {
+  animation-delay: 0.24s;
+}
+body:not(.login-page):not(.popup-body) .content > :nth-child(3) {
+  animation-delay: 0.4s;
+}
+body:not(.login-page):not(.popup-body) .profile-wrap > :nth-child(3) {
+  animation-delay: 0.4s;
+}
+body:not(.login-page):not(.popup-body) .content > :nth-child(4) {
+  animation-delay: 0.56s;
+}
+body:not(.login-page):not(.popup-body) .content > :nth-child(5) {
+  animation-delay: 0.72s;
+}
+.dashboard-grid > *,
+.stats > *,
+.summary-grid > *,
+.form-grid > *,
+.profile-grid > *,
+.profile-cards > * {
+  animation: pageRiseEnter 1.55s cubic-bezier(0.19, 1, 0.22, 1) both;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  will-change: opacity, transform;
+}
+.dashboard-grid > :nth-child(1),
+.stats > :nth-child(1),
+.summary-grid > :nth-child(1),
+.form-grid > :nth-child(1),
+.profile-grid > :nth-child(1),
+.profile-cards > :nth-child(1) {
+  animation-delay: 0.24s;
+}
+.dashboard-grid > :nth-child(2),
+.stats > :nth-child(2),
+.summary-grid > :nth-child(2),
+.form-grid > :nth-child(2),
+.profile-grid > :nth-child(2),
+.profile-cards > :nth-child(2) {
+  animation-delay: 0.4s;
+}
+.stats > :nth-child(3),
+.summary-grid > :nth-child(3),
+.form-grid > :nth-child(3),
+.profile-grid > :nth-child(3) {
+  animation-delay: 0.56s;
+}
+.summary-grid > :nth-child(4),
+.profile-grid > :nth-child(4) {
+  animation-delay: 0.72s;
+}
+.history-card-head,
+.history-table-panel,
+.history-chart-panel {
+  animation: pageRiseEnter 1.55s cubic-bezier(0.19, 1, 0.22, 1) both;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  will-change: opacity, transform;
+}
+.history-card-head {
+  animation-delay: 0.08s;
+}
+.history-table-panel {
+  animation-delay: 0.22s;
+}
+.history-chart-panel {
+  animation-delay: 0.36s;
+}
+.form-page,
+.login-card,
+.delete-modal,
+/* LOGOUT POPUP: tampilan popup konfirmasi keluar. */
+.logout-modal {
+  animation: pageRiseEnter 1.45s cubic-bezier(0.19, 1, 0.22, 1) both;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+.main .content > .hero + .summary-grid {
+  width: auto;
+}
+
