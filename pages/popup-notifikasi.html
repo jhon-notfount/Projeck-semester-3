@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Popup Notifikasi</title>
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body class="popup-body">
+    <section
+      class="notification-panel show"
+      role="dialog"
+      aria-label="Daftar notifikasi"
+      style="position:static;width:min(340px,calc(100vw - 32px))"
+    >
+      <div class="notification-head">
+        <div>
+          <span>Notifikasi</span>
+          <strong>Sistem Hidroponik</strong>
+        </div>
+        <button type="button" onclick="window.history.back()">Tandai dibaca</button>
+      </div>
+      <div class="notification-list">
+        <a class="notification-item warning" href="pengaturan-ph.html">
+          <span class="notification-dot"></span>
+          <span>
+            <b>pH perlu dipantau</b>
+            <small>Nilai pH terakhir mendekati batas atas.</small>
+            <em>2 menit lalu</em>
+          </span>
+        </a>
+        <a class="notification-item" href="pengaturan-ppm.html">
+          <span class="notification-dot"></span>
+          <span>
+            <b>PPM stabil</b>
+            <small>Nutrisi berada dalam rentang aman.</small>
+            <em>5 menit lalu</em>
+          </span>
+        </a>
+        <a class="notification-item info" href="pengaturan-dithane.html">
+          <span class="notification-dot"></span>
+          <span>
+            <b>Jadwal Dithane aktif</b>
+            <small>Penyemprotan berikutnya mengikuti jadwal otomatis.</small>
+            <em>12 menit lalu</em>
+          </span>
+        </a>
+      </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../assets/confirm-modal.js"></script>
+  </body>
+</html>

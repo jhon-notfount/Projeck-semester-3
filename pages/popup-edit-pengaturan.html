@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Popup Edit Pengaturan</title>
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body class="popup-body">
+    <div class="settings-modal show">
+      <div class="settings-modal-backdrop" onclick="window.history.back()"></div>
+      <section class="settings-modal-card" role="dialog" aria-modal="true">
+        <div class="settings-modal-head">
+          <div class="settings-modal-title">
+            <span class="settings-modal-icon">⚙</span>
+            <div>
+              <span>Edit Pengaturan</span>
+              <h2>Pengaturan Sistem</h2>
+              <p>Perbarui nilai sistem, lalu simpan untuk menerapkan perubahan.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-modal-body">
+          <label class="settings-modal-field">
+            <span>Nilai Minimum</span>
+            <div class="settings-modal-control">
+              <input type="text" inputmode="decimal" placeholder="Masukkan nilai minimum">
+              <small>Unit</small>
+            </div>
+          </label>
+          <label class="settings-modal-field">
+            <span>Nilai Maksimum</span>
+            <div class="settings-modal-control">
+              <input type="text" inputmode="decimal" placeholder="Masukkan nilai maksimum">
+              <small>Unit</small>
+            </div>
+          </label>
+          <p class="settings-modal-message"></p>
+        </div>
+
+        <div class="settings-modal-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            onclick="window.history.back()"
+          >
+            Batal
+          </button>
+          <button type="button" class="btn-save" onclick="window.history.back()">
+            Simpan Perubahan
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../assets/confirm-modal.js"></script>
+  </body>
+</html>

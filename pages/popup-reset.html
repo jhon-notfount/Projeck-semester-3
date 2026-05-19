@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Popup Reset</title>
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body class="popup-body">
+    <div class="confirm-modal show">
+      <div class="confirm-modal-backdrop" onclick="window.history.back()"></div>
+      <section class="confirm-modal-card" role="dialog" aria-modal="true">
+        <div class="confirm-modal-icon">R</div>
+        <h2>Reset data?</h2>
+        <p>Data atau filter akan dikembalikan ke kondisi awal.</p>
+        <div class="confirm-modal-actions">
+          <button
+            type="button"
+            class="confirm-cancel"
+            onclick="window.history.back()"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            class="confirm-ok danger"
+            onclick="window.history.back()"
+          >
+            Ya, Reset
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../assets/confirm-modal.js"></script>
+  </body>
+</html>

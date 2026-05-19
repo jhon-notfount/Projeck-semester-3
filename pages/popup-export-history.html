@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Popup Export History</title>
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body class="popup-body">
+    <div class="settings-modal show">
+      <div class="settings-modal-backdrop" onclick="window.history.back()"></div>
+      <section class="settings-modal-card" role="dialog" aria-modal="true">
+        <div class="settings-modal-head">
+          <div class="settings-modal-title">
+            <span class="settings-modal-icon">PDF</span>
+            <div>
+              <span>Export History</span>
+              <h2>Pilih bulan laporan</h2>
+              <p>
+                History bulanan akan dibuat sebagai PDF lengkap untuk bahan
+                pertimbangan pemilik.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-modal-body">
+          <label class="settings-modal-field">
+            <span>Bulan Laporan</span>
+            <div class="settings-modal-control">
+              <select
+                aria-label="Pilih bulan laporan"
+                style="flex:1;border:0;background:transparent;padding:0 18px;color:#275d29;font-size:17px;font-weight:800;outline:0"
+              >
+                <option>Sekarang</option>
+                <option>Januari</option>
+                <option>Februari</option>
+                <option>Maret</option>
+                <option>April</option>
+                <option>Mei</option>
+                <option>Juni</option>
+                <option>Juli</option>
+                <option>Agustus</option>
+                <option>September</option>
+                <option>Oktober</option>
+                <option>November</option>
+                <option>Desember</option>
+              </select>
+            </div>
+          </label>
+          <p class="settings-modal-message"></p>
+        </div>
+
+        <div class="settings-modal-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            onclick="window.history.back()"
+          >
+            Batal
+          </button>
+          <button type="button" class="btn-save" onclick="window.history.back()">
+            Download PDF
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../assets/confirm-modal.js"></script>
+  </body>
+</html>

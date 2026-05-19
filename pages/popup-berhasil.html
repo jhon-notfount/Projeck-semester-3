@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Popup Berhasil</title>
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body class="popup-body">
+    <div class="confirm-modal show">
+      <div class="confirm-modal-backdrop" onclick="window.history.back()"></div>
+      <section class="confirm-modal-card" role="dialog" aria-modal="true">
+        <div class="confirm-modal-icon">OK</div>
+        <h2>Berhasil</h2>
+        <p>Data telah berhasil disimpan dan pengaturan sudah diperbarui.</p>
+        <div class="confirm-modal-actions" style="grid-template-columns:1fr">
+          <button
+            type="button"
+            class="confirm-ok"
+            onclick="window.history.back()"
+          >
+            Mengerti
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../assets/confirm-modal.js"></script>
+  </body>
+</html>

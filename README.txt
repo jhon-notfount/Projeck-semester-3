@@ -14,6 +14,11 @@ File HTML dipisah per halaman:
 - pages/history.html
 - pages/popup-hapus.html
 - pages/popup-logout.html
+- pages/popup-reset.html
+- pages/popup-edit-pengaturan.html
+- pages/popup-export-history.html
+- pages/popup-notifikasi.html
+- pages/popup-berhasil.html
 
 CSS utama:
 - styles.css
