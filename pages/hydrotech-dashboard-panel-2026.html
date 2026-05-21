@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="id">
   <head>
+    <!-- META SETUP: pengaturan dasar dokumen dan stylesheet dashboard. -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Dashboard Hydrotech</title>
@@ -8,6 +9,7 @@
   </head>
   <body>
     <div class="app">
+      <!-- SIDEBAR: logo Hydrotech, navigasi utama, dropdown fitur, dan logout. -->
       <aside class="sidebar">
         <div class="side-logo">
           <div class="side-mark">
@@ -55,6 +57,7 @@
         <a class="logout" href="popup-logout.html">Log out</a>
       </aside>
       <main class="main">
+        <!-- TOPBAR: judul halaman, notifikasi, dan data admin. -->
         <header class="topbar">
           <div class="page-title">
             <h1>Dashboard</h1>
@@ -72,6 +75,7 @@
           </div>
         </header>
         <div class="content">
+          <!-- DASHBOARD HERO: ringkasan status sistem dan update terakhir. -->
           <section class="dashboard-hero">
             <div>
               <span class="hero-kicker">Live Hydroponic Control</span>
@@ -92,6 +96,7 @@
               </div>
             </div>
           </section>
+          <!-- STATS SUMMARY: kartu angka utama untuk PPM, pH, dan Dithane. -->
           <section class="stats">
             <div class="stat stat-ppm">
               <div class="mini-ico icon-ppm" aria-hidden="true"></div>
@@ -117,7 +122,9 @@
               <div class="stat-note">setiap hari pada pukul 14.00</div>
             </div>
           </section>
+          <!-- DASHBOARD GRID: area grafik nutrisi dan riwayat aktivitas terbaru. -->
           <section class="dashboard-grid">
+            <!-- CHART CARD: grafik perbandingan pH dan PPM hari ini. -->
             <div class="card chart-card">
               <div class="chart-head">
                 <div>
@@ -147,6 +154,7 @@
                   role="img"></canvas>
               </div>
             </div>
+            <!-- ACTIVITY CARD: daftar aktivitas sistem dengan filter kategori. -->
             <div class="card activity dashboard-activity-card" data-activity-section>
               <div class="activity-head">
                 <div>
@@ -237,6 +245,7 @@
         </div>
       </main>
     </div>
+    <!-- NAV SCRIPT: fungsi kecil untuk membuka, menutup, dan memakai dropdown sidebar. -->
     <script>
       function toggleDropdown() {
         const dropdownMenu = document.getElementById("dropdownMenu");
@@ -270,7 +279,7 @@
         }, 100);
       }
 
-      // Close dropdown when clicking outside
+      /* DROPDOWN OUTSIDE CLICK: menutup menu saat pengguna klik di luar area dropdown. */
       document.addEventListener("click", function (event) {
         const dropdown = document.querySelector(".nav-dropdown");
         if (!dropdown.contains(event.target)) {
@@ -278,6 +287,7 @@
         }
       });
     </script>
+    <!-- PAGE SCRIPTS: dialog, filter aktivitas, Chart.js, dan simulasi data live. -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../js/confirm-modal.js"></script>
     <script src="../js/dashboard-activity.js"></script>

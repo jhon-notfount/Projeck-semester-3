@@ -1,4 +1,5 @@
 (function () {
+  /* HISTORY SETUP: konfigurasi tabel, filter, pagination, dan tombol export history. */
   const storageKey = "hydrotech.history.deletedRows";
   const rowsPerPage = 5;
   const table = document.querySelector(".history-table");
@@ -16,12 +17,14 @@
   const emptyState = document.querySelector("[data-history-empty]");
   let currentPage = 1;
 
+  /* TEXT NORMALIZER: menyeragamkan teks supaya pencarian dan filter lebih mudah. */
   function normalize(value) {
     return String(value || "")
       .trim()
       .toLowerCase();
   }
 
+  /* DELETE STORAGE: membaca dan menyimpan ID baris history yang sudah dihapus. */
   function readDeletedRows() {
     try {
       return JSON.parse(localStorage.getItem(storageKey) || "[]");
@@ -34,6 +37,7 @@
     localStorage.setItem(storageKey, JSON.stringify(ids));
   }
 
+  /* ROW HELPERS: mengambil baris tabel dan mengubah isi kolom menjadi data terstruktur. */
   function getRows() {
     return Array.from(table.querySelectorAll("tbody tr"));
   }
@@ -52,6 +56,7 @@
     };
   }
 
+  /* FILTER DATA: memilih baris yang cocok dengan keyword, tipe, hari, bulan, dan status. */
   function getFilteredRows() {
     const keyword = normalize(searchInput?.value);
     const type = normalize(typeFilter?.value);
@@ -75,6 +80,7 @@
     });
   }
 
+  /* PAGINATION: membuat tombol halaman sebelumnya, nomor halaman, dan halaman berikutnya. */
   function renderPagination(totalPages) {
     if (!pagination) return;
     pagination.innerHTML = "";
@@ -116,6 +122,7 @@
     pagination.appendChild(next);
   }
 
+  /* TABLE RENDER: menampilkan baris sesuai filter dan halaman yang sedang aktif. */
   function render() {
     const filteredRows = getFilteredRows();
     const totalPages = Math.max(
@@ -149,6 +156,7 @@
     renderPagination(totalPages);
   }
 
+  /* RESET FILTER: mengosongkan semua filter dan kembali ke halaman pertama. */
   function resetFilters() {
     if (searchInput) searchInput.value = "";
     if (typeFilter) typeFilter.value = "";
@@ -159,6 +167,7 @@
     render();
   }
 
+  /* DELETED ROWS: menghapus baris tersimpan saat halaman history dibuka kembali. */
   function removeDeletedRows() {
     const deletedRows = readDeletedRows();
     getRows().forEach((row) => {
@@ -192,6 +201,7 @@
     "Sabtu",
   ];
 
+  /* MONTH DATA: memilih data aktual dan tren berdasarkan bulan laporan. */
   function getCurrentMonthIndex() {
     return new Date().getMonth();
   }
@@ -203,6 +213,7 @@
       .filter((data) => normalize(data.month) === monthName);
   }
 
+  /* SUMMARY HELPERS: menghitung jumlah data, rata-rata, dan teks ringkasan laporan. */
   function countBy(items, key) {
     return items.reduce((result, item) => {
       const value = item[key] || "Tidak diketahui";
@@ -217,6 +228,7 @@
     return entries.map(([label, total]) => `${label}: ${total}`).join(", ");
   }
 
+  /* RECOMMENDATION: membuat catatan tindakan untuk pemilik berdasarkan data bulanan. */
   function getMonthlyRecommendation(rows, trends) {
     const statusCounts = countBy(rows, "status");
     const averagePh = Number(getAverage(trends, "ph", 1));
@@ -242,6 +254,7 @@
     return notes;
   }
 
+  /* EXPORT PROMPT: menyiapkan tanggal laporan dan meminta pilihan bulan PDF. */
   function getGeneratedAtText() {
     return new Intl.DateTimeFormat("id-ID", {
       day: "numeric",
@@ -306,6 +319,7 @@
     return monthNumber - 1;
   }
 
+  /* PDF DATA HELPERS: membungkus teks, membaca status, dan membuat detail tabel bulanan. */
   function addWrappedText(doc, text, x, y, maxWidth, lineHeight) {
     const lines = doc.splitTextToSize(text, maxWidth);
     doc.text(lines, x, y);
@@ -401,6 +415,7 @@
     });
   }
 
+  /* PDF STYLE: membuat kotak metrik dan footer di setiap halaman laporan. */
   function drawMetricBox(doc, x, y, width, title, value, note, color) {
     doc.setDrawColor(222, 234, 226);
     doc.setFillColor(248, 252, 250);
@@ -434,6 +449,7 @@
     }
   }
 
+  /* CHART IMAGE: membuat gambar grafik sementara untuk dimasukkan ke PDF. */
   async function createMonthlyChartImage(trends, monthName) {
     if (typeof Chart === "undefined") return null;
 
@@ -542,6 +558,7 @@
     return image;
   }
 
+  /* PDF EXPORT: menyusun laporan bulanan lengkap berisi ringkasan, grafik, tabel, dan kesimpulan. */
   async function exportMonthlyPdf(monthIndex) {
     const jsPdf = window.jspdf?.jsPDF;
     if (!jsPdf) {
@@ -891,6 +908,7 @@
     addReportFooters(doc, monthName, margin);
     doc.save(`laporan-history-hydrotech-${monthName.toLowerCase()}-2026.pdf`);
   }
+  /* CHART CONFIG: data dasar untuk grafik history pH dan PPM di halaman. */
   const chartTimes = [
     "07:00",
     "07:15",
@@ -908,6 +926,7 @@
   let historyChart;
   let selectedChartRange = "month";
 
+  /* CHART DATA: membuat data tren harian pH dan PPM untuk bulan terpilih. */
   function getMonthlyChartData(monthIndex) {
     const year = 2026;
     const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
@@ -932,6 +951,7 @@
     });
   }
 
+  /* CHART HELPERS: menghitung rata-rata, rentang sumbu, dan periode yang ditampilkan. */
   function getAverage(items, key, digits) {
     const total = items.reduce((sum, item) => sum + item[key], 0);
     return (total / items.length).toFixed(digits);
@@ -962,6 +982,7 @@
     return `Tren monitoring pH dan PPM periode ${rangeLabel} (${startDate} - ${endDate}), lengkap dengan hari, tanggal, dan jam pengukuran.`;
   }
 
+  /* CHART STYLE: membuat gradasi area pada garis pH dan PPM. */
   function makeHistoryGradient(context, color) {
     const gradient = context.createLinearGradient(0, 0, 0, 300);
     gradient.addColorStop(0, color.replace("rgb", "rgba").replace(")", ", 0.18)"));
@@ -969,6 +990,7 @@
     return gradient;
   }
 
+  /* CHART RENDER: menggambar ulang grafik, rata-rata, dan teks periode sesuai filter. */
   function renderHistoryChart() {
     const canvas = document.getElementById("historyLineChart");
     const monthFilter = document.querySelector("[data-history-chart-month]");
@@ -1146,6 +1168,7 @@
     });
   }
 
+  /* FILTER EVENTS: menghubungkan input filter tabel dengan render history. */
   [searchInput, typeFilter, dayFilter, monthFilter, statusFilter].forEach(
     (control) => {
       control?.addEventListener("input", function () {
@@ -1159,6 +1182,7 @@
     },
   );
 
+  /* RESET EVENT: menampilkan konfirmasi sebelum filter history dikosongkan. */
   resetButton?.addEventListener("click", async function (event) {
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -1177,6 +1201,7 @@
     resetFilters();
   });
 
+  /* DELETE EVENT: menghapus data history setelah konfirmasi dan menyimpan statusnya. */
   table.addEventListener("click", async function (event) {
     const deleteButton = event.target.closest(".trash-btn");
     if (!deleteButton) return;
@@ -1204,6 +1229,7 @@
     render();
   });
 
+  /* EXPORT EVENT: membuat PDF history bulanan setelah pengguna memilih bulan. */
   exportButton?.addEventListener("click", async function () {
     const selectedMonth = await requestExportMonth();
     if (selectedMonth === null) return;
@@ -1228,6 +1254,7 @@
     });
   });
 
+  /* INITIAL RENDER: menerapkan data tersimpan, tabel, dan grafik saat halaman dibuka. */
   removeDeletedRows();
   render();
   renderHistoryChart();

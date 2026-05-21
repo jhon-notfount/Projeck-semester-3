@@ -1,4 +1,5 @@
 (function () {
+  /* NAV LABEL: menyesuaikan teks menu Fitur sesuai halaman pengaturan yang aktif. */
   function updateFeatureLabel() {
     const featureButton = document.querySelector(".nav-dropdown > .nav-item");
     if (!featureButton) return;
@@ -29,6 +30,7 @@
     featureButton.classList.toggle("active", Boolean(labels[currentPage]));
   }
 
+  /* SIDEBAR DROPDOWN: mengatur buka tutup menu fitur di sidebar. */
   function setupSmoothFeatureDropdown() {
     const dropdownMenu = document.getElementById("dropdownMenu");
     const dropdownButton = document.querySelector(".nav-dropdown > .nav-item");
@@ -54,6 +56,7 @@
     };
   }
 
+  /* SIDEBAR CLOCK: menambahkan tanggal dan jam WIB di sidebar. */
   function setupSidebarClock() {
     const sidebar = document.querySelector(".sidebar");
     const logout = sidebar?.querySelector(".logout");
@@ -104,6 +107,7 @@
     window.setInterval(renderClock, 1000);
   }
 
+  /* CONFIRM ICON: memilih ikon SweetAlert berdasarkan jenis konfirmasi. */
   function getIcon(icon, variant) {
     if (variant === "danger") return "warning";
     if (icon === "R") return "question";
@@ -111,6 +115,7 @@
     return "info";
   }
 
+  /* SWEETALERT CONFIRM: dialog konfirmasi utama saat library SweetAlert tersedia. */
   function openSweetAlert(options) {
     return Swal.fire({
       icon: getIcon(options.icon, options.variant),
@@ -134,6 +139,7 @@
     }).then((result) => result.isConfirmed);
   }
 
+  /* FALLBACK MODAL: membuat modal konfirmasi manual jika SweetAlert belum dimuat. */
   function ensureModal() {
     let modal = document.querySelector(".confirm-modal");
     if (modal) return modal;
@@ -157,6 +163,7 @@
     return modal;
   }
 
+  /* CONFIRM FLOW: membuka dialog dan mengembalikan jawaban true atau false. */
   function openConfirm(options) {
     if (window.Swal) {
       return openSweetAlert(options || {});
@@ -211,6 +218,7 @@
   }
 
   window.HydrotechConfirm = { open: openConfirm };
+  /* TOAST API: notifikasi sukses dan error yang bisa dipakai file JavaScript lain. */
   window.HydrotechToast = {
     success: function (message) {
       let toast = document.querySelector(".settings-toast");
@@ -265,6 +273,7 @@
     },
   };
 
+  /* NOTIFICATION DATA: daftar isi panel notifikasi sesuai halaman yang sedang dibuka. */
   function getNotificationItems() {
     const currentPage = window.location.pathname.split("/").pop();
     const baseItems = [
@@ -307,6 +316,7 @@
     return baseItems;
   }
 
+  /* NOTIFICATION BELL: membuat panel notifikasi, status dibaca, dan interaksi keyboard. */
   function setupNotificationBell() {
     const bell = document.querySelector(".bell");
     const admin = document.querySelector(".admin");
@@ -401,6 +411,7 @@
     });
   }
 
+  /* LOGOUT CONFIRM: menampilkan konfirmasi sebelum keluar dari dashboard. */
   document.addEventListener("click", async function (event) {
     const logout = event.target.closest(".logout");
     if (!logout) return;
@@ -420,6 +431,7 @@
     }
   });
 
+  /* RESET CONFIRM: konfirmasi umum untuk tombol reset pada filter halaman. */
   document.addEventListener("click", async function (event) {
     const resetButton = event.target.closest(".filter-bar button");
     if (
@@ -448,6 +460,7 @@
     });
   });
 
+  /* TRASH CONFIRM: fallback konfirmasi hapus baris history jika tombol khusus tidak menangani. */
   document.addEventListener("click", async function (event) {
     if (event.target.closest(".trash-btn")) return;
 
@@ -468,6 +481,7 @@
     }
   });
 
+  /* GLOBAL INIT: menjalankan fitur umum setelah file dimuat. */
   updateFeatureLabel();
   setupSmoothFeatureDropdown();
   setupSidebarClock();

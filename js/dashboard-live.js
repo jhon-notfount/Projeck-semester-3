@@ -1,4 +1,5 @@
 (function () {
+  /* DASHBOARD ELEMENTS: elemen angka, grafik, bar indikator, dan teks update live. */
   const chartCanvas = document.getElementById("dashboardNutrientChart");
   const ppmStat = document.querySelector(".stat-ppm .stat-num");
   const phStat = document.querySelector(".stat-ph .stat-num");
@@ -17,6 +18,7 @@
   let displayedPpm = ppmValues[ppmValues.length - 1];
   let displayedPh = phValues[phValues.length - 1];
 
+  /* VALUE HELPERS: menjaga angka tetap dalam batas dan membuat perubahan kecil acak. */
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
   }
@@ -26,6 +28,7 @@
     return Number(next.toFixed(decimals));
   }
 
+  /* NUMBER ANIMATION: membuat perubahan angka terlihat halus di kartu dashboard. */
   function animateValue(from, to, duration, onUpdate) {
     const startedAt = performance.now();
 
@@ -39,6 +42,7 @@
     requestAnimationFrame(frame);
   }
 
+  /* CHART STYLE: membuat gradasi area di bawah garis pH dan PPM. */
   function makeGradient(context, color) {
     const gradient = context.createLinearGradient(0, 0, 0, 220);
     gradient.addColorStop(0, color.replace(")", ", 0.26)").replace("rgb", "rgba"));
@@ -46,6 +50,7 @@
     return gradient;
   }
 
+  /* ACTIVITY PULSE: memberi efek sorot pada aktivitas terbaru yang sedang aktif. */
   function updateActivityPulse() {
     const visibleActivityRows = Array.from(
       document.querySelectorAll(".activity-row:not([hidden])"),
@@ -56,6 +61,7 @@
     window.setTimeout(() => activeRow?.classList.remove("live-pulse"), 850);
   }
 
+  /* RESPONSIVE CHART: menyesuaikan tinggi grafik agar tetap rapi di layar kecil. */
   function syncChartHeight() {
     const wrapper = chartCanvas.closest(".dashboard-chart-wrap");
     if (!wrapper) return;
@@ -80,6 +86,7 @@
 
   syncChartHeight();
 
+  /* CHART INIT: membuat grafik garis live untuk pH dan PPM dengan Chart.js. */
   const context = chartCanvas.getContext("2d");
   const chart = new Chart(chartCanvas, {
     type: "line",
@@ -235,6 +242,7 @@
     chart.resize();
   });
 
+  /* LIVE RENDER: memperbarui angka, bar, grafik, dan status update secara berkala. */
   function render() {
     tick += 1;
     const latestPpm = randomStep(ppmValues[ppmValues.length - 1], 62, 780, 940, 0);

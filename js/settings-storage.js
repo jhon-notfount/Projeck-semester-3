@@ -1,4 +1,5 @@
 (function () {
+  /* SETTINGS CONFIG: konfigurasi halaman PPM, pH, dan Dithane beserta nilai defaultnya. */
   const configs = {
     ppm: {
       inputPage: "input-ppm.html",
@@ -43,6 +44,7 @@
 
   if (!config) return;
 
+  /* STORAGE READ: membaca pengaturan dari localStorage dan memakai default jika kosong. */
   function readSettings() {
     try {
       return {
@@ -54,6 +56,7 @@
     }
   }
 
+  /* VALUE FORMAT: menambahkan satuan PPM, pH, Jam, Detik, atau WIB ke tampilan. */
   function formatValue(value, unit) {
     let cleanValue = String(value || "").trim();
     if (unit === "WIB") {
@@ -62,6 +65,7 @@
     return unit ? `${cleanValue} ${unit}` : cleanValue;
   }
 
+  /* SUCCESS TOAST: menampilkan notifikasi berhasil setelah data pengaturan disimpan. */
   function showSuccessToast(message) {
     if (window.HydrotechToast?.success(message)) return;
 
@@ -93,6 +97,7 @@
     }, 2500);
   }
 
+  /* UPDATED TEXT: memperbarui info waktu terakhir pengaturan di kartu ringkasan. */
   function setUpdatedText(settings) {
     const updated = settings.updatedAt || "5 Menit yang lalu";
     document.querySelectorAll(".sum-card").forEach((card) => {
@@ -105,6 +110,7 @@
     });
   }
 
+  /* SETTINGS PAGE: memasang nilai tersimpan ke halaman pengaturan dan fitur tabel. */
   function applySettingsPage() {
     const settings = readSettings();
 
@@ -129,6 +135,7 @@
     setupEditModal(settings);
   }
 
+  /* STATUS FILTER: memfilter tabel pengaturan berdasarkan status Normal, Rendah, atau Tinggi. */
   function setupStatusFilter() {
     const filter = document.querySelector(".status-filter");
     const table = document.querySelector(".table-card table");
@@ -163,6 +170,7 @@
     applyFilter();
   }
 
+  /* DELETE STORAGE: key khusus untuk menyimpan baris tabel yang sudah dihapus. */
   function getDeletedRowsKey() {
     return `${config.storageKey}.deletedRows`;
   }
@@ -179,6 +187,7 @@
     localStorage.setItem(getDeletedRowsKey(), JSON.stringify(rows));
   }
 
+  /* DELETE ROWS: menghapus baris tabel setelah konfirmasi dan menyimpannya di localStorage. */
   function setupDeleteRows() {
     const table = document.querySelector(".table-card table");
     if (!table || table.dataset.deleteReady === "true") return;
@@ -230,6 +239,7 @@
     }
   }
 
+  /* EDIT MODAL: membuat isi modal edit berdasarkan field halaman yang sedang aktif. */
   function createModal(settings) {
     const fields = config.fields
       .map((field) => {
@@ -302,6 +312,7 @@
     return modal;
   }
 
+  /* EDIT FLOW: membuka modal, validasi input, menyimpan perubahan, dan menutup modal. */
   function setupEditModal(settings) {
     const editButton = document.querySelector(".edit-btn");
     if (!editButton) return;
@@ -392,6 +403,7 @@
     });
   }
 
+  /* INPUT PAGE: mengisi form input, reset nilai, batal, dan simpan pengaturan baru. */
   function applyInputPage() {
     const settings = readSettings();
     const inputs = Array.from(document.querySelectorAll(".field input"));
@@ -472,6 +484,7 @@
     });
   }
 
+  /* PAGE ROUTER: memilih alur halaman input atau halaman pengaturan. */
   if (currentPage === config.inputPage) {
     applyInputPage();
   } else {

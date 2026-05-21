@@ -1,4 +1,5 @@
 (function () {
+  /* ACTIVITY SETUP: mengambil elemen riwayat aktivitas dan filter dashboard. */
   const section = document.querySelector("[data-activity-section]");
   if (!section) return;
 
@@ -10,11 +11,13 @@
   const toggle = section.querySelector("[data-activity-toggle]");
   const label = section.querySelector("[data-activity-label]");
 
+  /* DROPDOWN CONTROL: menutup menu filter setelah dipilih atau klik di luar area. */
   function closeDropdown() {
     dropdown?.classList.remove("open");
     toggle?.setAttribute("aria-expanded", "false");
   }
 
+  /* ACTIVITY FILTER: menampilkan aktivitas sesuai kategori PPM, pH, Dithane, atau semua. */
   function applyFilter(filter) {
     let visibleCount = 0;
 
@@ -43,6 +46,7 @@
     }
   }
 
+  /* FILTER EVENTS: menghubungkan tombol filter dengan tampilan daftar aktivitas. */
   filterButtons.forEach((button) => {
     button.addEventListener("click", function () {
       applyFilter(button.dataset.activityFilter || "all");
@@ -50,6 +54,7 @@
     });
   });
 
+  /* DROPDOWN EVENTS: membuka menu filter dan menutupnya saat klik di luar atau tekan Escape. */
   toggle?.addEventListener("click", function (event) {
     event.stopPropagation();
     if (!dropdown) return;
@@ -67,5 +72,6 @@
     if (event.key === "Escape") closeDropdown();
   });
 
+  /* INITIAL RENDER: menampilkan semua aktivitas saat halaman pertama kali dibuka. */
   applyFilter("all");
 })();

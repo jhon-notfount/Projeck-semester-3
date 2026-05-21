@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="id">
   <head>
+    <!-- META SETUP: pengaturan dasar dokumen, stylesheet login, dan icon library. -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hydrotech Login</title>
@@ -10,6 +11,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   </head>
   <script>
+    /* PASSWORD TOGGLE: menampilkan atau menyembunyikan isi password. */
     function togglePassword() {
       const passwordInput = document.getElementById("password");
       const eyeIcon = document.getElementById("eyeIcon");
@@ -25,6 +27,7 @@
       }
     }
 
+    /* LOGIN HANDLER: validasi akun admin lalu mengarahkan ke dashboard. */
     function handleLogin(event) {
       event.preventDefault();
 
@@ -47,9 +50,10 @@
       message.classList.add("error", "show");
     }
   </script>
-  <body class="login-page">
+  <body class="login-page"><!-- LOGIN PAGE: halaman masuk admin dengan branding Hydrotech. -->
     <div class="login-overlay"></div>
 
+    <!-- LOGIN LOGOS: logo institusi yang tampil di halaman login. -->
     <div class="login-logos">
       <div class="logo-box">
         <img
@@ -59,6 +63,7 @@
         <img src="../assets/Logo_TRK.png" alt="Logo TRK" class="logo-right" />
       </div>
     </div>
+    <!-- LOGIN INTRO: teks pembuka dan logo utama Hydrotech. -->
     <section class="login-left">
       <div class="hydro-logo">
         <img src="../assets/Logo_hydrotech.png" alt="Logo Hydrotech" />
@@ -78,6 +83,7 @@
       </p>
     </section>
 
+    <!-- LOGIN FEATURES: ringkasan keunggulan sistem Hydrotech. -->
     <div class="login-features">
       <div class="feature">
         <span class="feature-icon">🌱</span>
@@ -95,6 +101,7 @@
       </div>
     </div>
 
+    <!-- LOGIN CARD: form username, password, pesan validasi, dan tombol masuk. -->
     <main class="login-card">
       <div class="brand">
         <span>Hydr</span>
@@ -162,6 +169,7 @@
         <button type="submit" class="btn-login">Masuk</button>
       </form>
     </main>
+    <!-- PAGE SCRIPTS: library dialog dan fitur global dashboard. -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../js/confirm-modal.js"></script>
   </body>
