@@ -665,7 +665,7 @@
     overflow: hidden;
   }
   /* DASHBOARD HEADER: hero/header utama dashboard. */
-.dashboard-hero {
+  .dashboard-hero {
     min-height: 104px;
     margin: 0 10px 10px;
     padding: 16px 22px;
@@ -692,7 +692,7 @@
     font-size: 16px;
   }
   /* STATISTIC CARDS: kartu PPM, pH, dan Dithane. */
-.stats {
+  .stats {
     gap: 12px;
     margin: 0 10px 10px;
   }
@@ -721,7 +721,7 @@
     margin-top: 8px;
   }
   /* DASHBOARD GRID: pembungkus chart dan aktivitas. */
-.dashboard-grid {
+  .dashboard-grid {
     gap: 12px;
     margin: 0 10px;
     height: calc(100vh - 322px);
@@ -732,7 +732,7 @@
     min-height: 0;
   }
   /* MONITORING CHART: kartu grafik monitoring realtime. */
-.chart-card {
+  .chart-card {
     display: flex;
     flex-direction: column;
     padding: 14px 18px 12px;
@@ -838,7 +838,7 @@
     grid-template-columns: repeat(2, 1fr);
   }
   /* DASHBOARD HEADER: hero/header utama dashboard. */
-.dashboard-hero {
+  .dashboard-hero {
     flex-direction: column;
     align-items: stretch;
   }
@@ -846,7 +846,7 @@
     font-size: 22px;
   }
   /* HEADER METRICS: ringkasan kecil di dalam hero dashboard. */
-.hero-metrics {
+  .hero-metrics {
     min-width: 0;
   }
   .stats,
@@ -867,7 +867,7 @@
     width: 100%;
   }
   /* MONITORING CHART: kartu grafik monitoring realtime. */
-.chart-card {
+  .chart-card {
     min-height: 330px;
   }
   .dashboard-chart-wrap {
@@ -1356,7 +1356,6 @@ body:not(.login-page):not(.popup-body) .content > :nth-child(5) {
   width: auto;
 }
 
-
 .card,
 .stat,
 .info-card,
@@ -1700,4 +1699,3 @@ body:not(.login-page):not(.popup-body) .content > :nth-child(5) {
     max-height: 176px !important;
   }
 }
-

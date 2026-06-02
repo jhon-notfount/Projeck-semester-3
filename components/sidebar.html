@@ -1,0 +1,38 @@
+<!-- SIDEBAR: logo Hydrotech, navigasi utama, dropdown fitur, jam, dan logout. -->
+<aside class="sidebar">
+  <div class="side-logo">
+    <div class="side-mark">
+      <img src="../assets/Logo_hydrotech.png" alt="Logo Hydrotech" />
+    </div>
+    <div class="side-brand">
+      <strong>Hydrotech</strong><span>Dashboard Admin</span>
+    </div>
+  </div>
+  <nav class="nav">
+    <a class="nav-item" href="hydrotech-dashboard-panel-2026.html" data-sidebar-page="hydrotech-dashboard-panel-2026.html">
+      <span class="ico ico-dashboard" aria-hidden="true"></span>
+      <span>Dashboard</span>
+    </a>
+    <div class="nav-dropdown">
+      <button class="nav-item" type="button" data-sidebar-dropdown-toggle>
+        <span class="ico ico-features" aria-hidden="true"></span>
+        <span data-feature-label>Fitur</span>
+        <span class="chev">v</span>
+      </button>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <a href="pengaturan-ppm.html" class="dropdown-item" data-sidebar-page="pengaturan-ppm.html">Pengaturan PPM</a>
+        <a href="pengaturan-ph.html" class="dropdown-item" data-sidebar-page="pengaturan-ph.html">Pengaturan pH</a>
+        <a href="pengaturan-dithane.html" class="dropdown-item" data-sidebar-page="pengaturan-dithane.html">Pengaturan Dithane</a>
+      </div>
+    </div>
+    <a class="nav-item" href="history.html" data-sidebar-page="history.html">
+      <span class="ico ico-history" aria-hidden="true"></span>
+      <span>History</span>
+    </a>
+    <a class="nav-item" href="profile.html" data-sidebar-page="profile.html">
+      <span class="ico ico-profile" aria-hidden="true"></span>
+      <span>Profile</span>
+    </a>
+  </nav>
+  <a class="logout" href="popup-logout.html">Log out</a>
+</aside>
