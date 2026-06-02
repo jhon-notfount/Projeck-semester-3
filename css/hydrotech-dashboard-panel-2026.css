@@ -219,6 +219,10 @@
   text-shadow: 0 10px 22px rgba(7, 141, 67, 0.18);
   transform: translateY(-3px) scale(1.07);
 }
+.stat-range {
+  font-size: 25px;
+  white-space: nowrap;
+}
 .stat-note {
   margin-top: 6px;
   color: #7b8780;

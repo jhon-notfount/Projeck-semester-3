@@ -1,5 +1,5 @@
 (function () {
-  /* DASHBOARD ELEMENTS: elemen angka, grafik, bar indikator, dan teks update live. */
+  /* DASHBOARD ELEMENTS: elemen rentang setting, grafik, dan teks update live. */
   const chartCanvas = document.getElementById("dashboardNutrientChart");
   const ppmStat = document.querySelector(".stat-ppm .stat-num");
   const phStat = document.querySelector(".stat-ph .stat-num");
@@ -9,7 +9,38 @@
   const ppmSummary = document.querySelector(".chart-summary div:last-child b");
   const updateText = document.querySelector(".hero-metrics div:last-child b");
 
-  if (!chartCanvas || !ppmStat || !phStat || typeof Chart === "undefined") return;
+  const settingDefaults = {
+    ppm: { storageKey: "hydrotech.ppmSettings", min: "800", max: "1000" },
+    ph: { storageKey: "hydrotech.phSettings", min: "5,5", max: "6,5" },
+  };
+
+  /* SETTING RANGE: menampilkan rentang PPM dan pH yang diatur di halaman fitur. */
+  function readSettingRange(type) {
+    const setting = settingDefaults[type];
+    try {
+      return {
+        min: setting.min,
+        max: setting.max,
+        ...JSON.parse(localStorage.getItem(setting.storageKey) || "{}"),
+      };
+    } catch (error) {
+      return { min: setting.min, max: setting.max };
+    }
+  }
+
+  function applySettingRanges() {
+    const ppmRange = readSettingRange("ppm");
+    const phRange = readSettingRange("ph");
+
+    if (ppmStat) ppmStat.textContent = `${ppmRange.min} - ${ppmRange.max}`;
+    if (phStat) phStat.textContent = `${phRange.min} - ${phRange.max}`;
+    if (ppmBar) ppmBar.style.width = "100%";
+    if (phBar) phBar.style.width = "100%";
+  }
+
+  applySettingRanges();
+
+  if (!chartCanvas || typeof Chart === "undefined") return;
 
   const timeLabels = ["08.00", "09.00", "10.00", "11.00", "12.00", "13.00", "14.00", "Live"];
   let ppmValues = [845, 858, 874, 862, 892, 876, 864, 863];
@@ -242,7 +273,7 @@
     chart.resize();
   });
 
-  /* LIVE RENDER: memperbarui angka, bar, grafik, dan status update secara berkala. */
+  /* LIVE RENDER: memperbarui ringkasan grafik, diagram, dan status update secara berkala. */
   function render() {
     tick += 1;
     const latestPpm = randomStep(ppmValues[ppmValues.length - 1], 62, 780, 940, 0);
@@ -252,25 +283,16 @@
     phValues = [...phValues.slice(1), latestPh];
 
     animateValue(displayedPpm, latestPpm, 760, (value) => {
-      ppmStat.textContent = Math.round(value);
       if (ppmSummary) ppmSummary.textContent = Math.round(value);
     });
     animateValue(displayedPh, latestPh, 760, (value) => {
-      phStat.textContent = value.toFixed(1);
       if (phSummary) phSummary.textContent = value.toFixed(1);
     });
     displayedPpm = latestPpm;
     displayedPh = latestPh;
 
-    [ppmStat, phStat].forEach((number) => {
-      number.classList.add("live-number");
-      window.setTimeout(() => number.classList.remove("live-number"), 620);
-    });
     chartCanvas.classList.add("live-refresh");
     window.setTimeout(() => chartCanvas.classList.remove("live-refresh"), 900);
-
-    if (ppmBar) ppmBar.style.width = `${clamp(((latestPpm - 700) / 350) * 100, 8, 100)}%`;
-    if (phBar) phBar.style.width = `${clamp(((latestPh - 5) / 3) * 100, 8, 100)}%`;
 
     chart.data.datasets[0].data = phValues;
     chart.data.datasets[1].data = ppmValues;
