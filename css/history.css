@@ -238,7 +238,7 @@
   border-color: rgba(7, 141, 67, 0.45);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.95) inset,
-    0 12px 26px rgba(24, 56, 36, 0.1);
+    0 12px 26px rgba(178, 22, 72, 0.1);
   transform: translateY(-1px);
 }
 .filter-bar input:focus,
@@ -475,7 +475,7 @@
   background:
     radial-gradient(
       circle at 12% 10%,
-      rgba(42, 157, 143, 0.12),
+      rgba(157, 98, 42, 0.12),
       transparent 30%
     ),
     linear-gradient(135deg, #f8fffb 0%, #eefaf5 52%, #f7fbff 100%);
@@ -980,7 +980,7 @@
     max-width: none;
   }
   /* HISTORY HEADER: judul halaman, deskripsi, dan tombol export. */
-.history-card-head {
+  .history-card-head {
     flex-direction: column;
     padding: 22px 18px 18px;
   }
@@ -988,7 +988,7 @@
     width: 100%;
   }
   /* FILTER BAR: input pencarian dan dropdown filter history. */
-.filter-bar {
+  .filter-bar {
     flex-direction: column;
     align-items: stretch;
   }
@@ -1001,7 +1001,7 @@
     width: 100%;
   }
   /* TABLE FOOTER: info jumlah data dan kontrol halaman. */
-.history-footer {
+  .history-footer {
     align-items: flex-start;
     flex-direction: column;
   }
@@ -1022,7 +1022,7 @@
     flex-wrap: wrap;
   }
   /* CHART CONTROLS: pilihan rentang dan bulan grafik. */
-.history-chart-controls {
+  .history-chart-controls {
     flex: 1 1 250px;
   }
   .history-chart-filter {
@@ -1239,7 +1239,6 @@
   outline: none;
 }
 
-
 /* Smooth page entrance */
 body:not(.login-page):not(.popup-body)
   .content
@@ -1356,7 +1355,6 @@ body:not(.login-page):not(.popup-body) .content > :nth-child(5) {
   width: auto;
 }
 
-
 .card,
 .stat,
 .info-card,
@@ -1384,4 +1382,3 @@ body:not(.login-page):not(.popup-body) .content > :nth-child(5) {
   border-color: rgba(211, 231, 220, 0.95);
   background: rgba(255, 255, 255, 0.92);
 }
-

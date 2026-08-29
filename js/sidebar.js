@@ -11,7 +11,7 @@
     </div>
   </div>
   <nav class="nav">
-    <a class="nav-item" href="hydrotech-dashboard-panel-2026.html" data-sidebar-page="hydrotech-dashboard-panel-2026.html">
+    <a class="nav-item" href="hydrotech-dashboard-panel-2026.php" data-sidebar-page="hydrotech-dashboard-panel-2026.php">
       <span class="ico ico-dashboard" aria-hidden="true"></span>
       <span>Dashboard</span>
     </a>
@@ -22,31 +22,32 @@
         <span class="chev">v</span>
       </button>
       <div class="dropdown-menu" id="dropdownMenu">
-        <a href="pengaturan-ppm.html" class="dropdown-item" data-sidebar-page="pengaturan-ppm.html">Pengaturan PPM</a>
-        <a href="pengaturan-ph.html" class="dropdown-item" data-sidebar-page="pengaturan-ph.html">Pengaturan pH</a>
-        <a href="pengaturan-dithane.html" class="dropdown-item" data-sidebar-page="pengaturan-dithane.html">Pengaturan Dithane</a>
+        <a href="pengaturan-ppm.php" class="dropdown-item" data-sidebar-page="pengaturan-ppm.php">Pengaturan PPM</a>
+        <a href="pengaturan-ph.php" class="dropdown-item" data-sidebar-page="pengaturan-ph.php">Pengaturan pH</a>
+        <a href="pengaturan-dithane.php" class="dropdown-item" data-sidebar-page="pengaturan-dithane.php">Pengaturan Dithane</a>
       </div>
     </div>
-    <a class="nav-item" href="history.html" data-sidebar-page="history.html">
+    <a class="nav-item" href="history.php" data-sidebar-page="history.php">
       <span class="ico ico-history" aria-hidden="true"></span>
       <span>History</span>
     </a>
-    <a class="nav-item" href="profile.html" data-sidebar-page="profile.html">
+    <a class="nav-item" href="profile.php" data-sidebar-page="profile.php">
       <span class="ico ico-profile" aria-hidden="true"></span>
       <span>Profile</span>
     </a>
   </nav>
-  <a class="logout" href="popup-logout.html">Log out</a>
+  <a class="logout" href="popup-logout.php">Log out</a>
 </aside>`;
 
   const featureLabels = {
-    "pengaturan-ppm.html": "Pengaturan PPM",
-    "pengaturan-ph.html": "Pengaturan pH",
-    "pengaturan-dithane.html": "Pengaturan Dithane",
+    "pengaturan-ppm.php": "Pengaturan PPM",
+    "pengaturan-ph.php": "Pengaturan pH",
+    "pengaturan-dithane.php": "Pengaturan Dithane",
   };
 
   function getCurrentPage() {
-    return window.location.pathname.split("/").pop() || "hydrotech-dashboard-panel-2026.html";
+    const page = window.location.pathname.split("/").pop() || "hydrotech-dashboard-panel-2026.php";
+    return page.replace(".html", ".php"); // Fallback jika masih ada yang terbaca html
   }
 
   function closeDropdown() {
@@ -163,6 +164,10 @@
   }
 
   function initializeSidebar(root, html) {
+    // Replace all .html to .php in the loaded html to ensure consistency
+    html = html.replace(/href="([^"]+)\.html"/g, 'href="$1.php"');
+    html = html.replace(/data-sidebar-page="([^"]+)\.html"/g, 'data-sidebar-page="$1.php"');
+    
     root.innerHTML = html;
     const sidebar = root.querySelector(".sidebar");
     if (!sidebar) return;
@@ -182,7 +187,7 @@
 
     try {
       const request = new XMLHttpRequest();
-      request.open("GET", "../components/sidebar.html", false);
+      request.open("GET", "sidebar.html", false);
       request.send(null);
 
       if (

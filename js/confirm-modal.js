@@ -165,57 +165,11 @@
     },
   };
 
-  /* NOTIFICATION DATA: daftar isi panel notifikasi sesuai halaman yang sedang dibuka. */
-  function getNotificationItems() {
-    const currentPage = window.location.pathname.split("/").pop();
-    const baseItems = [
-      {
-        label: "pH perlu dipantau",
-        text: "Nilai pH terakhir mendekati batas atas.",
-        time: "2 menit lalu",
-        href: "pengaturan-ph.html",
-        tone: "warning",
-      },
-      {
-        label: "PPM stabil",
-        text: "Nutrisi berada dalam rentang aman.",
-        time: "5 menit lalu",
-        href: "pengaturan-ppm.html",
-        tone: "success",
-      },
-      {
-        label: "Jadwal Dithane aktif",
-        text: "Penyemprotan berikutnya mengikuti jadwal otomatis.",
-        time: "12 menit lalu",
-        href: "pengaturan-dithane.html",
-        tone: "info",
-      },
-    ];
-
-    if (currentPage === "history.html") {
-      return [
-        {
-          label: "History diperbarui",
-          text: "Data monitoring terbaru sudah masuk ke tabel.",
-          time: "Baru saja",
-          href: "history.html",
-          tone: "success",
-        },
-        ...baseItems.slice(0, 2),
-      ];
-    }
-
-    return baseItems;
-  }
-
-  /* NOTIFICATION BELL: membuat panel notifikasi, status dibaca, dan interaksi keyboard. */
-  function setupNotificationBell() {
+  /* NOTIFICATION BELL: memuat daftar notifikasi dari API dan menampilkan panelnya. */
+  async function setupNotificationBell() {
     const bell = document.querySelector(".bell");
     const admin = document.querySelector(".admin");
     if (!bell || !admin || bell.dataset.notificationReady === "true") return;
-
-    const readKey = "hydrotech.notificationsRead";
-    const isRead = localStorage.getItem(readKey) === "true";
 
     bell.dataset.notificationReady = "true";
     bell.setAttribute("role", "button");
@@ -223,12 +177,50 @@
     bell.setAttribute("aria-haspopup", "dialog");
     bell.setAttribute("aria-expanded", "false");
     bell.setAttribute("title", "Buka notifikasi");
+
+    let isRead = false;
+    let items = [];
+    
+    await fetch("../api/notifications/list.php")
+      .then(response => response.json())
+      .then(result => {
+        if (result.success && result.data) {
+          isRead = result.data.all_read;
+          items = (result.data.notifications || []).map(n => ({
+            label: n.label || "",
+            text: n.message || "",
+            time: n.created_at ? new Date(n.created_at).toLocaleString("id-ID", {hour:"2-digit",minute:"2-digit"}) : "",
+            href: n.href || "#",
+            tone: n.tone || "info",
+          }));
+        }
+      })
+      .catch(e => {
+        console.error("Gagal memuat notifikasi", e);
+      });
+
     bell.classList.toggle("read", isRead);
 
     const panel = document.createElement("section");
     panel.className = "notification-panel";
     panel.setAttribute("role", "dialog");
     panel.setAttribute("aria-label", "Daftar notifikasi");
+    
+    const itemsHtml = items.map((item) => {
+      // Pastikan URL mengarah ke .php
+      const href = item.href ? item.href.replace(".html", ".php") : "#";
+      return `
+        <a class="notification-item ${item.tone || 'info'} ${isRead ? 'read' : ''}" href="${href}">
+          <span class="notification-dot"></span>
+          <span>
+            <b>${item.label}</b>
+            <small>${item.text}</small>
+            <em>${item.time}</em>
+          </span>
+        </a>
+      `;
+    }).join("");
+
     panel.innerHTML = `
       <div class="notification-head">
         <div>
@@ -238,29 +230,10 @@
         <button type="button" data-notification-read>Tandai dibaca</button>
       </div>
       <div class="notification-list">
-        ${getNotificationItems()
-          .map(
-            (item) => `
-              <a class="notification-item ${item.tone}" href="${item.href}">
-                <span class="notification-dot"></span>
-                <span>
-                  <b>${item.label}</b>
-                  <small>${item.text}</small>
-                  <em>${item.time}</em>
-                </span>
-              </a>
-            `,
-          )
-          .join("")}
+        ${itemsHtml || '<div style="padding:16px;text-align:center;font-size:12px;color:#888;">Tidak ada notifikasi</div>'}
       </div>
     `;
     admin.appendChild(panel);
-
-    if (isRead) {
-      panel.querySelectorAll(".notification-item").forEach((item) => {
-        item.classList.add("read");
-      });
-    }
 
     function setOpen(isOpen) {
       panel.classList.toggle("show", isOpen);
@@ -281,12 +254,20 @@
 
     panel
       .querySelector("[data-notification-read]")
-      .addEventListener("click", function () {
-        localStorage.setItem(readKey, "true");
-        bell.classList.add("read");
-        panel.querySelectorAll(".notification-item").forEach((item) => {
-          item.classList.add("read");
-        });
+      ?.addEventListener("click", async function () {
+          fetch("../api/notifications/mark-read.php", { method: "POST" })
+            .then(response => response.json())
+            .then(result => {
+              if (result.success) {
+                bell.classList.add("read");
+                panel.querySelectorAll(".notification-item").forEach((item) => {
+                  item.classList.add("read");
+                });
+              }
+            })
+            .catch(e => {
+              console.error("Gagal menandai dibaca", e);
+            });
       });
 
     document.addEventListener("click", function (event) {
@@ -319,7 +300,8 @@
     });
 
     if (confirmed) {
-      window.location.href = "login.html";
+      await fetch("../api/auth/logout.php", { method: "POST" }).catch(e => {});
+      window.location.href = "login.php";
     }
   });
 

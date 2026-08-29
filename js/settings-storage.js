@@ -1,11 +1,11 @@
-(function () {
+(async function () {
   /* SETTINGS CONFIG: konfigurasi halaman PPM, pH, dan Dithane beserta nilai defaultnya. */
   const configs = {
     ppm: {
-      inputPage: "input-ppm.html",
-      settingPage: "pengaturan-ppm.html",
-      storageKey: "hydrotech.ppmSettings",
-      redirect: "pengaturan-ppm.html",
+      type: "ppm",
+      inputPage: "input-ppm.php",
+      settingPage: "pengaturan-ppm.php",
+      redirect: "pengaturan-ppm.php",
       defaults: { min: "800", max: "1000" },
       fields: [
         { key: "min", label: "PPM Minimum", unit: "PPM" },
@@ -13,10 +13,10 @@
       ],
     },
     ph: {
-      inputPage: "input-ph.html",
-      settingPage: "pengaturan-ph.html",
-      storageKey: "hydrotech.phSettings",
-      redirect: "pengaturan-ph.html",
+      type: "ph",
+      inputPage: "input-ph.php",
+      settingPage: "pengaturan-ph.php",
+      redirect: "pengaturan-ph.php",
       defaults: { min: "5,5", max: "6,5" },
       fields: [
         { key: "min", label: "pH Minimum", unit: "pH" },
@@ -24,10 +24,10 @@
       ],
     },
     dithane: {
-      inputPage: "input-dithane.html",
-      settingPage: "pengaturan-dithane.html",
-      storageKey: "hydrotech.dithaneSettings",
-      redirect: "pengaturan-dithane.html",
+      type: "dithane",
+      inputPage: "input-dithane.php",
+      settingPage: "pengaturan-dithane.php",
+      redirect: "pengaturan-dithane.php",
       defaults: { interval: "48", duration: "10", start: "08.00" },
       fields: [
         { key: "interval", label: "Interval Penyemprotan", unit: "Jam" },
@@ -44,16 +44,25 @@
 
   if (!config) return;
 
-  /* STORAGE READ: membaca pengaturan dari localStorage dan memakai default jika kosong. */
-  function readSettings() {
-    try {
-      return {
-        ...config.defaults,
-        ...JSON.parse(localStorage.getItem(config.storageKey) || "{}"),
-      };
-    } catch (error) {
-      return { ...config.defaults };
-    }
+  /* STORAGE READ: membaca pengaturan dari API. */
+  async function readSettings() {
+    return fetch(`../api/settings/get.php?type=${config.type}`)
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.success && result.data) {
+          const apiConfig = result.data.config || {};
+          return {
+            ...config.defaults,
+            ...apiConfig,
+            updatedAt: result.data.updated_at || "Baru saja",
+          };
+        }
+        return { ...config.defaults };
+      })
+      .catch((error) => {
+        console.error("Gagal membaca pengaturan dari API", error);
+        return { ...config.defaults };
+      });
   }
 
   /* VALUE FORMAT: menambahkan satuan PPM, pH, Jam, Detik, atau WIB ke tampilan. */
@@ -111,8 +120,8 @@
   }
 
   /* SETTINGS PAGE: memasang nilai tersimpan ke halaman pengaturan dan fitur tabel. */
-  function applySettingsPage() {
-    const settings = readSettings();
+  async function applySettingsPage() {
+    const settings = await readSettings();
 
     document.querySelectorAll(".sum-card").forEach((card) => {
       const label = card.querySelector("small");
@@ -170,38 +179,10 @@
     applyFilter();
   }
 
-  /* DELETE STORAGE: key khusus untuk menyimpan baris tabel yang sudah dihapus. */
-  function getDeletedRowsKey() {
-    return `${config.storageKey}.deletedRows`;
-  }
-
-  function readDeletedRows() {
-    try {
-      return JSON.parse(localStorage.getItem(getDeletedRowsKey()) || "[]");
-    } catch (error) {
-      return [];
-    }
-  }
-
-  function writeDeletedRows(rows) {
-    localStorage.setItem(getDeletedRowsKey(), JSON.stringify(rows));
-  }
-
-  /* DELETE ROWS: menghapus baris tabel setelah konfirmasi dan menyimpannya di localStorage. */
+  /* DELETE ROWS: menghapus baris tabel setelah konfirmasi via API. */
   function setupDeleteRows() {
     const table = document.querySelector(".table-card table");
     if (!table || table.dataset.deleteReady === "true") return;
-
-    const deletedRows = readDeletedRows();
-
-    Array.from(table.querySelectorAll("tbody tr")).forEach((row) => {
-      const rowId = row.dataset.rowId || row.children[0]?.textContent.trim();
-      if (!rowId) return;
-      row.dataset.rowId = rowId;
-      if (deletedRows.includes(rowId)) {
-        row.remove();
-      }
-    });
 
     table.dataset.deleteReady = "true";
     table.addEventListener("click", async function (event) {
@@ -209,7 +190,7 @@
       if (!deleteButton) return;
 
       const row = deleteButton.closest("tr");
-      const rowId = row?.dataset.rowId;
+      const rowId = row?.dataset.rowId || row?.children[0]?.textContent.trim();
       if (!row || !rowId) return;
 
       if (window.HydrotechConfirm) {
@@ -223,14 +204,32 @@
         if (!confirmed) return;
       }
 
-      const nextDeletedRows = Array.from(new Set([...readDeletedRows(), rowId]));
-      writeDeletedRows(nextDeletedRows);
-      row.remove();
-
-      const filter = document.querySelector(".status-filter");
-      if (filter && typeof filter.applyFilter === "function") {
-        filter.applyFilter();
-      }
+      const formData = new FormData();
+      formData.append("id", rowId);
+      
+      fetch("../api/monitoring/delete.php", {
+        method: "POST",
+        body: formData
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          row.remove();
+          const filter = document.querySelector(".status-filter");
+          if (filter && typeof filter.applyFilter === "function") {
+            filter.applyFilter();
+          }
+        } else {
+          if (window.HydrotechToast?.error) {
+             window.HydrotechToast.error("Gagal menghapus data.");
+          } else {
+             alert("Gagal menghapus data.");
+          }
+        }
+      })
+      .catch(error => {
+        console.error("Delete error:", error);
+      });
     });
 
     const filter = document.querySelector(".status-filter");
@@ -312,7 +311,7 @@
     return modal;
   }
 
-  /* EDIT FLOW: membuka modal, validasi input, menyimpan perubahan, dan menutup modal. */
+  /* EDIT FLOW: membuka modal, validasi input, menyimpan perubahan ke API, dan menutup modal. */
   function setupEditModal(settings) {
     const editButton = document.querySelector(".edit-btn");
     if (!editButton) return;
@@ -344,8 +343,8 @@
       });
     }
 
-    function openModal() {
-      const latestSettings = readSettings();
+    async function openModal() {
+      const latestSettings = await readSettings();
       inputs.forEach((input) => {
         const key = input.dataset.settingKey;
         input.value =
@@ -373,7 +372,7 @@
       button.addEventListener("click", closeModal);
     });
 
-    modal.querySelector("#settingsModalSave").addEventListener("click", function () {
+    modal.querySelector("#settingsModalSave").addEventListener("click", async function () {
       const nextSettings = {};
       let isValid = true;
 
@@ -390,10 +389,31 @@
       }
 
       nextSettings.updatedAt = "Baru saja";
-      localStorage.setItem(config.storageKey, JSON.stringify(nextSettings));
-      applySettingsPage();
-      closeModal();
-      showSuccessToast("Data telah berhasil diseting ulang.");
+      
+      const formData = new FormData();
+      formData.append("type", config.type);
+      formData.append("config", JSON.stringify(nextSettings));
+      
+      fetch("../api/settings/update.php", {
+        method: "POST",
+        body: formData
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          applySettingsPage();
+          closeModal();
+          showSuccessToast("Data telah berhasil diseting ulang.");
+        } else {
+          message.textContent = "Gagal menyimpan perubahan.";
+          message.className = "settings-modal-message error";
+        }
+      })
+      .catch(e => {
+        console.error(e);
+        message.textContent = "Terjadi kesalahan jaringan.";
+        message.className = "settings-modal-message error";
+      });
     });
 
     document.addEventListener("keydown", function (event) {
@@ -403,9 +423,9 @@
     });
   }
 
-  /* INPUT PAGE: mengisi form input, reset nilai, batal, dan simpan pengaturan baru. */
-  function applyInputPage() {
-    const settings = readSettings();
+  /* INPUT PAGE: mengisi form input, reset nilai, batal, dan simpan pengaturan baru via API. */
+  async function applyInputPage() {
+    const settings = await readSettings();
     const inputs = Array.from(document.querySelectorAll(".field input"));
 
     config.fields.forEach((field, index) => {
@@ -456,7 +476,7 @@
 
     if (!saveButton) return;
     saveButton.type = "button";
-    saveButton.addEventListener("click", function () {
+    saveButton.addEventListener("click", async function () {
       const nextSettings = {};
       let isValid = true;
 
@@ -475,19 +495,42 @@
       }
 
       nextSettings.updatedAt = "Baru saja";
-      localStorage.setItem(config.storageKey, JSON.stringify(nextSettings));
-      showSuccessToast("Data telah berhasil diseting ulang.");
-      saveButton.disabled = true;
-      window.setTimeout(() => {
-        window.location.href = config.redirect;
-      }, 1800);
+      
+      const formData = new FormData();
+      formData.append("type", config.type);
+      formData.append("config", JSON.stringify(nextSettings));
+      
+      fetch("../api/settings/update.php", {
+        method: "POST",
+        body: formData
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          showSuccessToast("Data telah berhasil diseting ulang.");
+          saveButton.disabled = true;
+          window.setTimeout(() => {
+            window.location.href = config.redirect;
+          }, 1800);
+        } else {
+           if (!window.HydrotechToast?.error("Gagal menyimpan data.")) {
+              alert("Gagal menyimpan data.");
+           }
+        }
+      })
+      .catch(e => {
+         console.error(e);
+         if (!window.HydrotechToast?.error("Kesalahan jaringan.")) {
+            alert("Kesalahan jaringan.");
+         }
+      });
     });
   }
 
   /* PAGE ROUTER: memilih alur halaman input atau halaman pengaturan. */
   if (currentPage === config.inputPage) {
-    applyInputPage();
+    await applyInputPage();
   } else {
-    applySettingsPage();
+    await applySettingsPage();
   }
 })();

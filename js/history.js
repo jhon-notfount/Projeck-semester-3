@@ -24,18 +24,7 @@
       .toLowerCase();
   }
 
-  /* DELETE STORAGE: membaca dan menyimpan ID baris history yang sudah dihapus. */
-  function readDeletedRows() {
-    try {
-      return JSON.parse(localStorage.getItem(storageKey) || "[]");
-    } catch (error) {
-      return [];
-    }
-  }
-
-  function writeDeletedRows(ids) {
-    localStorage.setItem(storageKey, JSON.stringify(ids));
-  }
+  /* DELETE STORAGE: sekarang ditangani oleh backend via API. */
 
   /* ROW HELPERS: mengambil baris tabel dan mengubah isi kolom menjadi data terstruktur. */
   function getRows() {
@@ -167,15 +156,7 @@
     render();
   }
 
-  /* DELETED ROWS: menghapus baris tersimpan saat halaman history dibuka kembali. */
-  function removeDeletedRows() {
-    const deletedRows = readDeletedRows();
-    getRows().forEach((row) => {
-      if (deletedRows.includes(row.dataset.id)) {
-        row.remove();
-      }
-    });
-  }
+  /* DELETED ROWS: baris dihapus langsung oleh backend, tidak perlu disembunyikan via JS lagi. */
 
   const monthNames = [
     "Januari",
@@ -1201,13 +1182,15 @@
     resetFilters();
   });
 
-  /* DELETE EVENT: menghapus data history setelah konfirmasi dan menyimpan statusnya. */
+  /* DELETE EVENT: menghapus data history setelah konfirmasi via API. */
   table.addEventListener("click", async function (event) {
     const deleteButton = event.target.closest(".trash-btn");
     if (!deleteButton) return;
 
     const row = deleteButton.closest("tr");
     if (!row) return;
+    const rowId = row.dataset.rowId;
+    if (!rowId) return;
 
     if (window.HydrotechConfirm) {
       const confirmed = await window.HydrotechConfirm.open({
@@ -1221,12 +1204,25 @@
       if (!confirmed) return;
     }
 
-    const nextDeletedRows = Array.from(
-      new Set([...readDeletedRows(), row.dataset.id]),
-    );
-    writeDeletedRows(nextDeletedRows);
-    row.remove();
-    render();
+    const formData = new FormData();
+    formData.append("id", rowId);
+    fetch("../api/history/delete.php", {
+      method: "POST",
+      body: formData
+    })
+    .then(response => response.json())
+    .then(result => {
+      if (result.success) {
+        row.remove();
+        render();
+      } else {
+        alert("Gagal menghapus data history.");
+      }
+    })
+    .catch(e => {
+      console.error(e);
+      alert("Kesalahan jaringan.");
+    });
   });
 
   /* EXPORT EVENT: membuat PDF history bulanan setelah pengguna memilih bulan. */
@@ -1255,7 +1251,6 @@
   });
 
   /* INITIAL RENDER: menerapkan data tersimpan, tabel, dan grafik saat halaman dibuka. */
-  removeDeletedRows();
   render();
   renderHistoryChart();
 })();

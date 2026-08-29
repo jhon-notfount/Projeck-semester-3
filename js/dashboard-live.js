@@ -1,4 +1,4 @@
-(function () {
+(async function () {
   /* DASHBOARD ELEMENTS: elemen rentang setting, grafik, dan teks update live. */
   const chartCanvas = document.getElementById("dashboardNutrientChart");
   const ppmStat = document.querySelector(".stat-ppm .stat-num");
@@ -10,27 +10,34 @@
   const updateText = document.querySelector(".hero-metrics div:last-child b");
 
   const settingDefaults = {
-    ppm: { storageKey: "hydrotech.ppmSettings", min: "800", max: "1000" },
-    ph: { storageKey: "hydrotech.phSettings", min: "5,5", max: "6,5" },
+    ppm: { min: "800", max: "1000" },
+    ph: { min: "5,5", max: "6,5" },
   };
 
-  /* SETTING RANGE: menampilkan rentang PPM dan pH yang diatur di halaman fitur. */
-  function readSettingRange(type) {
+  /* SETTING RANGE: menampilkan rentang PPM dan pH dari API. */
+  async function readSettingRange(type) {
     const setting = settingDefaults[type];
-    try {
-      return {
-        min: setting.min,
-        max: setting.max,
-        ...JSON.parse(localStorage.getItem(setting.storageKey) || "{}"),
-      };
-    } catch (error) {
-      return { min: setting.min, max: setting.max };
-    }
+    return fetch(`../api/settings/get.php?type=${type}`)
+      .then(response => response.json())
+      .then(result => {
+        if (result.success && result.data && result.data.config) {
+          return {
+            min: setting.min,
+            max: setting.max,
+            ...result.data.config
+          };
+        }
+        return { min: setting.min, max: setting.max };
+      })
+      .catch(error => {
+        console.error(error);
+        return { min: setting.min, max: setting.max };
+      });
   }
 
-  function applySettingRanges() {
-    const ppmRange = readSettingRange("ppm");
-    const phRange = readSettingRange("ph");
+  async function applySettingRanges() {
+    const ppmRange = await readSettingRange("ppm");
+    const phRange = await readSettingRange("ph");
 
     if (ppmStat) ppmStat.textContent = `${ppmRange.min} - ${ppmRange.max}`;
     if (phStat) phStat.textContent = `${phRange.min} - ${phRange.max}`;
@@ -38,7 +45,7 @@
     if (phBar) phBar.style.width = "100%";
   }
 
-  applySettingRanges();
+  await applySettingRanges();
 
   if (!chartCanvas || typeof Chart === "undefined") return;
 
@@ -274,7 +281,7 @@
   });
 
   /* LIVE RENDER: memperbarui ringkasan grafik, diagram, dan status update secara berkala. */
-  function render() {
+  async function render() {
     tick += 1;
     const latestPpm = randomStep(ppmValues[ppmValues.length - 1], 62, 780, 940, 0);
     const latestPh = randomStep(phValues[phValues.length - 1], 0.42, 5.6, 7.4, 1);
@@ -300,6 +307,16 @@
 
     if (updateText) updateText.textContent = "baru saja";
     updateActivityPulse();
+
+    const formData = new FormData();
+    formData.append("ph_value", latestPh);
+    formData.append("ppm_value", latestPpm);
+    fetch("../api/sensor/save.php", {
+      method: "POST",
+      body: formData
+    }).catch(e => {
+      console.error("Gagal menyimpan data sensor:", e);
+    });
   }
 
   render();

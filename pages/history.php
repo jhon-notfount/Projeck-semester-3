@@ -1,0 +1,286 @@
+<?php
+require_once '../includes/auth_check.php';
+requireAuth();
+require_once '../config/database.php';
+
+$pdo = getDBConnection();
+$stmt = $pdo->query("SELECT * FROM history_logs WHERE is_deleted=0 ORDER BY log_date DESC, log_time DESC");
+$logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+<!doctype html>
+<html lang="id">
+  <head>
+    <!-- META SETUP: pengaturan dasar dokumen dan stylesheet halaman history. -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>History</title>
+    <link rel="stylesheet" href="../css/history.css" />
+  </head>
+  <body>
+    <div class="app">
+      <div data-sidebar-root></div><script src="../js/sidebar.js"></script>
+
+      <main class="main">
+        <!-- TOPBAR: judul halaman, notifikasi, dan identitas admin. -->
+        <header class="topbar">
+          <div class="page-title">
+            <h1>History</h1>
+            <p>Selamat datang kembali, Admin</p>
+          </div>
+          <div class="admin">
+            <div class="bell" aria-label="Notifikasi"></div>
+            <div class="admin-card">
+              <div class="admin-a">A</div>
+              <div>
+                <div class="admin-name">Admin</div>
+                <div class="admin-email">admin@hydrotech.com</div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="content">
+          <!-- HISTORY WRAPPER: container utama untuk tabel history dan grafik monitoring. -->
+          <section class="history-card">
+            <!-- HISTORY HEADER: judul ringkas halaman dan tombol ekspor PDF. -->
+            <div class="history-card-head">
+              <div>
+                <span class="history-kicker">Riwayat Monitoring</span>
+                <h2>Data Aktivitas Sistem</h2>
+                <p>
+                  Pantau perubahan pH, PPM, dan Dithane berdasarkan tanggal,
+                  bulan, jam, tipe, dan status.
+                </p>
+              </div>
+              <button type="button" class="history-export" data-history-export>
+                Ekspor PDF
+              </button>
+            </div>
+
+            <!-- TABLE PANEL: area filter, tabel data history, empty state, dan pagination. -->
+            <div class="history-table-panel">
+              <!-- FILTER BAR: pencarian dan filter tipe, hari, bulan, serta status. -->
+              <div class="filter-bar history-filter">
+                <input
+                  data-history-search
+                  type="search"
+                  placeholder="Cari tanggal, tipe, status, hari, atau jam..." />
+                <span class="filter-select">
+                  <select data-history-type aria-label="Filter tipe">
+                    <option value="">Semua Tipe</option>
+                    <option value="ph">pH</option>
+                    <option value="ppm">PPM</option>
+                    <option value="dithane">Dithane</option>
+                  </select>
+                </span>
+                <span class="filter-select">
+                  <select data-history-day aria-label="Filter hari">
+                    <option value="">Semua Hari</option>
+                    <option value="senin">Senin</option>
+                    <option value="selasa">Selasa</option>
+                    <option value="rabu">Rabu</option>
+                    <option value="kamis">Kamis</option>
+                    <option value="jumat">Jumat</option>
+                  </select>
+                </span>
+                <span class="filter-select">
+                  <select data-history-month aria-label="Filter bulan">
+                    <option value="">Semua Bulan</option>
+                    <option value="januari">Januari</option>
+                    <option value="februari">Februari</option>
+                    <option value="maret">Maret</option>
+                    <option value="april">April</option>
+                    <option value="mei">Mei</option>
+                    <option value="juni">Juni</option>
+                    <option value="juli">Juli</option>
+                    <option value="agustus">Agustus</option>
+                    <option value="september">September</option>
+                    <option value="oktober">Oktober</option>
+                    <option value="november">November</option>
+                    <option value="desember">Desember</option>
+                  </select>
+                </span>
+                <span class="filter-select">
+                  <select data-history-status aria-label="Filter status">
+                    <option value="">Semua Status</option>
+                    <option value="normal">Normal</option>
+                    <option value="rendah">Rendah</option>
+                    <option value="tinggi">Tinggi</option>
+                  </select>
+                </span>
+                <button type="button" data-history-reset>Reset</button>
+              </div>
+
+              <!-- HISTORY TABLE: daftar aktivitas monitoring pH, PPM, dan Dithane. -->
+              <div class="history-table-wrap">
+                <table class="history-table">
+                  <thead>
+                    <tr>
+                      <th>No</th>
+                      <th>Hari</th>
+                      <th>Tanggal</th>
+                      <th>Jam</th>
+                      <th>Tipe</th>
+                      <th>Status</th>
+                      <th>Keterangan</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php $no = 1; foreach ($logs as $log): ?>
+                    <tr data-row-id="<?= htmlspecialchars($log['id']) ?>">
+                      <td><?= $no++ ?></td>
+                      <td><?= htmlspecialchars($log['day_name'] ?? '') ?></td>
+                      <td><?= htmlspecialchars($log['log_date'] ?? '') ?></td>
+                      <td><?= htmlspecialchars($log['log_time'] ?? '') ?></td>
+                      <td>
+                        <?php if (strtolower($log['type'] ?? '') === 'ph'): ?>
+                          <span class="badge blue">pH</span>
+                        <?php elseif (strtolower($log['type'] ?? '') === 'ppm'): ?>
+                          <span class="badge normal">PPM</span>
+                        <?php elseif (strtolower($log['type'] ?? '') === 'dithane'): ?>
+                          <span class="badge purple">Dithane</span>
+                        <?php else: ?>
+                          <span class="badge"><?= htmlspecialchars($log['type'] ?? '') ?></span>
+                        <?php endif; ?>
+                      </td>
+                      <td>
+                        <?php
+                        $statusClass = 'normal';
+                        if (strtolower($log['status'] ?? '') === 'rendah') $statusClass = 'low';
+                        elseif (strtolower($log['status'] ?? '') === 'tinggi') $statusClass = 'high';
+                        ?>
+                        <span class="badge <?= $statusClass ?>"><?= htmlspecialchars($log['status'] ?? '') ?></span>
+                      </td>
+                      <td><?= htmlspecialchars($log['note'] ?? '') ?></td>
+                      <td class="trash">
+                        <button
+                          type="button"
+                          class="trash-btn"
+                          aria-label="Hapus data">
+                          &#128465;
+                        </button>
+                      </td>
+                    </tr>
+                    <?php endforeach; ?>
+                  </tbody>
+                </table>
+                <div class="history-empty" data-history-empty>
+                  Data tidak ditemukan.
+                </div>
+              </div>
+
+              <!-- TABLE FOOTER: informasi jumlah data yang tampil dan tombol halaman. -->
+              <div class="history-footer">
+                <div class="showing" data-history-showing>
+                  Menampilkan 0 data
+                </div>
+                <div class="pagination" data-history-pagination></div>
+              </div>
+            </div>
+
+            <!-- CHART PANEL: grafik tren pH dan PPM beserta kontrol periode. -->
+            <section
+              class="history-chart-panel"
+              aria-labelledby="history-chart-title">
+              <div class="history-chart-head">
+                <div>
+                  <span class="history-kicker">Grafik Monitoring</span>
+                  <h3 id="history-chart-title">History pH dan PPM</h3>
+                  <p data-history-chart-period>
+                    Tren monitoring pH dan PPM selama Mei 2026, lengkap dengan
+                    hari, tanggal, dan jam pengukuran.
+                  </p>
+                </div>
+                <div class="history-chart-side">
+                  <!-- CHART CONTROLS: pilihan rentang waktu dan bulan grafik. -->
+                  <div class="history-chart-controls">
+                    <div
+                      class="history-chart-range"
+                      aria-label="Filter periode grafik">
+                      <button
+                        type="button"
+                        data-history-chart-range="7"
+                        aria-pressed="false">
+                        1 Minggu
+                      </button>
+                      <button
+                        type="button"
+                        data-history-chart-range="14"
+                        aria-pressed="false">
+                        2 Minggu
+                      </button>
+                      <button
+                        type="button"
+                        class="active"
+                        data-history-chart-range="month"
+                        aria-pressed="true">
+                        1 Bulan
+                      </button>
+                    </div>
+                    <label class="history-chart-filter">
+                      <span>Bulan Grafik</span>
+                      <select
+                        data-history-chart-month
+                        aria-label="Filter bulan grafik">
+                        <option value="0">Januari</option>
+                        <option value="1">Februari</option>
+                        <option value="2">Maret</option>
+                        <option value="3">April</option>
+                        <option value="4" selected>Mei</option>
+                        <option value="5">Juni</option>
+                        <option value="6">Juli</option>
+                        <option value="7">Agustus</option>
+                        <option value="8">September</option>
+                        <option value="9">Oktober</option>
+                        <option value="10">November</option>
+                        <option value="11">Desember</option>
+                      </select>
+                    </label>
+                  </div>
+                  <!-- CHART STATS: ringkasan rata-rata pH dan PPM dari grafik aktif. -->
+                  <div class="history-chart-stats">
+                    <div class="stat-ph">
+                      <div class="mini-ico icon-ph" aria-hidden="true"></div>
+                      <span>Rata-rata pH</span>
+                      <strong data-chart-average-ph>0</strong>
+                      <small>Keasaman air</small>
+                    </div>
+                    <div class="stat-ppm">
+                      <div class="mini-ico icon-ppm" aria-hidden="true"></div>
+                      <span>Rata-rata PPM</span>
+                      <strong data-chart-average-ppm>0</strong>
+                      <small>Nutrisi larutan</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CHART LEGEND: keterangan warna garis pH dan PPM. -->
+              <div class="history-chart-legend" aria-label="Legenda grafik">
+                <span><i class="legend-dot ph"></i>pH</span>
+                <span><i class="legend-dot ppm"></i>PPM</span>
+              </div>
+
+              <!-- CHART CANVAS: tempat Chart.js menggambar grafik history. -->
+              <div class="history-chart-wrap">
+                <canvas
+                  id="historyLineChart"
+                  aria-label="Diagram garis history pH dan PPM selama satu bulan"
+                  role="img"></canvas>
+              </div>
+            </section>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <!-- PAGE SCRIPTS: library dialog, grafik, PDF, dan logika halaman history. -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../js/confirm-modal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+    <script src="../js/history.js"></script>
+  </body>
+</html>

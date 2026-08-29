@@ -162,9 +162,9 @@ select {
   display: none;
 }
 .notification-panel {
-  position: absolute;
-  top: calc(100% + 12px);
-  right: 0;
+  position: fixed;
+  top: 72px;
+  right: 22px;
   width: min(340px, calc(100vw - 32px));
   background: rgba(255, 255, 255, 0.98);
   border: 1px solid rgba(215, 233, 222, 0.96);
@@ -788,7 +788,11 @@ select {
   border-radius: 26px;
   background:
     radial-gradient(circle at 50% 0%, rgba(7, 166, 79, 0.16), transparent 42%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 255, 249, 0.98));
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.98),
+      rgba(244, 255, 249, 0.98)
+    );
   box-shadow:
     0 30px 80px rgba(12, 45, 24, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.92);
@@ -818,7 +822,11 @@ select {
   height: 82px;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.34), transparent 32%),
+    radial-gradient(
+      circle at 35% 30%,
+      rgba(255, 255, 255, 0.34),
+      transparent 32%
+    ),
     linear-gradient(135deg, var(--green), #25c86d);
   display: grid;
   place-items: center;
@@ -942,4 +950,3 @@ body:not(.login-page) {
   border-color: rgba(215, 233, 222, 0.92);
   box-shadow: 0 10px 22px rgba(24, 56, 36, 0.08);
 }
-

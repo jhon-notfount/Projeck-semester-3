@@ -1,0 +1,215 @@
+<?php require_once __DIR__.'/../includes/auth_check.php'; requireAuth(); ?>
+<!doctype html>
+<html lang="id">
+  <head>
+    <!-- META SETUP: pengaturan dasar dokumen dan stylesheet dashboard. -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Dashboard Hydrotech</title>
+    <link rel="stylesheet" href="../css/hydrotech-dashboard-panel-2026.css" />
+  </head>
+  <body>
+    <div class="app">
+      <div data-sidebar-root></div><script src="../js/sidebar.js"></script>
+      <main class="main">
+        <!-- TOPBAR: judul halaman, notifikasi, dan data admin. -->
+        <header class="topbar">
+          <div class="page-title">
+            <h1>Dashboard</h1>
+            <p>Selamat datang kembali, <?php echo htmlspecialchars($_SESSION['username'] ?? 'Admin'); ?></p>
+          </div>
+          <div class="admin">
+            <div class="bell" aria-label="Notifikasi"></div>
+            <div class="admin-card">
+              <div class="admin-a"><?php echo strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)); ?></div>
+              <div>
+                <div class="admin-name"><?php echo htmlspecialchars($_SESSION['username'] ?? 'Admin'); ?></div>
+                <div class="admin-email">admin@hydrotech.com</div>
+              </div>
+            </div>
+          </div>
+        </header>
+        <div class="content">
+          <!-- DASHBOARD HERO: ringkasan status sistem dan update terakhir. -->
+          <section class="dashboard-hero">
+            <div>
+              <span class="hero-kicker">Live Hydroponic Control</span>
+              <h2>Monitoring tanaman berjalan stabil</h2>
+              <p>
+                Nutrisi, pH, dan penyemprotan Dithane berada dalam rentang aman
+                untuk siklus hari ini.
+              </p>
+            </div>
+            <div class="hero-metrics">
+              <div>
+                <small>Status Sistem</small>
+                <b>Aktif</b>
+              </div>
+              <div>
+                <small>Update Terakhir</small>
+                <b>2 menit lalu</b>
+              </div>
+            </div>
+          </section>
+          <!-- STATS SUMMARY: kartu angka utama untuk PPM, pH, dan Dithane. -->
+          <section class="stats">
+            <div class="stat stat-ppm">
+              <div class="mini-ico icon-ppm" aria-hidden="true"></div>
+              <div class="pill">DISETEL</div>
+              <div class="stat-title">Rentang PPM</div>
+              <div class="stat-num stat-range">800 - 1000</div>
+              <div class="stat-note">Dari halaman Pengaturan PPM</div>
+              <div class="bar"><span style="width: 100%"></span></div>
+            </div>
+            <div class="stat stat-ph">
+              <div class="mini-ico icon-ph" aria-hidden="true"></div>
+              <div class="pill">DISETEL</div>
+              <div class="stat-title">Rentang pH</div>
+              <div class="stat-num stat-range">5,5 - 6,5</div>
+              <div class="stat-note">Dari halaman Pengaturan pH</div>
+              <div class="bar"><span style="width: 100%"></span></div>
+            </div>
+            <div class="stat stat-dithane">
+              <div class="mini-ico icon-dithane" aria-hidden="true"></div>
+              <div class="pill">TERJADWAL</div>
+              <div class="stat-title">Penyemprotan Dithane</div>
+              <div class="stat-num">14:00</div>
+              <div class="stat-note">setiap hari pada pukul 14.00</div>
+            </div>
+          </section>
+          <!-- DASHBOARD GRID: area grafik nutrisi dan riwayat aktivitas terbaru. -->
+          <section class="dashboard-grid">
+            <!-- CHART CARD: grafik perbandingan pH dan PPM hari ini. -->
+            <div class="card chart-card">
+              <div class="chart-head">
+                <div>
+                  <div class="section-title">Monitoring Nutrisi</div>
+                  <p>Perbandingan pH dan PPM hari ini</p>
+                </div>
+                <div class="chart-legend">
+                  <span><i class="legend-ph"></i>pH</span>
+                  <span><i class="legend-ppm"></i>PPM</span>
+                </div>
+              </div>
+              <div class="chart-summary">
+                <div>
+                  <small>pH saat ini</small>
+                  <b>7.1</b>
+                </div>
+                <div>
+                  <small>PPM saat ini</small>
+                  <b>863</b>
+                </div>
+              </div>
+              <div class="dashboard-chart-wrap">
+                <canvas
+                  class="chart"
+                  id="dashboardNutrientChart"
+                  aria-label="Grafik pH dan PPM"
+                  role="img"></canvas>
+              </div>
+            </div>
+            <!-- ACTIVITY CARD: daftar aktivitas sistem dengan filter kategori. -->
+            <div
+              class="card activity dashboard-activity-card"
+              data-activity-section>
+              <div class="activity-head">
+                <div>
+                  <div class="section-title">Riwayat Aktivitas Sistem</div>
+                  <p>
+                    Aktivitas terbaru dari sensor, nutrisi, pH, dan jadwal
+                    penyemprotan.
+                  </p>
+                </div>
+                <div class="activity-filter-dropdown" data-activity-dropdown>
+                  <button
+                    class="activity-filter-toggle"
+                    type="button"
+                    data-activity-toggle
+                    aria-expanded="false">
+                    <span data-activity-label>Semua</span>
+                    <i></i>
+                  </button>
+                  <div class="activity-filter-menu" data-activity-menu>
+                    <button
+                      class="active"
+                      type="button"
+                      data-activity-filter="all">
+                      Semua
+                    </button>
+                    <button type="button" data-activity-filter="ppm">
+                      PPM
+                    </button>
+                    <button type="button" data-activity-filter="ph">pH</button>
+                    <button type="button" data-activity-filter="dithane">
+                      Dithane
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="activity-list">
+                <div class="activity-row" data-activity-type="ppm">
+                  <span class="nicon">PPM</span>
+                  <div>
+                    <b>Penyesuaian PPM</b>
+                    <small>PPM disesuaikan dari 845 ke 863</small>
+                  </div>
+                  <span class="status">Berhasil</span>
+                  <span class="ago">2 jam lalu</span>
+                </div>
+                <div class="activity-row" data-activity-type="ph">
+                  <span class="nicon">pH</span>
+                  <div>
+                    <b>Kalibrasi pH</b
+                    ><small>pH dikalibrasi ke level 7.1</small>
+                  </div>
+                  <span class="status">Berhasil</span>
+                  <span class="ago">2 jam lalu</span>
+                </div>
+                <div class="activity-row" data-activity-type="dithane">
+                  <span class="nicon">DT</span>
+                  <div>
+                    <b>Jadwal Dithane Aktif</b>
+                    <small>Penyemprotan berikutnya pukul 14.00</small>
+                  </div>
+                  <span class="status wait">Terjadwal</span>
+                  <span class="ago">35 menit lalu</span>
+                </div>
+                <div class="activity-row" data-activity-type="ppm">
+                  <span class="nicon">PPM</span>
+                  <div>
+                    <b>Sensor Nutrisi Dibaca</b>
+                    <small>Nilai PPM masuk dalam rentang aman</small>
+                  </div>
+                  <span class="status">Normal</span>
+                  <span class="ago">12 menit lalu</span>
+                </div>
+                <div class="activity-row" data-activity-type="ph">
+                  <span class="nicon">pH</span>
+                  <div>
+                    <b>pH Mulai Naik</b>
+                    <small>Sistem memantau perubahan pH secara otomatis</small>
+                  </div>
+                  <span class="status warn">Dipantau</span>
+                  <span class="ago">baru saja</span>
+                </div>
+              </div>
+              <div class="activity-empty" data-activity-empty>
+                Tidak ada aktivitas pada kategori ini.
+              </div>
+              <div class="activity-foot">
+                <span data-activity-count>Menampilkan 5 aktivitas</span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+    <!-- PAGE SCRIPTS: dialog, filter aktivitas, Chart.js, dan simulasi data live. -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../js/confirm-modal.js"></script>
+    <script src="../js/dashboard-activity.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../js/dashboard-live.js"></script>
+  </body>
+</html>

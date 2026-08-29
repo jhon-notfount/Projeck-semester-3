@@ -3,7 +3,9 @@
   const section = document.querySelector("[data-activity-section]");
   if (!section) return;
 
-  const filterButtons = Array.from(section.querySelectorAll("[data-activity-filter]"));
+  const filterButtons = Array.from(
+    section.querySelectorAll("[data-activity-filter]"),
+  );
   const rows = Array.from(section.querySelectorAll("[data-activity-type]"));
   const empty = section.querySelector("[data-activity-empty]");
   const counter = section.querySelector("[data-activity-count]");

@@ -543,10 +543,12 @@ Jam real-time dibuat menggunakan:
 - Zona waktu Asia/Jakarta.
 
 Cara kerja:
-- js/confirm-modal.js membuat elemen jam secara otomatis di sidebar.
+- js/sidebar.js membuat elemen jam secara otomatis di sidebar.
 - Tanggal diformat menggunakan locale id-ID.
 - Jam diformat dengan timeZone Asia/Jakarta.
 - setInterval() memperbarui jam setiap 1 detik.
+- Sumber waktu berasal dari object Date bawaan browser, sehingga waktu yang
+  tampil mengikuti waktu nyata perangkat/browser, lalu ditampilkan sebagai WIB.
 
 
 8. Notifikasi
@@ -1088,7 +1090,163 @@ dapat ditambahkan adalah:
 - Backup dan restore data.
 
 
-16. Ringkasan Teknis
+16. Ringkasan Penjelasan untuk Presentasi
+-----------------------------------------
+
+Bagian ini dapat digunakan sebagai bahan singkat ketika menjelaskan sistem
+Hydrotech kepada dosen.
+
+Gambaran umum sistem:
+- Hydrotech adalah prototype dashboard monitoring hidroponik berbasis web.
+- Sistem dibuat untuk membantu admin memantau kondisi pH, PPM, jadwal Dithane,
+  aktivitas terbaru, history monitoring, notifikasi, dan pengaturan parameter.
+- Aplikasi ini masih frontend statis, jadi belum menggunakan backend, database,
+  atau sensor asli.
+- Data yang berubah disimpan sementara di localStorage browser, sedangkan data
+  monitoring pH, PPM, history, aktivitas, dan notifikasi masih berupa simulasi.
+
+Alur kerja aplikasi:
+1. Pengguna membuka index.html.
+2. Sistem mengarahkan pengguna ke halaman login.
+3. Admin login menggunakan akun demo.
+4. Setelah berhasil login, admin masuk ke dashboard utama.
+5. Admin dapat melihat ringkasan pH, PPM, grafik live, aktivitas terbaru, dan
+   status sistem.
+6. Admin dapat membuka menu fitur untuk mengatur PPM, pH, dan Dithane.
+7. Admin dapat membuka history untuk mencari data, memfilter data, menghapus
+   data dari tampilan, melihat grafik tren, dan export laporan PDF.
+
+Animasi perpindahan halaman:
+- Perpindahan atau kemunculan halaman menggunakan animasi CSS bernama
+  pageRiseEnter.
+- Animasi ini dibuat dengan @keyframes di css/global.css.
+- Efeknya adalah elemen halaman muncul secara halus dari bawah ke atas sambil
+  berubah dari transparan menjadi terlihat.
+- Secara teknis animasi memakai perubahan opacity dan transform translateY.
+- Durasi animasi sekitar 1,45 sampai 1,55 detik.
+- Timing animasi memakai cubic-bezier(0.19, 1, 0.22, 1), sehingga gerakannya
+  terasa lembut dan tidak kaku.
+- Elemen seperti hero, card, grid, tabel, form, dan panel history diberi delay
+  bertahap, misalnya 0,08 detik, 0,24 detik, 0,4 detik, 0,56 detik, dan
+  0,72 detik. Karena itu saat halaman dibuka, komponen terlihat masuk satu per
+  satu.
+- Terdapat juga aturan prefers-reduced-motion. Jika pengguna mengaktifkan
+  pengurangan animasi di sistem operasi/browser, durasi animasi diperkecil agar
+  lebih nyaman dan tidak mengganggu.
+
+Animasi pada dashboard:
+- Titik status live pada hero dashboard memakai animasi liveDot.
+  Efeknya berupa pulse/ring kecil yang berulang untuk memberi kesan sistem
+  sedang aktif.
+- Kartu statistik PPM, pH, dan Dithane memakai animasi statShine.
+  Efeknya seperti kilau tipis yang bergerak melintasi card agar tampilan lebih
+  hidup.
+- Saat nilai live pH dan PPM berubah, angka pada ringkasan grafik dianimasikan
+  menggunakan requestAnimationFrame di js/dashboard-live.js.
+  Tujuannya agar angka tidak berubah secara kasar, tetapi naik/turun secara
+  halus.
+- Grafik live diberi class live-refresh ketika data baru masuk.
+  Class ini membuat grafik sedikit terangkat dan mendapat efek bayangan.
+- Aktivitas terbaru diberi animasi livePulse.
+  Efeknya adalah salah satu baris aktivitas disorot sebentar ketika update live
+  berjalan.
+
+Grafik live pH dan PPM:
+- Grafik dibuat menggunakan Chart.js.
+- Jenis grafik yang dipakai adalah line chart.
+- Ada dua dataset:
+  - pH dengan warna merah/oranye.
+  - PPM dengan warna hijau.
+- Grafik memakai fill/gradient di bawah garis agar tampil lebih informatif.
+- Grafik menggunakan dua sumbu Y:
+  - Sumbu kiri untuk pH.
+  - Sumbu kanan untuk PPM.
+- Data grafik diperbarui otomatis setiap 1,8 detik menggunakan setInterval().
+- Nilai baru dibuat dari simulasi angka acak yang tetap dijaga dalam batas
+  tertentu menggunakan fungsi clamp().
+- Setelah data berubah, Chart.js menjalankan chart.update() agar garis grafik
+  bergerak mengikuti data terbaru.
+
+Interaksi dashboard:
+- Filter aktivitas dibuat dengan JavaScript Vanilla pada js/dashboard-activity.js.
+- Tombol/dropdown filter membaca data-activity-filter dan data-activity-type.
+- Jika kategori dipilih, baris aktivitas yang sesuai ditampilkan, sedangkan
+  baris lain disembunyikan.
+- Jika tidak ada aktivitas yang cocok, sistem menampilkan empty state.
+- Dropdown filter juga dapat ditutup dengan klik di luar area atau tombol
+  Escape.
+
+Jam real-time:
+- Jam real-time pada sidebar dibuat di js/sidebar.js.
+- Teknologi yang dipakai adalah JavaScript Date, Intl.DateTimeFormat(), dan
+  setInterval().
+- Date digunakan untuk mengambil waktu nyata dari browser/perangkat.
+- Intl.DateTimeFormat() digunakan untuk memformat tanggal dan jam dalam bahasa
+  Indonesia dengan locale id-ID.
+- Opsi timeZone: "Asia/Jakarta" digunakan agar jam ditampilkan sebagai WIB.
+- setInterval() menjalankan update setiap 1 detik, sehingga detik, menit, dan
+  jam terus mengikuti waktu nyata.
+- Jadi, jam tersebut bukan berasal dari database atau API internet, tetapi dari
+  waktu sistem/browser pengguna yang diformat ke zona waktu Jakarta.
+
+Modal, toast, dan notifikasi:
+- Modal konfirmasi memakai SweetAlert2 jika library tersedia.
+- Jika SweetAlert2 gagal dimuat, aplikasi tetap memiliki fallback modal custom
+  dari JavaScript.
+- Toast berhasil memakai animasi icon pop, ring pulse, dan check draw pada
+  css/global.css.
+- Notifikasi berada di topbar dan status sudah dibaca disimpan di localStorage
+  dengan key hydrotech.notificationsRead.
+
+Penyimpanan data:
+- Pengaturan PPM, pH, dan Dithane disimpan di localStorage.
+- localStorage digunakan karena proyek ini belum memakai database.
+- Data disimpan dalam bentuk JSON string menggunakan JSON.stringify().
+- Saat dibuka kembali, data dibaca menggunakan JSON.parse().
+- Kelemahannya, data hanya tersimpan di browser/perangkat yang sama dan tidak
+  aman untuk data sensitif.
+
+Export PDF:
+- Fitur export laporan history menggunakan jsPDF dan jsPDF AutoTable.
+- jsPDF digunakan untuk membuat dokumen PDF, menulis judul, ringkasan, dan
+  kesimpulan.
+- jsPDF AutoTable digunakan untuk membuat tabel history di dalam PDF.
+- Chart.js juga digunakan untuk membuat grafik yang kemudian dimasukkan ke PDF
+  sebagai gambar.
+
+Library yang digunakan dan fungsinya:
+- Google Fonts - Poppins:
+  Digunakan sebagai font utama agar tampilan teks dashboard lebih modern,
+  konsisten, dan mudah dibaca.
+- Font Awesome 6.5.2:
+  Digunakan untuk icon pada halaman login, seperti icon user, password, shield,
+  dan tombol mata untuk show/hide password.
+- SweetAlert2:
+  Digunakan untuk popup/modal konfirmasi yang lebih rapi, misalnya logout,
+  hapus data, reset filter, pesan error, dan pemilihan bulan export PDF.
+- Chart.js:
+  Digunakan untuk membuat grafik pH dan PPM, baik grafik live pada dashboard
+  maupun grafik tren pada halaman history.
+- jsPDF:
+  Digunakan untuk membuat file laporan PDF dari data history.
+- jsPDF AutoTable:
+  Digunakan bersama jsPDF untuk membuat tabel data history di dalam PDF agar
+  hasil laporan lebih rapi dan otomatis menyesuaikan halaman.
+
+Poin penting yang bisa disampaikan:
+- Sistem ini fokus pada prototype tampilan dan alur monitoring hidroponik.
+- Semua dibuat dengan HTML, CSS, dan JavaScript murni tanpa framework.
+- Animasi utama halaman adalah pageRiseEnter, yaitu animasi masuk halus dari
+  bawah ke atas.
+- Grafik live menggunakan Chart.js dan diperbarui otomatis dengan data simulasi.
+- Jam real-time menggunakan JavaScript Date, Intl.DateTimeFormat(), zona waktu
+  Asia/Jakarta, dan setInterval() agar terus diperbarui setiap detik.
+- Penyimpanan sementara memakai localStorage karena belum ada database.
+- Untuk versi produksi, sistem perlu ditambah backend, database, autentikasi
+  yang aman, dan integrasi sensor IoT asli.
+
+
+17. Ringkasan Teknis
 --------------------
 
 Nama proyek:
@@ -1112,12 +1270,18 @@ Penyimpanan data:
 - localStorage browser.
 
 Library:
-- Google Fonts
-- Font Awesome
-- SweetAlert2
-- Chart.js
-- jsPDF
-- jsPDF AutoTable
+- Google Fonts:
+  Font utama aplikasi.
+- Font Awesome:
+  Icon pada halaman login.
+- SweetAlert2:
+  Popup/modal konfirmasi dan pesan interaktif.
+- Chart.js:
+  Grafik live dashboard dan grafik history.
+- jsPDF:
+  Pembuatan dokumen laporan PDF.
+- jsPDF AutoTable:
+  Pembuatan tabel otomatis di dalam PDF.
 
 Target pengguna:
 - Admin/pengelola sistem hidroponik.
