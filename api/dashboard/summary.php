@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../includes/auth_check.php';
 require_once __DIR__ . '/../../includes/response.php';
+require_once __DIR__ . '/../../includes/sensors.php';
 requireAuth();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') { errorResponse('Method not allowed', 405); }
@@ -17,8 +18,18 @@ try {
         $parsedSettings[$type] = json_decode($config, true);
     }
     
-    $stmtReading = $pdo->query("SELECT * FROM sensor_readings ORDER BY recorded_at DESC LIMIT 1");
-    $latestReading = $stmtReading->fetch(PDO::FETCH_ASSOC);
+    $latestReadings = latestSensorReadings($pdo);
+    // Compatibility fields: newest available reading per parameter, with its own timestamp.
+    $latestReading = null;
+    foreach ($latestReadings as $reading) {
+        if ($latestReading === null) $latestReading = [];
+        $key = $reading['type'] . '_value';
+        if (!array_key_exists($key, $latestReading)) {
+            $latestReading[$key] = (float)$reading['value'];
+            $latestReading[$reading['type'] . '_sensor_id'] = (int)$reading['sensor_id'];
+            $latestReading[$reading['type'] . '_recorded_at'] = $reading['recorded_at'];
+        }
+    }
     
     $stmtUnread = $pdo->query("SELECT COUNT(*) FROM notifications WHERE is_read = 0");
     $unreadNotifications = (int)$stmtUnread->fetchColumn();
@@ -26,6 +37,7 @@ try {
     $result = [
         'settings' => $parsedSettings,
         'latest_reading' => $latestReading,
+        'latest_readings' => $latestReadings,
         'unread_notifications' => $unreadNotifications
     ];
     

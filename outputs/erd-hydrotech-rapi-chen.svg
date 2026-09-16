@@ -1,0 +1,279 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="4480" height="3380" viewBox="0 0 4480 3380">
+<rect width="100%" height="100%" fill="white"/>
+<text x="2240.0" y="64" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="47" font-weight="bold" fill="#24333c">ERD SISTEM MONITORING HIDROPONIK HYDROTECH</text>
+<text x="2240.0" y="122" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="28" font-weight="bold" fill="#526670">VERSI CHEN — ENTITAS, ATRIBUT, DAN RELASI</text>
+<text x="2240.0" y="168" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#24333c">8 entitas  •  57 atribut  •  7 relasi  |  Nama entitas dan atribut dalam bahasa Indonesia</text>
+<polyline points="1980,655 840,655" fill="none" stroke="#44555f" stroke-width="2"/>
+<polygon points="1410,571 1552,655 1410,739 1268,655" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1410" y="640.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">Mengubah</text>
+<text x="1410" y="670.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">profil</text>
+<rect x="1861.0" y="608.0" width="82.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="1902.0" y="627.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">(0, N)</text>
+<rect x="879.0" y="608.0" width="78.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="918.0" y="627.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">(0, 1)</text>
+<polyline points="2340,655 3480,655" fill="none" stroke="#44555f" stroke-width="2"/>
+<polygon points="2910,571 3052,655 2910,739 2768,655" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="2910" y="640.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">Mengubah</text>
+<text x="2910" y="670.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">pengaturan</text>
+<rect x="2377.0" y="608.0" width="82.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="2418.0" y="627.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">(0, N)</text>
+<rect x="3363.0" y="608.0" width="78.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="3402.0" y="627.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">(0, 1)</text>
+<polyline points="3540,712 3540,1165 2160,1165 2160,1623" fill="none" stroke="#44555f" stroke-width="2"/>
+<polygon points="2910,1081 3052,1165 2910,1249 2768,1165" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="2910" y="1150.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">Mengelompokkan</text>
+<text x="2910" y="1180.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">monitoring</text>
+<rect x="3594.0" y="771.0" width="82.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="3635.0" y="790.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">(0, N)</text>
+<rect x="2216.0" y="1526.0" width="78.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="2255.0" y="1545.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">(1, 1)</text>
+<polyline points="3720,712 3720,1623" fill="none" stroke="#44555f" stroke-width="2"/>
+<polygon points="3720,1081 3862,1165 3720,1249 3578,1165" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="3720" y="1150.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">Mengelompokkan</text>
+<text x="3720" y="1180.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">riwayat</text>
+<rect x="3774.0" y="771.0" width="82.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="3815.0" y="790.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">(0, N)</text>
+<rect x="3776.0" y="1526.0" width="78.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="3815.0" y="1545.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">(1, 1)</text>
+<polyline points="840,1680 1410,1680 1410,2700 1980,2700" fill="none" stroke="#44555f" stroke-width="2"/>
+<polygon points="1410,2116 1552,2200 1410,2284 1268,2200" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1410" y="2200.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">Menghasilkan</text>
+<rect x="877.0" y="1633.0" width="82.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="918.0" y="1652.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">(0, N)</text>
+<rect x="1863.0" y="2653.0" width="78.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="1902.0" y="2672.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">(1, 1)</text>
+<polyline points="2160,2643 2160,1737" fill="none" stroke="#44555f" stroke-width="2"/>
+<polygon points="2160,2116 2302,2200 2160,2284 2018,2200" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="2160" y="2185.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">Menjadi sumber</text>
+<text x="2160" y="2215.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">monitoring</text>
+<rect x="2214.0" y="2546.0" width="82.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="2255.0" y="2565.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">(0, N)</text>
+<rect x="2216.0" y="1796.0" width="78.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="2255.0" y="1815.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">(0, 1)</text>
+<polyline points="2340,2700 3480,2700" fill="none" stroke="#44555f" stroke-width="2"/>
+<polygon points="2910,2616 3052,2700 2910,2784 2768,2700" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="2910" y="2685.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">Menjadi sumber</text>
+<text x="2910" y="2715.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">notifikasi</text>
+<rect x="2377.0" y="2653.0" width="82.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="2418.0" y="2672.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">(0, N)</text>
+<rect x="3363.0" y="2653.0" width="78.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="3402.0" y="2672.0" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">(0, 1)</text>
+<polyline points="660,655 270,425" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="660,655 270,560" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="660,655 270,860" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="660,655 1050,425" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="660,655 1050,560" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="660,655 1050,860" fill="none" stroke="#44555f" stroke-width="2"/>
+<ellipse cx="270" cy="425" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="270" y="425" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">id_profil</text>
+<polyline points="229.5,442 310.5,442" fill="none" stroke="#44555f" stroke-width="2"/>
+<ellipse cx="270" cy="560" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="270" y="560" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">label</text>
+<ellipse cx="270" cy="860" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="270" y="860" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">urutan</text>
+<ellipse cx="1050" cy="425" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1050" y="425" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">bagian</text>
+<ellipse cx="1050" cy="560" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1050" y="560" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">isi</text>
+<ellipse cx="1050" cy="860" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1050" y="860" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">diubah_oleh_id (FK)</text>
+<rect x="480" y="598" width="360" height="114" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="660" y="645" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#24333c">Profil</text>
+<text x="660" y="681" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="19" font-weight="normal" fill="#667881">profile</text>
+<polyline points="2160,655 1770,365" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="2160,655 1770,525" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="2160,655 1770,785" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="2160,655 1770,945" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="2160,655 2550,425" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="2160,655 2550,560" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="2160,655 2550,860" fill="none" stroke="#44555f" stroke-width="2"/>
+<ellipse cx="1770" cy="365" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1770" y="365" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">id_pengguna</text>
+<polyline points="1702.5,382 1837.5,382" fill="none" stroke="#44555f" stroke-width="2"/>
+<ellipse cx="1770" cy="525" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1770" y="525" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">kata_sandi</text>
+<ellipse cx="1770" cy="785" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1770" y="785" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">peran</text>
+<ellipse cx="1770" cy="945" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1770" y="945" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">diperbarui_pada</text>
+<ellipse cx="2550" cy="425" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="2550" y="425" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">nama_pengguna</text>
+<ellipse cx="2550" cy="560" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="2550" y="560" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">email</text>
+<ellipse cx="2550" cy="860" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="2550" y="860" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">dibuat_pada</text>
+<rect x="1980" y="598" width="360" height="114" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="2160" y="645" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#24333c">Pengguna</text>
+<text x="2160" y="681" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="19" font-weight="normal" fill="#667881">users</text>
+<polyline points="3660,655 3270,425" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,655 3270,560" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,655 3270,860" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,655 4050,495" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,655 4050,815" fill="none" stroke="#44555f" stroke-width="2"/>
+<ellipse cx="3270" cy="425" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="3270" y="425" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">id_pengaturan</text>
+<polyline points="3195.5,442 3344.5,442" fill="none" stroke="#44555f" stroke-width="2"/>
+<ellipse cx="3270" cy="560" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="3270" y="560" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">konfigurasi_json</text>
+<ellipse cx="3270" cy="860" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="3270" y="860" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">diubah_oleh_id (FK)</text>
+<ellipse cx="4050" cy="495" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="4050" y="495" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">jenis</text>
+<ellipse cx="4050" cy="815" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="4050" y="815" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">diperbarui_pada</text>
+<rect x="3480" y="598" width="360" height="114" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="3660" y="645" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#24333c">Pengaturan</text>
+<text x="3660" y="681" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="19" font-weight="normal" fill="#667881">settings</text>
+<polyline points="660,1680 270,1390" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="660,1680 270,1550" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="660,1680 270,1810" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="660,1680 270,1970" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="660,1680 1050,1390" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="660,1680 1050,1550" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="660,1680 1050,1810" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="660,1680 1050,1970" fill="none" stroke="#44555f" stroke-width="2"/>
+<ellipse cx="270" cy="1390" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="270" y="1390" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">id_sensor</text>
+<polyline points="219.0,1407 321.0,1407" fill="none" stroke="#44555f" stroke-width="2"/>
+<ellipse cx="270" cy="1550" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="270" y="1550" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">jenis_sensor</text>
+<ellipse cx="270" cy="1810" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="270" y="1810" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">status_sensor</text>
+<ellipse cx="270" cy="1970" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="270" y="1970" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">dibuat_pada</text>
+<ellipse cx="1050" cy="1390" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1050" y="1390" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">nama_sensor</text>
+<ellipse cx="1050" cy="1550" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1050" y="1550" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">satuan</text>
+<ellipse cx="1050" cy="1810" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1050" y="1810" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">lokasi</text>
+<ellipse cx="1050" cy="1970" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1050" y="1970" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">diperbarui_pada</text>
+<rect x="480" y="1623" width="360" height="114" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="660" y="1670" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#24333c">Sensor</text>
+<text x="660" y="1706" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="19" font-weight="normal" fill="#667881">sensors</text>
+<polyline points="2160,1680 1770,1350" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="2160,1680 1770,1470" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="2160,1680 1770,1590" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="2160,1680 1770,1810" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="2160,1680 1770,1970" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="2160,1680 2550,1350" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="2160,1680 2550,1470" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="2160,1680 2550,1590" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="2160,1680 2550,1810" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="2160,1680 2550,1970" fill="none" stroke="#44555f" stroke-width="2"/>
+<ellipse cx="1770" cy="1350" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1770" y="1350" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">id_monitoring</text>
+<polyline points="1700.5,1367 1839.5,1367" fill="none" stroke="#44555f" stroke-width="2"/>
+<ellipse cx="1770" cy="1470" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1770" y="1470" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">nama_hari</text>
+<ellipse cx="1770" cy="1590" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1770" y="1590" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">nilai</text>
+<ellipse cx="1770" cy="1810" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1770" y="1810" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">keterangan</text>
+<ellipse cx="1770" cy="1970" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1770" y="1970" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">dibuat_pada</text>
+<ellipse cx="2550" cy="1350" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="2550" y="1350" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">jenis (FK)</text>
+<ellipse cx="2550" cy="1470" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="2550" y="1470" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">jam_catatan</text>
+<ellipse cx="2550" cy="1590" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="2550" y="1590" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">status</text>
+<ellipse cx="2550" cy="1810" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="2550" y="1810" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">dihapus</text>
+<ellipse cx="2550" cy="1970" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="2550" y="1970" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">id_pembacaan (FK)</text>
+<rect x="1980" y="1623" width="360" height="114" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="2160" y="1670" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#24333c">Catatan Monitoring</text>
+<text x="2160" y="1706" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="19" font-weight="normal" fill="#667881">monitoring_logs</text>
+<polyline points="3660,1680 3270,1350" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,1680 3270,1470" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,1680 3270,1590" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,1680 3270,1810" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,1680 3270,1970" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,1680 4050,1390" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,1680 4050,1550" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,1680 4050,1810" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,1680 4050,1970" fill="none" stroke="#44555f" stroke-width="2"/>
+<ellipse cx="3270" cy="1350" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="3270" y="1350" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">id_riwayat</text>
+<polyline points="3217.5,1367 3322.5,1367" fill="none" stroke="#44555f" stroke-width="2"/>
+<ellipse cx="3270" cy="1470" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="3270" y="1470" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">tanggal_catatan</text>
+<ellipse cx="3270" cy="1590" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="3270" y="1590" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">jenis (FK)</text>
+<ellipse cx="3270" cy="1810" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="3270" y="1810" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">keterangan</text>
+<ellipse cx="3270" cy="1970" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="3270" y="1970" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">dibuat_pada</text>
+<ellipse cx="4050" cy="1390" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="4050" y="1390" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">nama_hari</text>
+<ellipse cx="4050" cy="1550" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="4050" y="1550" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">jam_catatan</text>
+<ellipse cx="4050" cy="1810" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="4050" y="1810" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">status</text>
+<ellipse cx="4050" cy="1970" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="4050" y="1970" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">dihapus</text>
+<rect x="3480" y="1623" width="360" height="114" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="3660" y="1670" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#24333c">Riwayat</text>
+<text x="3660" y="1706" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="19" font-weight="normal" fill="#667881">history_logs</text>
+<polyline points="2160,2700 1770,2540" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="2160,2700 1770,2860" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="2160,2700 2550,2540" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="2160,2700 2550,2860" fill="none" stroke="#44555f" stroke-width="2"/>
+<ellipse cx="1770" cy="2540" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1770" y="2540" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">id_pembacaan</text>
+<polyline points="1693.5,2557 1846.5,2557" fill="none" stroke="#44555f" stroke-width="2"/>
+<ellipse cx="1770" cy="2860" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="1770" y="2860" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">nilai</text>
+<ellipse cx="2550" cy="2540" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="2550" y="2540" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">id_sensor (FK)</text>
+<ellipse cx="2550" cy="2860" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="2550" y="2860" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">direkam_pada</text>
+<rect x="1980" y="2643" width="360" height="114" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="2160" y="2690" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#24333c">Pembacaan Sensor</text>
+<text x="2160" y="2726" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="19" font-weight="normal" fill="#667881">sensor_readings</text>
+<polyline points="3660,2700 3270,2410" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,2700 3270,2570" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,2700 3270,2830" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,2700 3270,2990" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,2700 4050,2410" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,2700 4050,2570" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,2700 4050,2830" fill="none" stroke="#44555f" stroke-width="2"/>
+<polyline points="3660,2700 4050,2990" fill="none" stroke="#44555f" stroke-width="2"/>
+<ellipse cx="3270" cy="2410" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="3270" y="2410" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">id_notifikasi</text>
+<polyline points="3209.5,2427 3330.5,2427" fill="none" stroke="#44555f" stroke-width="2"/>
+<ellipse cx="3270" cy="2570" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="3270" y="2570" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">pesan</text>
+<ellipse cx="3270" cy="2830" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="3270" y="2830" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">tautan</text>
+<ellipse cx="3270" cy="2990" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="3270" y="2990" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">dibuat_pada</text>
+<ellipse cx="4050" cy="2410" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="4050" y="2410" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">label</text>
+<ellipse cx="4050" cy="2570" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="4050" y="2570" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">tingkat_pesan</text>
+<ellipse cx="4050" cy="2830" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="4050" y="2830" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">sudah_dibaca</text>
+<ellipse cx="4050" cy="2990" rx="173" ry="44" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="4050" y="2990" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">id_pembacaan (FK)</text>
+<rect x="3480" y="2643" width="360" height="114" fill="white" stroke="#44555f" stroke-width="2"/>
+<text x="3660" y="2690" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#24333c">Notifikasi</text>
+<text x="3660" y="2726" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="19" font-weight="normal" fill="#667881">notifications</text>
+<rect x="110" y="2380" width="1040" height="550" fill="#fafbfc" stroke="#cbd5db" stroke-width="1"/>
+<text x="155" y="2430" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="29" font-weight="bold" fill="#24333c">KETERANGAN NOTASI CHEN</text>
+<text x="155" y="2490" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="25" font-weight="normal" fill="#24333c">Kotak = entitas; oval = atribut.</text>
+<text x="155" y="2534" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="25" font-weight="normal" fill="#24333c">Belah ketupat = hubungan antarentitas.</text>
+<text x="155" y="2578" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="25" font-weight="normal" fill="#24333c">Atribut bergaris bawah = primary key.</text>
+<text x="155" y="2622" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="25" font-weight="normal" fill="#24333c">(FK) = atribut referensi ke entitas lain.</text>
+<text x="155" y="2666" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="25" font-weight="normal" fill="#24333c">(min, maks) di dekat entitas menyatakan</text>
+<text x="155" y="2710" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="25" font-weight="normal" fill="#24333c">jumlah pasangan yang dapat dimilikinya.</text>
+<text x="155" y="2754" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="25" font-weight="normal" fill="#24333c">Contoh: satu Sensor mempunyai (0, N)</text>
+<text x="155" y="2798" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="25" font-weight="normal" fill="#24333c">pembacaan; satu Pembacaan berasal dari</text>
+<text x="155" y="2842" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="25" font-weight="normal" fill="#24333c">(1, 1) Sensor.</text>
+<polyline points="110,3110 4370,3110" fill="none" stroke="#a7b6bf" stroke-width="1"/>
+<text x="2240.0" y="3160" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="28" font-weight="bold" fill="#24333c">(0, N) = nol atau banyak  |  (0, 1) = nol atau satu  |  (1, 1) = wajib tepat satu</text>
+<text x="2240.0" y="3220" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#24333c">Setiap atribut pada diagram berasal dari skema tabel; nama Indonesia merupakan padanan untuk dokumentasi.</text>
+<text x="2240.0" y="3280" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#24333c">Detail tipe data, NULL, UNIQUE, dan nilai ENUM tersedia pada versi tabel / Crow’s Foot.</text>
+</svg>

@@ -6,10 +6,10 @@
  * Uses singleton pattern to avoid multiple connections.
  */
 
-$DB_HOST    = 'localhost';
-$DB_USER    = 'root';
-$DB_PASS    = '';
-$DB_NAME    = 'monitoring_sensor';
+$DB_HOST = getenv('HYDROTECH_DB_HOST') !== false ? getenv('HYDROTECH_DB_HOST') : 'localhost';
+$DB_USER = getenv('HYDROTECH_DB_USER') !== false ? getenv('HYDROTECH_DB_USER') : 'root';
+$DB_PASS = getenv('HYDROTECH_DB_PASS') !== false ? getenv('HYDROTECH_DB_PASS') : '';
+$DB_NAME = getenv('HYDROTECH_DB_NAME') !== false ? getenv('HYDROTECH_DB_NAME') : 'monitoring_sensor';
 $DB_CHARSET = 'utf8mb4';
 
 /**

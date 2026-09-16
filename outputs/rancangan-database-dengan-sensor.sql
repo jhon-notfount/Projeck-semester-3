@@ -1,8 +1,12 @@
--- Hydrotech: 8 tabel, 57 atribut, 7 foreign key.
--- Satu sensor menghasilkan banyak pembacaan.
--- Database lama: jalankan php database/migrate_sensors.php.
+-- RANCANGAN BARU HYDROTECH DENGAN SENSOR - BELUM DIJALANKAN.
+-- Untuk database rancangan kosong; bukan migrasi langsung database aktif.
+-- Nama database berbeda agar tidak menggunakan monitoring_sensor milik aplikasi.
+-- Aplikasi lama perlu diubah sebelum memakai model satu nilai per sensor ini.
+CREATE DATABASE `monitoring_sensor_rancangan`
+    DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `monitoring_sensor_rancangan`;
 
-CREATE TABLE IF NOT EXISTS `users` (
+CREATE TABLE `users` (
 `id` INT AUTO_INCREMENT PRIMARY KEY,
     `username` VARCHAR(50) NOT NULL UNIQUE,
     `password` VARCHAR(255) NOT NULL,
@@ -12,7 +16,7 @@ CREATE TABLE IF NOT EXISTS `users` (
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `settings` (
+CREATE TABLE `settings` (
 `id` INT AUTO_INCREMENT PRIMARY KEY,
     `type` ENUM('ppm','ph','dithane') NOT NULL UNIQUE,
     `config_json` JSON NOT NULL,
@@ -23,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `settings` (
         REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `profile` (
+CREATE TABLE `profile` (
 `id` INT AUTO_INCREMENT PRIMARY KEY,
     `section` ENUM('owner','team') NOT NULL,
     `label` VARCHAR(100) NOT NULL,
@@ -35,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `profile` (
         REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `sensors` (
+CREATE TABLE `sensors` (
 `id` INT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(100) NOT NULL,
     `type` ENUM('ph','ppm') NOT NULL,
@@ -51,7 +55,7 @@ CREATE TABLE IF NOT EXISTS `sensors` (
     )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `sensor_readings` (
+CREATE TABLE `sensor_readings` (
 `id` INT AUTO_INCREMENT PRIMARY KEY,
     `sensor_id` INT NOT NULL,
     `value` DECIMAL(12,4) NOT NULL,
@@ -62,7 +66,7 @@ CREATE TABLE IF NOT EXISTS `sensor_readings` (
         REFERENCES `sensors` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `monitoring_logs` (
+CREATE TABLE `monitoring_logs` (
 `id` INT AUTO_INCREMENT PRIMARY KEY,
     `type` ENUM('ppm','ph','dithane') NOT NULL,
     `day_name` VARCHAR(20) NOT NULL,
@@ -83,7 +87,7 @@ CREATE TABLE IF NOT EXISTS `monitoring_logs` (
         REFERENCES `sensor_readings` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `history_logs` (
+CREATE TABLE `history_logs` (
 `id` INT AUTO_INCREMENT PRIMARY KEY,
     `day_name` VARCHAR(20) NOT NULL,
     `log_date` DATE NOT NULL,
@@ -102,7 +106,7 @@ CREATE TABLE IF NOT EXISTS `history_logs` (
         REFERENCES `settings` (`type`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `notifications` (
+CREATE TABLE `notifications` (
 `id` INT AUTO_INCREMENT PRIMARY KEY,
     `label` VARCHAR(100) NOT NULL,
     `message` TEXT NOT NULL,
@@ -118,3 +122,17 @@ CREATE TABLE IF NOT EXISTS `notifications` (
         REFERENCES `sensor_readings` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Contoh data khusus untuk memperjelas identitas dan hasil ukur sensor.
+INSERT INTO sensors (id, name, type, unit, status, location) VALUES
+    (1, 'Sensor pH Larutan', 'ph', 'pH', 'aktif', 'Bak nutrisi utama'),
+    (2, 'Sensor TDS Larutan', 'ppm', 'ppm', 'aktif', 'Bak nutrisi utama');
+
+SET @waktu_contoh = CURRENT_TIMESTAMP;
+INSERT INTO sensor_readings (sensor_id, value, recorded_at) VALUES
+    (1, 6.40, @waktu_contoh),
+    (2, 845.00, @waktu_contoh);
+
+INSERT INTO settings (type, config_json) VALUES
+    ('ppm', '{"min":"800","max":"1000"}'),
+    ('ph', '{"min":"5,5","max":"6,5"}'),
+    ('dithane', '{"interval":"48","duration":"10","start":"08.00"}');

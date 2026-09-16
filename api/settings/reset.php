@@ -23,8 +23,8 @@ try {
         $defaultConfig = json_encode(["interval" => "48", "duration" => "10", "start" => "08.00"]);
     }
     
-    $stmt = $pdo->prepare("UPDATE settings SET config_json = ?, updated_at = CURRENT_TIMESTAMP WHERE type = ?");
-    $stmt->execute([$defaultConfig, $type]);
+    $stmt = $pdo->prepare("UPDATE settings SET config_json = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE type = ?");
+    $stmt->execute([$defaultConfig, $_SESSION['user_id'], $type]);
     
     successResponse(null, 'Setting reset to default successfully');
 } catch (Exception $e) {

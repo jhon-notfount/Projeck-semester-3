@@ -1,0 +1,402 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3320" height="2570" viewBox="0 0 3320 2570">
+<rect width="100%" height="100%" fill="white"/>
+<text x="1660.0" y="62" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="43" font-weight="bold" fill="#24333c">ERD SISTEM MONITORING HIDROPONIK HYDROTECH</text>
+<text x="1660.0" y="117" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#526670">VERSI TABEL / CROW’S FOOT</text>
+<text x="1660.0" y="161" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">8 tabel  •  57 kolom  •  7 foreign key  |  Nama kolom mengikuti database</text>
+<polyline points="1260,425 910,425" fill="none" stroke="#44555f" stroke-width="3"/>
+<polyline points="1244.0,440.0 1244.0,410.0" fill="none" stroke="#44555f" stroke-width="3"/>
+<ellipse cx="1218.0" cy="425.0" rx="9" ry="9" fill="white" stroke="#44555f" stroke-width="2"/>
+<polyline points="910.0,410.0 939.0,425.0 910.0,440.0" fill="none" stroke="#44555f" stroke-width="3"/>
+<ellipse cx="957.0" cy="425.0" rx="9" ry="9" fill="white" stroke="#44555f" stroke-width="2"/>
+<rect x="995.5" y="360" width="179.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="1085" y="379" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="normal" fill="#24333c">Mengubah profil</text>
+<polyline points="2060,425 2410,425" fill="none" stroke="#44555f" stroke-width="3"/>
+<polyline points="2076.0,410.0 2076.0,440.0" fill="none" stroke="#44555f" stroke-width="3"/>
+<ellipse cx="2102.0" cy="425.0" rx="9" ry="9" fill="white" stroke="#44555f" stroke-width="2"/>
+<polyline points="2410.0,440.0 2381.0,425.0 2410.0,410.0" fill="none" stroke="#44555f" stroke-width="3"/>
+<ellipse cx="2363.0" cy="425.0" rx="9" ry="9" fill="white" stroke="#44555f" stroke-width="2"/>
+<rect x="2114.5" y="360" width="241.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="2235" y="379" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="normal" fill="#24333c">Mengubah pengaturan</text>
+<polyline points="2410,525 2250,525 2250,790 1660,790 1660,990" fill="none" stroke="#44555f" stroke-width="3"/>
+<polyline points="2394.0,540.0 2394.0,510.0" fill="none" stroke="#44555f" stroke-width="3"/>
+<polyline points="2376.0,540.0 2376.0,510.0" fill="none" stroke="#44555f" stroke-width="3"/>
+<polyline points="1645.0,990.0 1660.0,961.0 1675.0,990.0" fill="none" stroke="#44555f" stroke-width="3"/>
+<ellipse cx="1660.0" cy="943.0" rx="9" ry="9" fill="white" stroke="#44555f" stroke-width="2"/>
+<rect x="1789.0" y="737" width="302.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="1940" y="756" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="normal" fill="#24333c">Mengelompokkan monitoring</text>
+<polyline points="2810,557 2810,990" fill="none" stroke="#44555f" stroke-width="3"/>
+<polyline points="2825.0,573.0 2795.0,573.0" fill="none" stroke="#44555f" stroke-width="3"/>
+<polyline points="2825.0,591.0 2795.0,591.0" fill="none" stroke="#44555f" stroke-width="3"/>
+<polyline points="2795.0,990.0 2810.0,961.0 2825.0,990.0" fill="none" stroke="#44555f" stroke-width="3"/>
+<ellipse cx="2810.0" cy="943.0" rx="9" ry="9" fill="white" stroke="#44555f" stroke-width="2"/>
+<rect x="2675.0" y="749" width="270.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="2810" y="768" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="normal" fill="#24333c">Mengelompokkan riwayat</text>
+<polyline points="910,1230 1085,1230 1085,1960 1260,1960" fill="none" stroke="#44555f" stroke-width="3"/>
+<polyline points="926.0,1215.0 926.0,1245.0" fill="none" stroke="#44555f" stroke-width="3"/>
+<polyline points="944.0,1215.0 944.0,1245.0" fill="none" stroke="#44555f" stroke-width="3"/>
+<polyline points="1260.0,1975.0 1231.0,1960.0 1260.0,1945.0" fill="none" stroke="#44555f" stroke-width="3"/>
+<ellipse cx="1213.0" cy="1960.0" rx="9" ry="9" fill="white" stroke="#44555f" stroke-width="2"/>
+<rect x="1006.0" y="1641" width="158.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="1085" y="1660" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="normal" fill="#24333c">Menghasilkan</text>
+<polyline points="1660,1800 1660,1552" fill="none" stroke="#44555f" stroke-width="3"/>
+<polyline points="1645.0,1784.0 1675.0,1784.0" fill="none" stroke="#44555f" stroke-width="3"/>
+<ellipse cx="1660.0" cy="1758.0" rx="9" ry="9" fill="white" stroke="#44555f" stroke-width="2"/>
+<polyline points="1675.0,1552.0 1660.0,1581.0 1645.0,1552.0" fill="none" stroke="#44555f" stroke-width="3"/>
+<ellipse cx="1660.0" cy="1599.0" rx="9" ry="9" fill="white" stroke="#44555f" stroke-width="2"/>
+<rect x="1556.5" y="1663" width="207.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="1660" y="1682" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="normal" fill="#24333c">Sumber monitoring</text>
+<polyline points="2060,1960 2410,1960" fill="none" stroke="#44555f" stroke-width="3"/>
+<polyline points="2076.0,1945.0 2076.0,1975.0" fill="none" stroke="#44555f" stroke-width="3"/>
+<ellipse cx="2102.0" cy="1960.0" rx="9" ry="9" fill="white" stroke="#44555f" stroke-width="2"/>
+<polyline points="2410.0,1975.0 2381.0,1960.0 2410.0,1945.0" fill="none" stroke="#44555f" stroke-width="3"/>
+<ellipse cx="2363.0" cy="1960.0" rx="9" ry="9" fill="white" stroke="#44555f" stroke-width="2"/>
+<rect x="2139.5" y="1896" width="191.0" height="38" fill="white" stroke="white" stroke-width="1"/>
+<text x="2235" y="1915" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="normal" fill="#24333c">Sumber notifikasi</text>
+<rect x="115" y="225" width="800" height="382" fill="#e8ecee" stroke="#e8ecee" stroke-width="1"/>
+<rect x="110" y="220" width="800" height="382" fill="#f5eff9" stroke="#667881" stroke-width="2"/>
+<rect x="110" y="220" width="800" height="72" fill="#dfd1eb" stroke="#667881" stroke-width="2"/>
+<text x="510.0" y="246" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="28" font-weight="bold" fill="#24333c">Profil</text>
+<text x="510.0" y="274" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">profile</text>
+<text x="126" y="313" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">KUNCI</text>
+<text x="233" y="313" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">KOLOM</text>
+<text x="530" y="313" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">TIPE DATA</text>
+<text x="828" y="313" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">NULL</text>
+<polyline points="110,332 910,332" fill="none" stroke="#44555f" stroke-width="1"/>
+<text x="126" y="354.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">PK</text>
+<text x="233" y="354.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">id</text>
+<text x="530" y="354.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">INT</text>
+<text x="830" y="354.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="126" y="399.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="233" y="399.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">section</text>
+<text x="530" y="399.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">ENUM [D]</text>
+<text x="830" y="399.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="126" y="444.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="233" y="444.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">label</text>
+<text x="530" y="444.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">VARCHAR(100)</text>
+<text x="830" y="444.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="126" y="489.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="233" y="489.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">value</text>
+<text x="530" y="489.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">TEXT</text>
+<text x="830" y="489.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="126" y="534.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="233" y="534.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">sort_order</text>
+<text x="530" y="534.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">INT</text>
+<text x="830" y="534.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="126" y="579.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">FK</text>
+<text x="233" y="579.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">updated_by</text>
+<text x="530" y="579.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">INT</text>
+<text x="830" y="579.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Ya</text>
+<polyline points="217,292 217,602" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<polyline points="515,292 515,602" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<polyline points="811,292 811,602" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<rect x="1265" y="225" width="800" height="427" fill="#e8ecee" stroke="#e8ecee" stroke-width="1"/>
+<rect x="1260" y="220" width="800" height="427" fill="#edf5fa" stroke="#667881" stroke-width="2"/>
+<rect x="1260" y="220" width="800" height="72" fill="#c2d9ea" stroke="#667881" stroke-width="2"/>
+<text x="1660.0" y="246" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="28" font-weight="bold" fill="#24333c">Pengguna</text>
+<text x="1660.0" y="274" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">users</text>
+<text x="1276" y="313" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">KUNCI</text>
+<text x="1383" y="313" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">KOLOM</text>
+<text x="1680" y="313" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">TIPE DATA</text>
+<text x="1978" y="313" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">NULL</text>
+<polyline points="1260,332 2060,332" fill="none" stroke="#44555f" stroke-width="1"/>
+<text x="1276" y="354.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">PK</text>
+<text x="1383" y="354.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">id</text>
+<text x="1680" y="354.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">INT</text>
+<text x="1980" y="354.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="1276" y="399.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">UQ</text>
+<text x="1383" y="399.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">username</text>
+<text x="1680" y="399.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">VARCHAR(50)</text>
+<text x="1980" y="399.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="1276" y="444.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="1383" y="444.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">password</text>
+<text x="1680" y="444.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">VARCHAR(255)</text>
+<text x="1980" y="444.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="1276" y="489.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="1383" y="489.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">email</text>
+<text x="1680" y="489.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">VARCHAR(100)</text>
+<text x="1980" y="489.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Ya</text>
+<text x="1276" y="534.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="1383" y="534.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">role</text>
+<text x="1680" y="534.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">ENUM [A]</text>
+<text x="1980" y="534.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="1276" y="579.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="1383" y="579.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">created_at</text>
+<text x="1680" y="579.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">TIMESTAMP</text>
+<text x="1980" y="579.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Ya</text>
+<text x="1276" y="624.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="1383" y="624.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">updated_at</text>
+<text x="1680" y="624.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">TIMESTAMP</text>
+<text x="1980" y="624.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Ya</text>
+<polyline points="1367,292 1367,647" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<polyline points="1665,292 1665,647" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<polyline points="1961,292 1961,647" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<rect x="2415" y="225" width="800" height="337" fill="#e8ecee" stroke="#e8ecee" stroke-width="1"/>
+<rect x="2410" y="220" width="800" height="337" fill="#f0f7ec" stroke="#667881" stroke-width="2"/>
+<rect x="2410" y="220" width="800" height="72" fill="#c8dfbf" stroke="#667881" stroke-width="2"/>
+<text x="2810.0" y="246" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="28" font-weight="bold" fill="#24333c">Pengaturan</text>
+<text x="2810.0" y="274" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">settings</text>
+<text x="2426" y="313" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">KUNCI</text>
+<text x="2533" y="313" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">KOLOM</text>
+<text x="2830" y="313" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">TIPE DATA</text>
+<text x="3128" y="313" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">NULL</text>
+<polyline points="2410,332 3210,332" fill="none" stroke="#44555f" stroke-width="1"/>
+<text x="2426" y="354.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">PK</text>
+<text x="2533" y="354.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">id</text>
+<text x="2830" y="354.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">INT</text>
+<text x="3130" y="354.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="2426" y="399.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">UQ</text>
+<text x="2533" y="399.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">type</text>
+<text x="2830" y="399.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">ENUM [B]</text>
+<text x="3130" y="399.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="2426" y="444.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="2533" y="444.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">config_json</text>
+<text x="2830" y="444.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">JSON</text>
+<text x="3130" y="444.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="2426" y="489.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="2533" y="489.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">updated_at</text>
+<text x="2830" y="489.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">TIMESTAMP</text>
+<text x="3130" y="489.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Ya</text>
+<text x="2426" y="534.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">FK</text>
+<text x="2533" y="534.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">updated_by</text>
+<text x="2830" y="534.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">INT</text>
+<text x="3130" y="534.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Ya</text>
+<polyline points="2517,292 2517,557" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<polyline points="2815,292 2815,557" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<polyline points="3111,292 3111,557" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<rect x="115" y="995" width="800" height="472" fill="#e8ecee" stroke="#e8ecee" stroke-width="1"/>
+<rect x="110" y="990" width="800" height="472" fill="#edf7f1" stroke="#667881" stroke-width="2"/>
+<rect x="110" y="990" width="800" height="72" fill="#b9dccc" stroke="#667881" stroke-width="2"/>
+<text x="510.0" y="1016" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="28" font-weight="bold" fill="#24333c">Sensor</text>
+<text x="510.0" y="1044" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">sensors</text>
+<text x="126" y="1083" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">KUNCI</text>
+<text x="233" y="1083" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">KOLOM</text>
+<text x="530" y="1083" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">TIPE DATA</text>
+<text x="828" y="1083" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">NULL</text>
+<polyline points="110,1102 910,1102" fill="none" stroke="#44555f" stroke-width="1"/>
+<text x="126" y="1124.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">PK</text>
+<text x="233" y="1124.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">id</text>
+<text x="530" y="1124.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">INT</text>
+<text x="830" y="1124.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="126" y="1169.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="233" y="1169.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">name</text>
+<text x="530" y="1169.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">VARCHAR(100)</text>
+<text x="830" y="1169.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="126" y="1214.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="233" y="1214.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">type</text>
+<text x="530" y="1214.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">ENUM [E]</text>
+<text x="830" y="1214.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="126" y="1259.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="233" y="1259.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">unit</text>
+<text x="530" y="1259.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">ENUM [F]</text>
+<text x="830" y="1259.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="126" y="1304.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="233" y="1304.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">status</text>
+<text x="530" y="1304.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">ENUM [G]</text>
+<text x="830" y="1304.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="126" y="1349.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="233" y="1349.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">location</text>
+<text x="530" y="1349.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">VARCHAR(150)</text>
+<text x="830" y="1349.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Ya</text>
+<text x="126" y="1394.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="233" y="1394.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">created_at</text>
+<text x="530" y="1394.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">TIMESTAMP</text>
+<text x="830" y="1394.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="126" y="1439.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="233" y="1439.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">updated_at</text>
+<text x="530" y="1439.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">TIMESTAMP</text>
+<text x="830" y="1439.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<polyline points="217,1062 217,1462" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<polyline points="515,1062 515,1462" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<polyline points="811,1062 811,1462" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<rect x="1265" y="995" width="800" height="562" fill="#e8ecee" stroke="#e8ecee" stroke-width="1"/>
+<rect x="1260" y="990" width="800" height="562" fill="#fff9e8" stroke="#667881" stroke-width="2"/>
+<rect x="1260" y="990" width="800" height="72" fill="#e9d9a8" stroke="#667881" stroke-width="2"/>
+<text x="1660.0" y="1016" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="28" font-weight="bold" fill="#24333c">Catatan Monitoring</text>
+<text x="1660.0" y="1044" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">monitoring_logs</text>
+<text x="1276" y="1083" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">KUNCI</text>
+<text x="1383" y="1083" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">KOLOM</text>
+<text x="1680" y="1083" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">TIPE DATA</text>
+<text x="1978" y="1083" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">NULL</text>
+<polyline points="1260,1102 2060,1102" fill="none" stroke="#44555f" stroke-width="1"/>
+<text x="1276" y="1124.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">PK</text>
+<text x="1383" y="1124.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">id</text>
+<text x="1680" y="1124.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">INT</text>
+<text x="1980" y="1124.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="1276" y="1169.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">FK</text>
+<text x="1383" y="1169.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">type</text>
+<text x="1680" y="1169.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">ENUM [B]</text>
+<text x="1980" y="1169.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="1276" y="1214.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="1383" y="1214.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">day_name</text>
+<text x="1680" y="1214.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">VARCHAR(20)</text>
+<text x="1980" y="1214.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="1276" y="1259.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="1383" y="1259.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">log_time</text>
+<text x="1680" y="1259.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">VARCHAR(10)</text>
+<text x="1980" y="1259.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="1276" y="1304.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="1383" y="1304.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">value</text>
+<text x="1680" y="1304.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">VARCHAR(20)</text>
+<text x="1980" y="1304.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="1276" y="1349.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="1383" y="1349.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">status</text>
+<text x="1680" y="1349.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">VARCHAR(30)</text>
+<text x="1980" y="1349.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="1276" y="1394.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="1383" y="1394.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">note</text>
+<text x="1680" y="1394.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">TEXT</text>
+<text x="1980" y="1394.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Ya</text>
+<text x="1276" y="1439.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="1383" y="1439.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">is_deleted</text>
+<text x="1680" y="1439.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">TINYINT(1)</text>
+<text x="1980" y="1439.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="1276" y="1484.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="1383" y="1484.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">created_at</text>
+<text x="1680" y="1484.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">TIMESTAMP</text>
+<text x="1980" y="1484.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Ya</text>
+<text x="1276" y="1529.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">FK</text>
+<text x="1383" y="1529.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">sensor_reading_id</text>
+<text x="1680" y="1529.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">INT</text>
+<text x="1980" y="1529.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Ya</text>
+<polyline points="1367,1062 1367,1552" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<polyline points="1665,1062 1665,1552" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<polyline points="1961,1062 1961,1552" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<rect x="2415" y="995" width="800" height="517" fill="#e8ecee" stroke="#e8ecee" stroke-width="1"/>
+<rect x="2410" y="990" width="800" height="517" fill="#fcf1e9" stroke="#667881" stroke-width="2"/>
+<rect x="2410" y="990" width="800" height="72" fill="#e8c9b5" stroke="#667881" stroke-width="2"/>
+<text x="2810.0" y="1016" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="28" font-weight="bold" fill="#24333c">Riwayat</text>
+<text x="2810.0" y="1044" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">history_logs</text>
+<text x="2426" y="1083" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">KUNCI</text>
+<text x="2533" y="1083" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">KOLOM</text>
+<text x="2830" y="1083" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">TIPE DATA</text>
+<text x="3128" y="1083" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">NULL</text>
+<polyline points="2410,1102 3210,1102" fill="none" stroke="#44555f" stroke-width="1"/>
+<text x="2426" y="1124.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">PK</text>
+<text x="2533" y="1124.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">id</text>
+<text x="2830" y="1124.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">INT</text>
+<text x="3130" y="1124.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="2426" y="1169.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="2533" y="1169.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">day_name</text>
+<text x="2830" y="1169.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">VARCHAR(20)</text>
+<text x="3130" y="1169.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="2426" y="1214.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="2533" y="1214.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">log_date</text>
+<text x="2830" y="1214.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">DATE</text>
+<text x="3130" y="1214.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="2426" y="1259.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="2533" y="1259.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">log_time</text>
+<text x="2830" y="1259.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">VARCHAR(10)</text>
+<text x="3130" y="1259.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="2426" y="1304.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">FK</text>
+<text x="2533" y="1304.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">type</text>
+<text x="2830" y="1304.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">ENUM [B]</text>
+<text x="3130" y="1304.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="2426" y="1349.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="2533" y="1349.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">status</text>
+<text x="2830" y="1349.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">VARCHAR(30)</text>
+<text x="3130" y="1349.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="2426" y="1394.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="2533" y="1394.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">note</text>
+<text x="2830" y="1394.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">TEXT</text>
+<text x="3130" y="1394.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Ya</text>
+<text x="2426" y="1439.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="2533" y="1439.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">is_deleted</text>
+<text x="2830" y="1439.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">TINYINT(1)</text>
+<text x="3130" y="1439.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="2426" y="1484.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="2533" y="1484.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">created_at</text>
+<text x="2830" y="1484.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">TIMESTAMP</text>
+<text x="3130" y="1484.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Ya</text>
+<polyline points="2517,1062 2517,1507" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<polyline points="2815,1062 2815,1507" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<polyline points="3111,1062 3111,1507" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<rect x="1265" y="1805" width="800" height="292" fill="#e8ecee" stroke="#e8ecee" stroke-width="1"/>
+<rect x="1260" y="1800" width="800" height="292" fill="#edf7f8" stroke="#667881" stroke-width="2"/>
+<rect x="1260" y="1800" width="800" height="72" fill="#badde1" stroke="#667881" stroke-width="2"/>
+<text x="1660.0" y="1826" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="28" font-weight="bold" fill="#24333c">Pembacaan Sensor</text>
+<text x="1660.0" y="1854" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">sensor_readings</text>
+<text x="1276" y="1893" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">KUNCI</text>
+<text x="1383" y="1893" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">KOLOM</text>
+<text x="1680" y="1893" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">TIPE DATA</text>
+<text x="1978" y="1893" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">NULL</text>
+<polyline points="1260,1912 2060,1912" fill="none" stroke="#44555f" stroke-width="1"/>
+<text x="1276" y="1934.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">PK</text>
+<text x="1383" y="1934.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">id</text>
+<text x="1680" y="1934.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">INT</text>
+<text x="1980" y="1934.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="1276" y="1979.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">FK</text>
+<text x="1383" y="1979.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">sensor_id</text>
+<text x="1680" y="1979.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">INT</text>
+<text x="1980" y="1979.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="1276" y="2024.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="1383" y="2024.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">value</text>
+<text x="1680" y="2024.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">DECIMAL(12,4)</text>
+<text x="1980" y="2024.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="1276" y="2069.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="1383" y="2069.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">recorded_at</text>
+<text x="1680" y="2069.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">TIMESTAMP</text>
+<text x="1980" y="2069.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<polyline points="1367,1872 1367,2092" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<polyline points="1665,1872 1665,2092" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<polyline points="1961,1872 1961,2092" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<rect x="2415" y="1805" width="800" height="472" fill="#e8ecee" stroke="#e8ecee" stroke-width="1"/>
+<rect x="2410" y="1800" width="800" height="472" fill="#faf0f5" stroke="#667881" stroke-width="2"/>
+<rect x="2410" y="1800" width="800" height="72" fill="#e1bed0" stroke="#667881" stroke-width="2"/>
+<text x="2810.0" y="1826" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="28" font-weight="bold" fill="#24333c">Notifikasi</text>
+<text x="2810.0" y="1854" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">notifications</text>
+<text x="2426" y="1893" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">KUNCI</text>
+<text x="2533" y="1893" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">KOLOM</text>
+<text x="2830" y="1893" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">TIPE DATA</text>
+<text x="3128" y="1893" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">NULL</text>
+<polyline points="2410,1912 3210,1912" fill="none" stroke="#44555f" stroke-width="1"/>
+<text x="2426" y="1934.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">PK</text>
+<text x="2533" y="1934.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">id</text>
+<text x="2830" y="1934.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">INT</text>
+<text x="3130" y="1934.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="2426" y="1979.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="2533" y="1979.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">label</text>
+<text x="2830" y="1979.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">VARCHAR(100)</text>
+<text x="3130" y="1979.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="2426" y="2024.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="2533" y="2024.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">message</text>
+<text x="2830" y="2024.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">TEXT</text>
+<text x="3130" y="2024.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="2426" y="2069.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="2533" y="2069.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">tone</text>
+<text x="2830" y="2069.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">ENUM [C]</text>
+<text x="3130" y="2069.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="2426" y="2114.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="2533" y="2114.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">href</text>
+<text x="2830" y="2114.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">VARCHAR(255)</text>
+<text x="3130" y="2114.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Ya</text>
+<text x="2426" y="2159.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="2533" y="2159.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">is_read</text>
+<text x="2830" y="2159.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">TINYINT(1)</text>
+<text x="3130" y="2159.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Tidak</text>
+<text x="2426" y="2204.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c"></text>
+<text x="2533" y="2204.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">created_at</text>
+<text x="2830" y="2204.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">TIMESTAMP</text>
+<text x="3130" y="2204.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Ya</text>
+<text x="2426" y="2249.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#24333c">FK</text>
+<text x="2533" y="2249.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">sensor_reading_id</text>
+<text x="2830" y="2249.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="23" font-weight="normal" fill="#24333c">INT</text>
+<text x="3130" y="2249.5" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="21" font-weight="normal" fill="#24333c">Ya</text>
+<polyline points="2517,1872 2517,2272" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<polyline points="2815,1872 2815,2272" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<polyline points="3111,1872 3111,2272" fill="none" stroke="#b1bec5" stroke-width="1"/>
+<rect x="110" y="1800" width="800" height="472" fill="#f8fafb" stroke="#cbd5db" stroke-width="1"/>
+<text x="145" y="1840" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="25" font-weight="bold" fill="#24333c">KETERANGAN</text>
+<text x="145" y="1893" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">PK = kunci utama</text>
+<text x="145" y="1936" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">FK = kunci tamu / referensi</text>
+<text x="145" y="1979" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">UQ = nilai unik</text>
+<text x="145" y="2022" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">NULL: Ya = boleh kosong</text>
+<text x="145" y="2065" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">Garis tegak = satu; lingkaran = nol.</text>
+<text x="145" y="2108" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">Kaki gagak = banyak (N).</text>
+<text x="145" y="2151" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">Sensor → Pembacaan: satu ke banyak.</text>
+<text x="145" y="2194" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">Nama Indonesia ada pada judul tabel.</text>
+<polyline points="110,2330 3210,2330" fill="none" stroke="#a7b6bf" stroke-width="1"/>
+<text x="110" y="2371" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">ENUM  A: admin / user     B: ppm / ph / dithane     C: warning / success / info     D: owner / team</text>
+<text x="110" y="2417" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">ENUM  E: ph / ppm     F: pH / ppm     G: aktif / nonaktif / rusak</text>
+<text x="110" y="2470" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#24333c">FK jenis mengacu ke settings.type (UQ). Referensi pengguna dan pembacaan pada catatan boleh kosong.</text>
+<text x="110" y="2516" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="22" font-weight="normal" fill="#24333c">Sumber: schema.sql dan struktur pada gambar. Semua relasi non-identifying; setiap tabel memiliki PK id sendiri.</text>
+</svg>

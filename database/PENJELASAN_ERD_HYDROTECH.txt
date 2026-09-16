@@ -1,0 +1,2429 @@
+================================================================================
+PENJELASAN ENTITY RELATIONSHIP DIAGRAM (ERD) - HYDROTECH
+Hydroponic IoT Monitoring System
+================================================================================
+
+Database    : monitoring_sensor
+Engine      : MySQL (InnoDB)
+Jumlah Tabel: 7
+Project     : Politeknik Negeri Jember 2026
+
+================================================================================
+RINGKASAN SISTEM HYDROTECH
+================================================================================
+
+HYDROTECH adalah sistem monitoring hidroponik berbasis IoT (Internet of Things)
+yang memungkinkan petani hidroponik untuk memantau kondisi tanaman mereka secara
+real-time melalui dashboard web.
+
+APA YANG DIMONITOR?
+1. pH (Tingkat Keasaman) - Parameter kritis untuk penyerapan nutrisi
+2. PPM (Parts Per Million) - Konsentrasi nutrisi dalam larutan
+3. Dithane - Jadwal penyemprotan fungisida untuk pencegahan penyakit
+
+BAGAIMANA SISTEM BEKERJA?
+1. Sensor fisik (pH sensor dan PPM/EC sensor) dipasang di larutan nutrisi
+2. Sensor membaca data secara periodik (setiap beberapa menit)
+3. Data dikirim ke server melalui mikrokontroler (Arduino/ESP32/Raspberry Pi)
+4. Server menyimpan data dan membandingkan dengan threshold yang dikonfigurasi
+5. Jika nilai di luar range normal → sistem otomatis buat notifikasi alert
+6. User bisa lihat data real-time di dashboard web
+7. User bisa lihat tren historis dan export laporan PDF
+
+SIAPA YANG MENGGUNAKAN?
+- Petani hidroponik yang ingin monitor tanaman mereka dari jarak jauh
+- Admin yang bertanggung jawab atas sistem monitoring
+- Tim pengembang yang maintain sistem
+
+KEUNTUNGAN SISTEM INI:
+- Monitoring 24/7 tanpa perlu cek manual
+- Alert otomatis jika ada masalah (pH/PPM tidak normal)
+- Data historis untuk analisis tren
+- Export laporan untuk dokumentasi
+- Akses dari mana saja melalui web browser
+
+================================================================================
+RINGKASAN DATABASE
+================================================================================
+
+ERD ini menggambarkan skema database untuk sistem monitoring hidroponik IoT 
+HYDROTECH. Sistem terdiri dari 7 tabel dengan hubungan logikal di level aplikasi
+(tanpa foreign key constraint di database).
+
+KETUJUH TABEL TERSEBUT:
+
+1. users              - Manajemen autentikasi dan otorisasi pengguna
+2. sensor_readings    - Penyimpanan data sensor IoT (pH dan PPM)
+3. notifications      - Sistem alerting otomatis untuk kondisi abnormal
+4. settings           - Konfigurasi threshold yang bisa diubah admin
+5. monitoring_logs    - Log detail monitoring per parameter
+6. history_logs       - Riwayat monitoring global dengan filter dan export
+7. profile            - Informasi profil pemilik dan tim pengembang
+
+HUBUNGAN ANTAR TABEL:
+- users → sensor_readings (1:N) - User memonitor data sensor
+- sensor_readings → notifications (1:N) - Sensor trigger alert
+- sensor_readings → settings (N:1) - Sensor dibandingkan dengan threshold
+- settings → monitoring_logs (1:N) - Settings jadi referensi tipe
+- monitoring_logs → history_logs (1:N) - Peer relationship
+- notifications → history_logs (1:N) - Context relationship
+
+KARAKTERISTIK DESAIN:
+- Tidak ada foreign key constraint (semua relasi logikal di level aplikasi)
+- Menggunakan soft delete untuk audit trail
+- JSON column untuk konfigurasi fleksibel
+- ENUM-driven polymorphism untuk tipe parameter
+- Composite indexes untuk optimasi query kompleks
+
+VOLUME DATA:
+- users: Kecil (hanya beberapa user admin)
+- sensor_readings: Sangat besar (bisa ribuan rows per hari)
+- notifications: Sedang (tergantung frekuensi alert)
+- settings: Sangat kecil (hanya 3 rows: ppm, ph, dithane)
+- monitoring_logs: Sedang hingga besar (log per parameter)
+- history_logs: Besar (semua log global)
+- profile: Sangat kecil (hanya ~8 rows)
+
+================================================================================
+TABEL-TABEL DAN FUNGSI DETAIL
+================================================================================
+
+1. users
+   ---------------------------------------------------------------------------
+   FUNGSI UTAMA : Manajemen autentikasi dan otorisasi pengguna sistem
+   
+   DESKRIPSI    :
+   Tabel ini merupakan pusat autentikasi sistem HYDROTECH. Setiap pengguna yang
+   ingin mengakses dashboard monitoring harus login terlebih dahulu melalui
+   tabel ini. Sistem menggunakan session-based authentication dimana setelah
+   login berhasil, data user disimpan di $_SESSION PHP.
+   
+   Tabel ini dirancang untuk mendukung multi-user di masa depan, meskipun saat
+   ini hanya ada 1 admin user. Struktur role-based access control sudah
+   disiapkan tapi belum diimplementasikan sepenuhnya.
+   
+   FUNGSI DETAIL KOLOM:
+   ---------------------------------------------------------------------------
+   
+   id (PK) - INT AUTO_INCREMENT
+   Fungsi     : Identitas unik setiap user dalam sistem
+   Kenapa ada : Setiap tabel database membutuhkan primary key untuk identifikasi
+                unik. AUTO_INCREMENT memastikan setiap user baru mendapat ID
+                yang unik secara otomatis.
+   Penggunaan : Disimpan di $_SESSION['user_id'] setelah login untuk tracking
+                siapa yang sedang login. Bisa digunakan untuk audit log
+                (siapa yang melakukan aksi tertentu).
+   
+   username (UK) - VARCHAR(50) UNIQUE
+   Fungsi     : Identitas login yang mudah diingat oleh user
+   Kenapa ada : User perlu cara mudah untuk login tanpa harus mengingat email
+                yang panjang. UNIQUE constraint memastikan tidak ada dua user
+                dengan username yang sama.
+   Penggunaan : Input field di form login. Div alidasi uniqueness saat registrasi
+                user baru (jika fitur registrasi ditambahkan).
+   Contoh     : 'hydrotech', 'admin1', 'operator_ppm'
+   
+   password - VARCHAR(255)
+   Fungsi     : Menyimpan password user dalam bentuk terenkripsi (hash)
+   Kenapa ada : Keamanan! Password TIDAK BOLEH disimpan dalam plain text.
+                Sistem menggunakan bcrypt (password_hash() PHP) yang merupakan
+                standar industri untuk hashing password.
+   Penggunaan : Saat login, input user di-hash dan dibandingkan dengan hash
+                yang tersimpan menggunakan password_verify().
+   Kenapa 255 : Bcrypt menghasilkan hash sepanjang 60 karakter, tapi 255
+                memberikan ruang untuk algoritma lain di masa depan.
+   Keamanan   : Password asli TIDAK PERNAH tersimpan. Hanya hash-nya saja.
+   
+   email - VARCHAR(100)
+   Fungsi     : Menyimpan alamat email untuk komunikasi dan recovery
+   Kenapa ada : Untuk fitur masa depan seperti:
+                - Reset password via email
+                - Notifikasi alert via email
+                - Laporan otomatis via email
+                - Identifikasi user yang lebih formal
+   Penggunaan : Saat ini belum digunakan secara aktif, tapi sudah disiapkan
+                untuk fitur-fitur di atas.
+   Nullable   : DEFAULT NULL - email tidak wajib diisi saat ini
+   
+   role - ENUM('admin','user')
+   Fungsi     : Menentukan level akses/hak istimewa user dalam sistem
+   Kenapa ada : Infrastruktur untuk role-based access control (RBAC):
+                - Admin  : Akses penuh ke semua fitur
+                - User   : Akses terbatas (hanya monitoring, tidak bisa config)
+   
+   STATUS IMPLEMENTASI ROLE:
+   ---------------------------------------------------------------------------
+   Saat ini role TIDAK DIGUNAKAN untuk membatasi akses. Semua user yang login
+   memiliki hak akses yang SAMA (seperti admin). Role hanya disimpan di
+   session ($_SESSION['role']) tapi tidak pernah dicek di kode.
+   
+   RENCANA IMPLEMENTASI (belum dilakukan):
+   - Admin bisa: manage users, ubah settings, export data, konfigurasi sistem
+   - User hanya bisa: lihat dashboard, lihat data monitoring, lihat notifikasi
+   
+   Contoh implementasi yang seharusnya:
+   ```php
+   function requireAdmin() {
+       requireAuth();
+       if ($_SESSION['role'] !== 'admin') {
+           http_response_code(403); // Forbidden
+           exit;
+       }
+   }
+   ```
+   
+   created_at - TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   Fungsi     : Mencatat kapan akun user dibuat
+   Kenapa ada : Untuk audit trail dan tracking:
+                - Berapa lama user sudah punya akun
+                - Kapan user pertama kali mendaftar
+                - Analisis pertumbuhan user
+   Penggunaan : Otomatis terisi saat INSERT. Tidak perlu diisi manual.
+   
+   updated_at - TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+   Fungsi     : Mencatat kapan data user terakhir kali diubah
+   Kenapa ada : Untuk tracking perubahan data:
+                - Kapan user terakhir ganti password
+                - Kapan email terakhir diubah
+                - Debugging jika ada masalah dengan akun
+   Penggunaan : Otomatis terupdate setiap kali ada UPDATE pada baris ini.
+   
+   Seed Data    : 1 user admin (username: hydrotech, password: Admin123)
+   Catatan      : Password di-hash dengan bcrypt sebelum disimpan ke database
+
+
+2. sensor_readings
+   ---------------------------------------------------------------------------
+   FUNGSI UTAMA : Penyimpanan dan manajemen data sensor IoT secara real-time
+   
+   DESKRIPSI    :
+   Tabel ini adalah JANTUNG dari sistem IoT HYDROTECH. Setiap kali sensor
+   fisik (sensor pH dan sensor PPM) mengambil pembacaan dari larutan nutrisi
+   hidroponik, data tersebut dikirim ke server dan disimpan di tabel ini.
+   
+   Ini adalah "data ingestion point" - titik masuk utama data dari dunia fisik
+   (sensor) ke dunia digital (database). Tanpa tabel ini, sistem tidak punya
+   data untuk ditampilkan atau dianalisis.
+   
+   KARAKTERISTIK:
+   - Data masuk secara continuous/berkelanjutan dari sensor
+   - Volume data bisa sangat besar (misal: 1 reading per menit = 1440 rows/hari)
+   - Data terbaru lebih penting daripada data lama (untuk real-time monitoring)
+   - Data historis tetap disimpan untuk analisis tren
+   
+   FUNGSI DETAIL KOLOM:
+   ---------------------------------------------------------------------------
+   
+   id (PK) - INT AUTO_INCREMENT
+   Fungsi     : Identitas unik setiap pembacaan sensor
+   Kenapa ada : Setiap reading perlu ID unik untuk:
+                - Referensi di log dan debugging
+                - Tracking jumlah total pembacaan
+                - Join dengan tabel lain jika diperlukan
+   Penggunaan : Auto-increment memastikan setiap reading mendapat ID unik
+                tanpa perlu logic tambahan.
+   Contoh     : Reading ke-1, reading ke-1000, reading ke-50000
+   
+   ph_value - DECIMAL(5,2)
+   Fungsi     : Menyimpan nilai pH dari sensor pH
+   Kenapa ada : pH adalah parameter KRITIS dalam hidroponik. Tanaman butuh
+                pH yang tepat untuk menyerap nutrisi dengan optimal.
+   
+   DETAIL TEKNIS:
+   - DECIMAL(5,2) berarti: maksimal 5 digit total, 2 digit di belakang koma
+   - Range: -999.99 sampai 999.99
+   - Contoh valid: 5.50, 6.25, 7.00
+   - Presisi tinggi penting karena perubahan 0.1 pH sudah signifikan
+   
+   KONTEKS HIDROPONIK:
+   - pH ideal hidroponik: 5.5 - 6.5
+   - pH < 5.5: terlalu asam, tanaman tidak bisa serap nutrisi
+   - pH > 6.5: terlalu basa, nutrisi mengendap
+   - Sensor pH mengukur keasaman larutan nutrisi
+   
+   Penggunaan :
+   - Ditampilkan di dashboard sebagai angka real-time
+   - Diplot di chart untuk melihat tren pH
+   - Dibandingkan dengan threshold settings untuk trigger alert
+   - Disimpan untuk analisis jangka panjang
+   
+   ppm_value - INT
+   Fungsi     : Menyimpan nilai PPM (Parts Per Million) dari sensor EC/TDS
+   Kenapa ada : PPM mengukur konsentrasi nutrisi dalam larutan. Ini parameter
+                KRITIS kedua setelah pH.
+   
+   DETAIL TEKNIS:
+   - INT (integer) karena PPM biasanya bilangan bulat
+   - Range: 0 - 2,147,483,647 (lebih dari cukup untuk PPM)
+   - Contoh valid: 800, 1000, 1200
+   
+   KONTEKS HIDROPONIK:
+   - PPM mengukur Total Dissolved Solids (TDS) atau Electrical Conductivity (EC)
+   - PPM ideal tergantung jenis tanaman:
+     * Sayuran daun: 800-1000 ppm
+     * Tanaman buah: 1000-1500 ppm
+   - PPM terlalu rendah: tanaman kurang nutrisi, pertumbuhan lambat
+   - PPM terlalu tinggi: "nutrient burn", akar rusak, tanaman mati
+   
+   Penggunaan :
+   - Ditampilkan di dashboard sebagai angka real-time
+   - Diplot di chart untuk melihat tren nutrisi
+   - Dibandingkan dengan threshold settings untuk trigger alert
+   - Membantu user menentukan kapan perlu tambah/urangi nutrisi
+   
+   recorded_at (IDX) - TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   Fungsi     : Mencatat kapan pembacaan sensor diambil
+   Kenapa ada : Data sensor TANPA timestamp tidak berguna. Timestamp penting untuk:
+                - Mengetahui kapan data diambil
+                - Mengurutkan data berdasarkan waktu
+                - Membuat time-series chart
+                - Analisis tren (apakah pH naik/turun dari waktu ke waktu)
+                - Menentukan data mana yang "terbaru" untuk dashboard
+   
+   INDEX (idx_recorded_at):
+   Kenapa di-index: Kolom ini SANGAT SERING digunakan di WHERE clause:
+   - ORDER BY recorded_at DESC (ambil data terbaru)
+   - WHERE recorded_at > (tanggal tertentu) (filter rentang waktu)
+   - WHERE recorded_at BETWEEN x AND y (filter periode)
+   Index membuat query-query ini JAUH lebih cepat.
+   
+   Penggunaan :
+   - Query 10 data terbaru: ORDER BY recorded_at DESC LIMIT 10
+   - Query data hari ini: WHERE DATE(recorded_at) = CURDATE()
+   - Query data bulan ini: WHERE MONTH(recorded_at) = MONTH(NOW())
+   
+   FUNGSI TABEL DALAM SISTEM:
+   ---------------------------------------------------------------------------
+   
+   1. REAL-TIME MONITORING
+      - Dashboard menampilkan data terbaru dari tabel ini
+      - Live chart mengambil 10-20 data terakhir
+      - User bisa lihat kondisi terkini tanaman mereka
+   
+   2. TRIGGER NOTIFIKASI
+      - Setiap kali data baru masuk, sistem cek:
+        * Apakah pH di luar range? → buat notifikasi pH
+        * Apakah PPM di luar range? → buat notifikasi PPM
+      - Notifikasi otomatis muncul tanpa campur tangan user
+   
+   3. ANALISIS TREN
+      - Data historis memungkinkan analisis:
+        * "Apakah pH saya stabil minggu ini?"
+        * "Kapan PPM biasanya turun?"
+        * "Apakah ada pola tertentu?"
+   
+   4. DASAR KEPUTUSAN
+      - User bisa ambil keputusan berdasarkan data:
+        * "PPM rendah, perlu tambah nutrisi"
+        * "pH terlalu tinggi, perlu turunkan dengan pH down"
+        * "Tren PPM naik terus, mungkin perlu ganti air"
+   
+   CONTOH PENGGUNAAN:
+   ---------------------------------------------------------------------------
+   
+   Skenario 1: Sensor kirim data baru
+   1. Sensor pH membaca: 6.8
+   2. Sensor PPM membaca: 950
+   3. Data dikirim ke api/sensor/save.php
+   4. INSERT INTO sensor_readings (ph_value, ppm_value) VALUES (6.8, 950)
+   5. Sistem cek settings: pH range 5.5-6.5, PPM range 800-1000
+   6. pH 6.8 > 6.5 → INSERT notifikasi "PH Alert: pH terlalu tinggi!"
+   7. PPM 950 dalam range → tidak ada notifikasi PPM
+   8. Dashboard refresh, user lihat pH 6.8 dan notifikasi alert
+   
+   Skenario 2: User lihat dashboard
+   1. Dashboard load api/sensor/latest.php
+   2. SELECT * FROM sensor_readings ORDER BY recorded_at DESC LIMIT 10
+   3. Data dikembalikan ke frontend
+   4. Chart.js plot 10 titik data terakhir
+   5. User lihat grafik pH dan PPM real-time
+
+
+3. notifications
+   ---------------------------------------------------------------------------
+   FUNGSI UTAMA : Sistem alerting otomatis untuk kondisi sensor abnormal
+   
+   DESKRIPSI    :
+   Tabel ini adalah "sistem peringatan dini" HYDROTECH. Ketika sensor mendeteksi
+   kondisi yang tidak normal (pH terlalu tinggi/rendah, PPM di luar range),
+   sistem OTOMATIS membuat notifikasi dan menyimpannya di tabel ini.
+   
+   Notifikasi kemudian ditampilkan di dashboard sebagai bell icon dengan badge
+   jumlah notifikasi belum dibaca. User bisa klik untuk melihat detail dan
+   mengambil tindakan yang diperlukan.
+   
+   KARAKTERISTIK:
+   - Notifikasi di-generate OTOMATIS oleh sistem (bukan dibuat manual oleh user)
+   - Ada 3 tingkat keparahan (severity): warning, success, info
+   - Bisa ditandai sudah dibaca (is_read) untuk membedakan yang baru/lama
+   - Bersifat temporal - notifikasi lama bisa diabaikan setelah kondisi normal
+   
+   FUNGSI DETAIL KOLOM:
+   ---------------------------------------------------------------------------
+   
+   id (PK) - INT AUTO_INCREMENT
+   Fungsi     : Identitas unik setiap notifikasi
+   Kenapa ada : Untuk tracking dan referensi:
+                - Menghitung jumlah total notifikasi
+                - Referensi saat mark as read
+                - Debugging jika ada masalah dengan notifikasi
+   
+   label - VARCHAR(100)
+   Fungsi     : Judul singkat notifikasi yang langsung terlihat oleh user
+   Kenapa ada : User perlu tahu SEKILAS apa isi notifikasi tanpa harus buka
+                detailnya. Label muncul di dropdown notifikasi di navbar.
+   Penggunaan : Ditampilkan sebagai bold text di list notifikasi
+   Contoh     : "PH Alert", "PPM Warning", "Dithane Info", "System Normal"
+   
+   message - TEXT
+   Fungsi     : Pesan lengkap yang menjelaskan detail notifikasi
+   Kenapa ada : Label hanya judul singkat. Message berisi penjelasan detail:
+                - Berapa nilai aktual yang terdeteksi
+                - Berapa range yang seharusnya
+                - Saran tindakan yang perlu diambil
+   Penggunaan : Ditampilkan saat user klik notifikasi atau buka halaman notifikasi
+   Contoh     : "pH terdeteksi 7.2 (di atas normal 5.5-6.5). Segera cek larutan 
+                 nutrisi dan tambahkan pH down jika perlu."
+   
+   tone - ENUM('warning','success','info')
+   Fungsi     : Menentukan tampilan visual dan tingkat keparahan notifikasi
+   Kenapa ada : User perlu tahu SEBERAPA PENTING notifikasi ini sekilas:
+                - warning  : Ada masalah, perlu tindakan (warna merah/kuning)
+                - success  : Kondisi baik/normal (warna hijau)
+                - info     : Informasi umum (warna biru)
+   Penggunaan : Frontend menggunakan ini untuk menentukan:
+                - Warna background notifikasi
+                - Icon yang ditampilkan (⚠️ warning, ✅ success, ℹ️ info)
+                - Urutan prioritas tampilan
+   Contoh     : pH/PPM di luar range → warning, kembali normal → success
+   
+   href - VARCHAR(255)
+   Fungsi     : Link/URL tujuan jika notifikasi diklik
+   Kenapa ada : User bisa langsung diarahkan ke halaman yang relevan:
+                - Notifikasi pH → langsung ke halaman pengaturan pH
+                - Notifikasi PPM → langsung ke halaman pengaturan PPM
+                - Notifikasi dithane → langsung ke halaman jadwal dithane
+   Nullable   : DEFAULT NULL - tidak semua notifikasi perlu link
+   Penggunaan : Frontend check: if (href) { window.location = href }
+   Contoh     : 'pengaturan-ph.php', 'pengaturan-ppm.php', 'dithane.php'
+   
+   is_read (IDX) - TINYINT(1) DEFAULT 0
+   Fungsi     : Menandai apakah notifikasi sudah dibaca atau belum
+   Kenapa ada : User perlu tahu mana notifikasi yang BELUM dilihat:
+                - 0 = belum dibaca (ditampilkan bold/terang)
+                - 1 = sudah dibaca (ditampilkan normal/redup)
+                - Badge di bell icon menunjukkan jumlah yang belum dibaca
+   INDEX      : idx_is_read - Query sering filter WHERE is_read = 0
+   Penggunaan : Saat user buka dropdown notifikasi → UPDATE SET is_read = 1
+   
+   created_at (IDX) - TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   Fungsi     : Mencatat kapan notifikasi dibuat
+   Kenapa ada : Untuk pengurutan dan filtering:
+                - Notifikasi terbaru muncul di atas
+                - User bisa lihat notifikasi dari tanggal tertentu
+                - Analisis frekuensi alert (berapa sering pH tidak normal?)
+   INDEX      : idx_created_at - Query sering ORDER BY created_at DESC
+   
+   MEKANISME AUTO-GENERATE:
+   ---------------------------------------------------------------------------
+   
+   Notifikasi dibuat OTOMATIS oleh sistem, bukan oleh user. Alurnya:
+   
+   1. Sensor kirim data → api/sensor/save.php
+   2. Data disimpan ke sensor_readings
+   3. Sistem ambil settings untuk pH dan PPM
+   4. Bandingkan nilai sensor dengan threshold
+   5. Jika di luar range → INSERT ke notifications dengan tone='warning'
+   6. Jika dalam range → bisa INSERT notifikasi dengan tone='success' (opsional)
+   
+   CONTOH SCENARIO:
+   - pH terdeteksi 7.2 (range 5.5-6.5) → INSERT notifikasi "PH Alert" (warning)
+   - PPM terdeteksi 650 (range 800-1000) → INSERT notifikasi "PPM Warning" (warning)
+   - Semua parameter normal → INSERT notifikasi "System Normal" (success)
+
+
+4. settings
+   ---------------------------------------------------------------------------
+   FUNGSI UTAMA : Konfigurasi threshold dan parameter sistem yang dapat diubah
+   
+   DESKRIPSI    :
+   Tabel ini menyimpan konfigurasi sistem yang bisa diubah oleh admin tanpa
+   perlu mengubah kode program. Setiap jenis parameter (PPM, pH, Dithane) punya
+   konfigurasi sendiri yang disimpan dalam format JSON untuk fleksibilitas.
+   
+   Ini adalah "otak" dari sistem alerting - menentukan kapan notifikasi harus
+   dibuat berdasarkan threshold yang dikonfigurasi.
+   
+   KARAKTERISTIK:
+   - Hanya ada 3 baris (ppm, ph, dithane) - satu per tipe parameter
+   - Menggunakan JSON untuk menyimpan konfigurasi yang berbeda-beda
+   - Bisa di-reset ke default jika admin salah konfigurasi
+   - Perubahan langsung berdampak pada sistem alerting
+   
+   FUNGSI DETAIL KOLOM:
+   ---------------------------------------------------------------------------
+   
+   id (PK) - INT AUTO_INCREMENT
+   Fungsi     : Identitas unik setiap setting
+   Kenapa ada : Standard primary key untuk identifikasi unik
+   
+   type (UK) - ENUM('ppm','ph','dithane')
+   Fungsi     : Menentukan jenis parameter yang dikonfigurasi
+   Kenapa ada : UNIQUE constraint memastikan hanya ada SATU konfigurasi per tipe:
+                - 1 konfigurasi untuk PPM
+                - 1 konfigurasi untuk pH
+                - 1 konfigurasi untuk Dithane
+   Penggunaan : Query menggunakan WHERE type='ppm' untuk ambil konfigurasi PPM
+   
+   config_json - JSON
+   Fungsi     : Menyimpan konfigurasi dalam format JSON yang fleksibel
+   Kenapa ada : Setiap tipe parameter punya struktur konfigurasi yang berbeda:
+                - PPM butuh min dan max
+                - pH butuh min dan max
+                - Dithane butuh interval, duration, dan start time
+                
+                Dengan JSON, kita bisa simpan struktur berbeda dalam satu kolom
+                tanpa perlu buat tabel terpisah untuk setiap tipe.
+   
+   Seed Data dan Arti:
+   - type='ppm': {"min": "800", "max": "1000"}
+     Artinya: PPM normal adalah 800-1000 ppm
+     Jika sensor baca < 800 atau > 1000 → trigger alert
+   
+   - type='ph': {"min": "5,5", "max": "6,5"}
+     Artinya: pH normal adalah 5.5-6.5
+     Jika sensor baca < 5.5 atau > 6.5 → trigger alert
+   
+   - type='dithane': {"interval": "48", "duration": "10", "start": "08.00"}
+     Artinya: Penyemprotan Dithane setiap 48 jam, durasi 10 menit, mulai jam 08.00
+     Ini untuk reminder jadwal penyemprotan fungisida
+   
+   Penggunaan :
+   - Admin ubah via halaman pengaturan
+   - Sistem baca untuk bandingkan dengan sensor_readings
+   - Frontend tampilkan nilai saat ini di form pengaturan
+   
+   updated_at - TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+   Fungsi     : Mencatat kapan konfigurasi terakhir diubah
+   Kenapa ada : Untuk tracking:
+                - Kapan admin terakhir ubah threshold
+                - Audit trail perubahan konfigurasi
+                - Debugging jika alert tidak muncul (mungkin threshold diubah)
+   
+   FUNGSI DALAM SISTEM:
+   ---------------------------------------------------------------------------
+   
+   1. THRESHOLD COMPARISON
+      Sistem membandingkan nilai sensor dengan threshold di sini:
+      - Baca sensor_readings terbaru (misal: pH = 7.2)
+      - Baca settings untuk pH (min: 5.5, max: 6.5)
+      - Bandingkan: 7.2 > 6.5 → ALERT!
+      - Buat notifikasi "pH terlalu tinggi"
+   
+   2. USER CONFIGURABLE
+      Admin bisa ubah threshold sesuai kebutuhan:
+      - Tanaman berbeda butuh pH berbeda
+      - Musim berbeda butuh PPM berbeda
+      - Jadwal dithane bisa disesuaikan
+   
+   3. DYNAMIC ALERTING
+      Perubahan threshold langsung berdampak:
+      - Ubah max pH dari 6.5 ke 7.0
+      - Sekarang pH 6.8 tidak trigger alert lagi
+      - Sistem lebih fleksibel tanpa perlu coding
+
+
+5. monitoring_logs
+   ---------------------------------------------------------------------------
+   FUNGSI UTAMA : Log detail monitoring per parameter untuk halaman pengaturan
+   
+   DESKRIPSI    :
+   Tabel ini menyimpan catatan monitoring yang lebih detail dan terstruktur
+   untuk setiap parameter (PPM, pH, Dithane). Berbeda dengan sensor_readings
+   yang hanya menyimpan data mentah dari sensor, monitoring_logs menyimpan
+   data yang sudah diinterpretasi dengan status dan catatan.
+   
+   Tabel ini ditampilkan di halaman-halaman pengaturan (Pengaturan PPM,
+   Pengaturan pH, Pengaturan Dithane) sebagai log aktivitas monitoring.
+   
+   KARAKTERISTIK:
+   - Berisi data yang sudah di-interpretasi (ada status, ada note)
+   - Menggunakan soft delete (tidak benar-benar dihapus dari database)
+   - Ditampilkan per tipe parameter (satu halaman = satu tipe)
+   - Lebih untuk "catatan manual" atau "log terstruktur"
+   
+   FUNGSI DETAIL KOLOM:
+   ---------------------------------------------------------------------------
+   
+   id (PK) - INT AUTO_INCREMENT
+   Fungsi     : Identitas unik setiap log entry
+   Kenapa ada : Standard primary key untuk referensi dan tracking
+   
+   type (IDX) - ENUM('ppm','ph','dithane')
+   Fungsi     : Menentukan parameter mana yang di-monitor
+   Kenapa ada : Setiap halaman pengaturan hanya menampilkan log untuk satu tipe:
+                - Halaman Pengaturan PPM → WHERE type='ppm'
+                - Halaman Pengaturan pH → WHERE type='ph'
+                - Halaman Pengaturan Dithane → WHERE type='dithane'
+   INDEX      : idx_type - Query sering filter berdasarkan type
+   
+   day_name - VARCHAR(20)
+   Fungsi     : Menyimpan nama hari dalam bahasa Indonesia
+   Kenapa ada : User-friendly display. Lebih mudah baca "Senin" daripada
+                harus konversi dari tanggal.
+   Penggunaan : Ditampilkan di kolom tabel log
+   Contoh     : "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"
+   
+   log_time - VARCHAR(10)
+   Fungsi     : Menyimpan waktu pencatatan dalam format sederhana
+   Kenapa ada : Format "10.00" lebih mudah dibaca daripada "10:00:00"
+                dan lebih ringkas untuk display di tabel
+   Penggunaan : Ditampilkan di kolom waktu di log
+   Contoh     : "10.00", "14.30", "08.15"
+   
+   value - VARCHAR(20)
+   Fungsi     : Menyimpan nilai yang terukur/tercatat
+   Kenapa ada : Menyimpan nilai aktual yang dibaca dari sensor atau diinput
+   Kenapa VARCHAR: Karena value bisa berbagai format:
+                   - PPM: "1000" (angka)
+                   - pH: "6.5" (desimal)
+                   - Dithane: "0.5 l" (dengan satuan)
+   Penggunaan : Ditampilkan di kolom nilai di log
+   
+   status - VARCHAR(30)
+   Fungsi     : Menyimpan status/interpretasi dari nilai yang terukur
+   Kenapa ada : User perlu tahu apakah nilai ini NORMAL atau TIDAK:
+                - "Normal" - nilai dalam range yang baik
+                - "Rendah" - nilai di bawah threshold minimum
+                - "Tinggi" - nilai di atas threshold maximum
+   Penggunaan : Ditampilkan dengan warna:
+                - Normal → hijau
+                - Rendah → kuning/oranye
+                - Tinggi → merah
+   
+   note - TEXT
+   Fungsi     : Menyimpan catatan tambahan dari user atau sistem
+   Kenapa ada : Terkadang perlu penjelasan lebih detail:
+                - "Setelah tambah nutrisi AB Mix"
+                - "pH turun karena hujan semalam"
+                - "Dithane disemprot manual"
+   Nullable   : Boleh kosong jika tidak ada catatan
+   Penggunaan : Ditampilkan di kolom catatan atau sebagai tooltip
+   
+   is_deleted (IDX) - TINYINT(1) DEFAULT 0
+   Fungsi     : Flag untuk soft delete (tidak benar-benar hapus dari database)
+   Kenapa ada : SOFT DELETE PATTERN:
+                - 0 = aktif, ditampilkan di query
+                - 1 = "dihapus", tidak ditampilkan tapi masih ada di database
+                
+                Keuntungan soft delete:
+                - Data tidak hilang permanen (bisa recovery)
+                - Audit trail tetap ada
+                - Tidak ada masalah dengan foreign key (jika ada)
+                - Bisa undo delete jika salah
+   
+   INDEX      : idx_is_deleted - Query selalu filter WHERE is_deleted = 0
+                idx_type_deleted (composite) - Filter type DAN is_deleted sekaligus
+   
+   Penggunaan :
+   - User klik "Hapus" → UPDATE SET is_deleted = 1 (bukan DELETE)
+   - Query SELECT → selalu tambahkan WHERE is_deleted = 0
+   - Admin bisa lihat data yang "dihapus" jika perlu
+   
+   created_at - TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   Fungsi     : Mencatat kapan log entry dibuat
+   Kenapa ada : Untuk tracking waktu pembuatan log dan pengurutan
+   
+   FUNGSI DALAM SISTEM:
+   ---------------------------------------------------------------------------
+   
+   1. DETAIL MONITORING PER PARAMETER
+      Setiap halaman pengaturan menampilkan log untuk satu parameter:
+      - Pengaturan PPM → list semua log PPM dengan status dan note
+      - Pengaturan pH → list semua log pH dengan interpretasi
+      - Pengaturan Dithane → list jadwal dan status penyemprotan
+   
+   2. INTERPRETASI DATA
+      Berbeda dengan sensor_readings yang hanya angka mentah, monitoring_logs
+      memberikan interpretasi:
+      - Value: 1000, Status: "Normal" → user tahu ini baik
+      - Value: 650, Status: "Rendah" → user tahu perlu tambah nutrisi
+   
+   3. CATATAN AKTIVITAS
+      User bisa tambah note untuk dokumentasi:
+      - "Hari ini ganti air reservoir"
+      - "Tambah 50ml nutrisi A"
+      - "Sensor kalibrasi ulang"
+   
+   4. SOFT DELETE UNTUK AUDIT
+      Data yang "dihapus" masih tersimpan untuk audit trail:
+      - Bisa lihat siapa yang hapus dan kapan
+      - Bisa recovery jika salah hapus
+      - Tidak ada data loss
+
+
+6. history_logs
+   ---------------------------------------------------------------------------
+   FUNGSI UTAMA : Riwayat monitoring global dengan filter, search, dan export
+   
+   DESKRIPSI    :
+   Tabel ini menyimpan riwayat monitoring GLOBAL yang menggabungkan semua
+   parameter (PPM, pH, Dithane) dalam satu tempat. Berbeda dengan monitoring_logs
+   yang per-halaman per-parameter, history_logs menampilkan SEMUA aktivitas
+   monitoring dalam satu timeline.
+   
+   Tabel ini ditampilkan di halaman "History" dengan fitur-fitur advanced:
+   - Filter berdasarkan tipe parameter
+   - Filter berdasarkan rentang tanggal
+   - Search/pencarian berdasarkan status atau note
+   - Pagination untuk data yang banyak
+   - Export ke PDF untuk laporan
+   
+   KARAKTERISTIK:
+   - Berisi data dari SEMUA parameter dalam satu tabel
+   - Punya kolom log_date (DATE) untuk filter tanggal yang lebih presisi
+   - Lebih banyak index untuk mendukung query kompleks (filter + search + sort)
+   - Dirancang untuk reporting dan analisis historis
+   
+   FUNGSI DETAIL KOLOM:
+   ---------------------------------------------------------------------------
+   
+   id (PK) - INT AUTO_INCREMENT
+   Fungsi     : Identitas unik setiap history entry
+   Kenapa ada : Standard primary key untuk referensi dan tracking
+   
+   day_name - VARCHAR(20)
+   Fungsi     : Menyimpan nama hari dalam bahasa Indonesia
+   Kenapa ada : User-friendly display, sama seperti monitoring_logs
+   Penggunaan : Ditampilkan di kolom hari di tabel history
+   Contoh     : "Senin", "Selasa", "Rabu"
+   
+   log_date (IDX) - DATE
+   Fungsi     : Menyimpan tanggal lengkap pencatatan (YYYY-MM-DD)
+   Kenapa ada : INI PERBEDAAN UTAMA dengan monitoring_logs!
+                
+                monitoring_logs hanya punya day_name (nama hari) dan log_time,
+                tapi history_logs punya log_date (tanggal lengkap).
+                
+                Dengan tanggal lengkap, user bisa:
+                - Filter: "Tampilkan log bulan Januari 2026"
+                - Filter: "Tampilkan log dari tanggal 1-15"
+                - Analisis: "Berapa kali alert dalam sebulan?"
+                - Export: "Buat laporan bulanan"
+   
+   INDEX      : idx_log_date - Query sering filter berdasarkan tanggal:
+                WHERE log_date BETWEEN '2026-01-01' AND '2026-01-31'
+                WHERE log_date >= '2026-01-01'
+                WHERE MONTH(log_date) = 1
+   
+   Penggunaan :
+   - User pilih rentang tanggal di UI
+   - Query filter berdasarkan log_date
+   - Hasil ditampilkan atau di-export ke PDF
+   
+   log_time - VARCHAR(10)
+   Fungsi     : Menyimpan waktu pencatatan dalam format sederhana
+   Kenapa ada : Sama seperti monitoring_logs, untuk user-friendly display
+   Penggunaan : Ditampilkan di kolom waktu
+   Contoh     : "10.00", "14.30"
+   
+   type (IDX) - ENUM('ppm','ph','dithane')
+   Fungsi     : Menentukan parameter mana yang di-monitor
+   Kenapa ada : User bisa filter berdasarkan tipe:
+                - "Tampilkan hanya log PPM"
+                - "Tampilkan hanya log pH"
+                - "Tampilkan semua tipe"
+   
+   INDEX      : idx_type - Query sering filter WHERE type='ppm' atau type='ph'
+   
+   Penggunaan :
+   - User pilih dropdown filter: "Semua", "PPM", "pH", "Dithane"
+   - Query tambahkan WHERE type = [pilihan user]
+   
+   status (IDX) - VARCHAR(30)
+   Fungsi     : Menyimpan status/interpretasi dari nilai yang terukur
+   Kenapa ada : Sama seperti monitoring_logs:
+                - "Normal" - nilai dalam range
+                - "Rendah" - di bawah minimum
+                - "Tinggi" - di atas maximum
+   
+   INDEX      : idx_status - Query bisa filter berdasarkan status:
+                WHERE status = 'Tinggi' (lihat semua alert)
+                WHERE status != 'Normal' (lihat semua yang bermasalah)
+   
+   Penggunaan :
+   - User bisa filter: "Tampilkan hanya yang statusnya Tinggi"
+   - Berguna untuk analisis: "Berapa kali pH tinggi bulan ini?"
+   
+   note - TEXT
+   Fungsi     : Menyimpan catatan tambahan
+   Kenapa ada : Sama seperti monitoring_logs, untuk dokumentasi
+   Nullable   : Boleh kosong
+   Penggunaan : Ditampilkan di kolom catatan, bisa di-search
+   
+   is_deleted (IDX) - TINYINT(1) DEFAULT 0
+   Fungsi     : Flag untuk soft delete
+   Kenapa ada : SOFT DELETE PATTERN, sama seperti monitoring_logs:
+                - 0 = aktif, ditampilkan
+                - 1 = "dihapus", tidak ditampilkan tapi masih ada
+   
+   INDEX      : idx_is_deleted - Query selalu filter WHERE is_deleted = 0
+   
+   created_at - TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   Fungsi     : Mencatat kapan history entry dibuat
+   Kenapa ada : Untuk tracking dan pengurutan
+   
+   COMPOSITE INDEX:
+   ---------------------------------------------------------------------------
+   idx_type_date_deleted (type, log_date, is_deleted)
+   
+   Kenapa ada composite index:
+   Query yang PALING SERING digunakan di halaman history:
+   
+   SELECT * FROM history_logs 
+   WHERE type = 'ppm' 
+     AND log_date BETWEEN '2026-01-01' AND '2026-01-31'
+     AND is_deleted = 0
+   ORDER BY log_date DESC, log_time DESC
+   
+   Composite index ini membuat query di atas SANGAT CEPAT karena MySQL bisa
+   menggunakan index untuk filter type, log_date, dan is_deleted sekaligus.
+   
+   PERBEDAAN DENGAN monitoring_logs:
+   ---------------------------------------------------------------------------
+   
+   monitoring_logs:
+   - Per halaman, per parameter
+   - Tidak ada log_date (hanya day_name)
+   - Lebih untuk detail per setting
+   - Query sederhana
+   
+   history_logs:
+   - Satu halaman untuk SEMUA parameter
+   - Ada log_date untuk filter tanggal presisi
+   - Lebih untuk reporting dan analisis
+   - Query kompleks dengan filter + search + pagination
+   - Support export PDF
+   
+   FUNGSI DALAM SISTEM:
+   ---------------------------------------------------------------------------
+   
+   1. GLOBAL TIMELINE
+      Menampilkan semua aktivitas monitoring dalam satu timeline:
+      - Senin, 5 Jan 2026, 10.00 - PPM - Normal - "Setelah tambah nutrisi"
+      - Senin, 5 Jan 2026, 14.30 - pH - Tinggi - "pH naik setelah hujan"
+      - Selasa, 6 Jan 2026, 08.00 - Dithane - Normal - "Penyemprotan rutin"
+   
+   2. ADVANCED FILTERING
+      User bisa filter dengan kombinasi:
+      - Tipe: PPM saja
+      - Tanggal: Januari 2026
+      - Status: hanya yang "Tinggi"
+      - Hasil: semua log PPM yang tinggi di Januari 2026
+   
+   3. SEARCH FUNCTIONALITY
+      User bisa search berdasarkan note atau status:
+      - Search: "hujan" → tampilkan semua log yang mention hujan
+      - Search: "nutrisi" → tampilkan log tentang nutrisi
+   
+   4. PAGINATION
+      Data history bisa ribuan rows. Pagination membantu:
+      - Tampilkan 20 rows per halaman
+      - User bisa navigate ke halaman berikutnya
+      - Performa lebih baik (tidak load semua data sekaligus)
+   
+   5. EXPORT PDF
+      User bisa export data yang sedang ditampilkan (setelah filter) ke PDF:
+      - Untuk laporan bulanan
+      - Untuk dokumentasi
+      - Untuk presentasi ke stakeholder
+      - Format: tabel dengan header, tanggal, dan footer
+
+
+7. profile
+   ---------------------------------------------------------------------------
+   FUNGSI UTAMA : Penyimpanan informasi profil pemilik dan tim pengembang
+   
+   DESKRIPSI    :
+   Tabel ini menyimpan informasi profil dalam format key-value pairs yang
+   fleksibel. Ada dua kategori profil: owner (pemilik sistem) dan team
+   (tim pengembang). Informasi ini ditampilkan di halaman "Profile" untuk
+   kontak dan informasi tentang sistem.
+   
+   KARAKTERISTIK:
+   - Menggunakan pola EAV (Entity-Attribute-Value) untuk fleksibilitas
+   - Bisa tambah/hapus field profil tanpa ubah struktur tabel
+   - Dua section: owner dan team
+   - Sort order untuk kontrol urutan tampilan
+   
+   FUNGSI DETAIL KOLOM:
+   ---------------------------------------------------------------------------
+   
+   id (PK) - INT AUTO_INCREMENT
+   Fungsi     : Identitas unik setiap entry profil
+   Kenapa ada : Standard primary key untuk referensi
+   
+   section - ENUM('owner','team')
+   Fungsi     : Menentukan kategori profil
+   Kenapa ada : Ada dua entitas yang perlu profil:
+                - owner: informasi pemilik sistem (user yang menggunakan)
+                - team: informasi tim pengembang (yang membuat sistem)
+   
+   Penggunaan :
+   - Halaman Profile punya dua section/tab: "Pemilik" dan "Tim Pengembang"
+   - Query: SELECT * WHERE section='owner' untuk data pemilik
+   - Query: SELECT * WHERE section='team' untuk data tim
+   
+   label - VARCHAR(100)
+   Fungsi     : Nama field/atribut profil
+   Kenapa ada : Karena menggunakan pola key-value, label adalah "key"-nya
+   Penggunaan : Ditampilkan sebagai label di form dan display
+   Contoh     : "Nama", "Email", "WA", "Lokasi", "Nama Team", "Peran"
+   
+   value - TEXT
+   Fungsi     : Nilai dari field profil
+   Kenapa ada : Ini adalah "value" dalam pola key-value
+   Kenapa TEXT: Bisa menyimpan nilai yang panjang (alamat lengkap, dll)
+   Penggunaan : Ditampilkan sebagai nilai di form dan display
+   
+   Seed Data (Contoh):
+   
+   Section OWNER:
+   - label: "Nama", value: "Edi Setiawan"
+   - label: "Email", value: "EdiSetiawan@gmail.com"
+   - label: "WA", value: "0856-4584-2028"
+   - label: "Lokasi", value: "Jl. Raung, Gumuk Kerang, Ajung, Jember"
+   
+   Section TEAM:
+   - label: "Nama Team", value: "Kelompok 1 (Hydrotech)"
+   - label: "Peran", value: "Web Developer"
+   - label: "Kontak", value: "0815-1533-4689"
+   - label: "Alamat", value: "Sumbersari Jember"
+   
+   sort_order - INT DEFAULT 0
+   Fungsi     : Menentukan urutan tampilan field profil
+   Kenapa ada : Tanpa sort_order, field akan tampil sesuai urutan INSERT
+                (yang mungkin tidak logis). Dengan sort_order, kita bisa
+                kontrol urutan tampilan.
+   
+   Penggunaan :
+   - Query: SELECT * ORDER BY sort_order ASC
+   - Hasil: field dengan sort_order=1 muncul pertama, lalu 2, 3, dst
+   
+   Contoh:
+   - Nama (sort_order=1) → muncul pertama
+   - Email (sort_order=2) → muncul kedua
+   - WA (sort_order=3) → muncul ketiga
+   - Lokasi (sort_order=4) → muncul keempat
+   
+   FUNGSI DALAM SISTEM:
+   ---------------------------------------------------------------------------
+   
+   1. INFORMASI KONTAK
+      User bisa lihat informasi kontak pemilik dan tim pengembang:
+      - Jika ada masalah dengan sistem, tahu harus hubungi siapa
+      - Jika perlu support, ada kontak tim pengembang
+   
+   2. DOKUMENTASI SISTEM
+      Menunjukkan siapa yang memiliki dan mengembangkan sistem:
+      - Untuk keperluan dokumentasi
+      - Untuk keperluan presentasi/demo
+      - Untuk kredit/attribution
+   
+   3. FLEKSIBEL DAN EXTENSIBLE
+      Bisa tambah field baru tanpa ubah struktur tabel:
+      - Tambah field "Instagram" → INSERT (section='owner', label='Instagram', value='@username')
+      - Hapus field "WA" → DELETE WHERE label='WA'
+      - Ubah urutan → UPDATE sort_order
+   
+   4. EDITABLE VIA UI
+      Admin bisa edit profil langsung dari halaman Profile:
+      - Klik edit → form muncul dengan data saat ini
+      - Ubah nilai → klik save
+      - Sistem: DELETE semua field untuk section itu, lalu INSERT ulang
+   
+   POLA EAV (ENTITY-ATTRIBUTE-VALUE):
+   ---------------------------------------------------------------------------
+   
+   Tabel ini menggunakan pola desain EAV yang cocok untuk:
+   - Data yang strukturnya bisa berubah-ubah
+   - Field yang bisa ditambah/dihapus tanpa migrasi database
+   - Jumlah field yang berbeda per entity
+   
+   Alternatif yang TIDAK digunakan:
+   - Tabel terpisah untuk owner dan team (kurang fleksibel)
+   - Kolom固定 untuk setiap field (tidak bisa tambah field baru)
+   
+   Keuntungan EAV:
+   - Fleksibel: bisa tambah/hapus field kapan saja
+   - Extensible: bisa support entity lain di masa depan
+   - Simple: hanya satu tabel untuk semua profil
+   
+   Kekurangan EAV:
+   - Query lebih kompleks (perlu pivot/jika mau display sebagai kolom)
+   - Tidak ada validasi tipe data di database (semua TEXT)
+   - Performance bisa lebih lambat untuk data yang sangat besar
+   
+   Tapi untuk use case profil yang kecil (hanya ~8 rows), EAV sangat cocok.
+
+
+================================================================================
+RELASI ANTAR TABEL - PENJELASAN DETAIL
+================================================================================
+
+PENTING: Semua relasi adalah LOGIKAL (application-level), TIDAK ADA foreign key 
+constraint di database. Relasi diimplementasikan dan dipaksa oleh kode PHP,
+bukan oleh database engine.
+
+Kenapa tidak ada foreign key?
+- Lebih fleksibel untuk development
+- Tidak ada masalah cascade delete yang tidak diinginkan
+- Performance sedikit lebih baik (tidak ada FK check)
+- Tapi: tanggung jawab integritas data ada di kode PHP
+
+================================================================================
+
+1. users → sensor_readings (1:N)
+   ---------------------------------------------------------------------------
+   TIPE RELASI  : Logical relationship (tidak ada FK)
+   CARDINALITY  : Satu user bisa memonitor banyak pembacaan sensor
+   
+   DESKRIPSI DETAIL:
+   User yang login bisa melihat dan memonitor semua data sensor. Namun, tabel
+   sensor_readings TIDAK menyimpan user_id karena:
+   - Data sensor datang dari perangkat IoT, bukan dari user
+   - Semua user (saat ini hanya 1 admin) melihat data yang sama
+   - User_id disimpan di session, tidak perlu di tabel sensor_readings
+   
+   IMPLEMENTASI:
+   ```php
+   // User login → session disimpan
+   $_SESSION['user_id'] = $user['id'];
+   
+   // User akses dashboard → bisa lihat semua sensor_readings
+   $readings = getAllSensorReadings(); // tidak filter by user_id
+   
+   // Jika di masa depan ada multi-user dengan data terpisah:
+   // ALTER TABLE sensor_readings ADD COLUMN user_id INT;
+   // ALTER TABLE sensor_readings ADD FOREIGN KEY (user_id) REFERENCES users(id);
+   ```
+   
+   KENAPA 1:N?
+   - 1 user bisa lihat N sensor readings
+   - Tapi 1 sensor reading tidak "milik" 1 user tertentu
+   - Ini relasi "akses", bukan "kepemilikan"
+   
+   USE CASE:
+   - Admin login → lihat semua data sensor dari semua perangkat
+   - Di masa depan: user biasa hanya lihat data sensor milik mereka saja
+
+
+2. sensor_readings → notifications (1:N)
+   ---------------------------------------------------------------------------
+   TIPE RELASI  : Trigger relationship (sebab-akibat)
+   CARDINALITY  : Satu pembacaan sensor bisa menghasilkan 0-2 notifikasi
+   
+   DESKRIPSI DETAIL:
+   Ini adalah relasi SEBAB-AKIBAT yang PALING PENTING dalam sistem:
+   - SEBAB: sensor membaca nilai di luar range
+   - AKIBAT: sistem membuat notifikasi alert
+   
+   Setiap kali data sensor baru masuk, sistem melakukan:
+   1. Simpan data ke sensor_readings
+   2. Ambil threshold dari settings
+   3. Bandingkan nilai sensor dengan threshold
+   4. Jika pH di luar range → buat notifikasi "PH Alert"
+   5. Jika PPM di luar range → buat notifikasi "PPM Alert"
+   6. Jika keduanya di luar range → buat 2 notifikasi
+   
+   IMPLEMENTASI:
+   ```php
+   // api/sensor/save.php
+   function saveSensorReading($ph, $ppm) {
+       // 1. Simpan data sensor
+       $reading_id = insertSensorReading($ph, $ppm);
+       
+       // 2. Ambil threshold
+       $ph_settings = getSettings('ph'); // min: 5.5, max: 6.5
+       $ppm_settings = getSettings('ppm'); // min: 800, max: 1000
+       
+       // 3. Cek pH
+       if ($ph < $ph_settings['min'] || $ph > $ph_settings['max']) {
+           insertNotification([
+               'label' => 'PH Alert',
+               'message' => "pH terdeteksi $ph (normal: {$ph_settings['min']}-{$ph_settings['max']})",
+               'tone' => 'warning',
+               'href' => 'pengaturan-ph.php'
+           ]);
+       }
+       
+       // 4. Cek PPM
+       if ($ppm < $ppm_settings['min'] || $ppm > $ppm_settings['max']) {
+           insertNotification([
+               'label' => 'PPM Alert',
+               'message' => "PPM terdeteksi $ppm (normal: {$ppm_settings['min']}-{$ppm_settings['max']})",
+               'tone' => 'warning',
+               'href' => 'pengaturan-ppm.php'
+           ]);
+       }
+       
+       return $reading_id;
+   }
+   ```
+   
+   CONTOH SCENARIO:
+   
+   Scenario 1: Semua normal
+   - Sensor baca: pH=6.0, PPM=900
+   - Threshold: pH 5.5-6.5, PPM 800-1000
+   - Hasil: 0 notifikasi (semua dalam range)
+   
+   Scenario 2: pH tinggi
+   - Sensor baca: pH=7.2, PPM=900
+   - Threshold: pH 5.5-6.5, PPM 800-1000
+   - Hasil: 1 notifikasi "PH Alert" (pH di atas max)
+   
+   Scenario 3: Keduanya abnormal
+   - Sensor baca: pH=4.5, PPM=1200
+   - Threshold: pH 5.5-6.5, PPM 800-1000
+   - Hasil: 2 notifikasi (pH rendah + PPM tinggi)
+   
+   KENAPA 1:N?
+   - 1 sensor reading bisa trigger 0, 1, atau 2 notifikasi
+   - 1 notifikasi hanya berasal dari 1 sensor reading (yang terakhir)
+
+
+3. sensor_readings → settings (N:1)
+   ---------------------------------------------------------------------------
+   TIPE RELASI  : Comparison relationship (perbandingan)
+   CARDINALITY  : Banyak sensor readings dibandingkan dengan 1 set threshold
+   
+   DESKRIPSI DETAIL:
+   Setiap data sensor yang masuk akan DIBANDINGKAN dengan threshold yang ada
+   di settings. Ini adalah dasar dari sistem alerting.
+   
+   Alur:
+   1. Sensor kirim data: pH=6.8, PPM=950
+   2. Sistem baca settings:
+      - SELECT config_json FROM settings WHERE type='ph'
+      - Result: {"min": "5.5", "max": "6.5"}
+      - SELECT config_json FROM settings WHERE type='ppm'
+      - Result: {"min": "800", "max": "1000"}
+   3. Bandingkan:
+      - pH 6.8 > 6.5 → ALERT!
+      - PPM 950 dalam range 800-1000 → OK
+   4. Buat notifikasi untuk pH
+   
+   IMPLEMENTASI:
+   ```php
+   function compareWithThreshold($type, $value) {
+       $settings = getSettings($type); // ambil dari tabel settings
+       $config = json_decode($settings['config_json'], true);
+       
+       $min = floatval($config['min']);
+       $max = floatval($config['max']);
+       
+       if ($value < $min) {
+           return 'rendah'; // di bawah minimum
+       } elseif ($value > $max) {
+           return 'tinggi'; // di atas maximum
+       } else {
+           return 'normal'; // dalam range
+       }
+   }
+   
+   // Penggunaan
+   $ph_status = compareWithThreshold('ph', 6.8); // return 'tinggi'
+   $ppm_status = compareWithThreshold('ppm', 950); // return 'normal'
+   ```
+   
+   KENAPA N:1?
+   - N (banyak) sensor readings dibandingkan dengan 1 set threshold
+   - Threshold berlaku untuk semua readings sampai diubah oleh admin
+   - Jika admin ubah threshold, readings berikutnya menggunakan threshold baru
+
+
+4. settings → monitoring_logs (1:N)
+   ---------------------------------------------------------------------------
+   TIPE RELASI  : Type reference relationship (referensi tipe)
+   CARDINALITY  : Satu setting type memiliki banyak monitoring logs
+   
+   DESKRIPSI DETAIL:
+   Settings dan monitoring_logs berbagi ENUM yang sama: 'ppm', 'ph', 'dithane'.
+   Ini membuat mereka terhubung secara logikal berdasarkan tipe parameter.
+   
+   Contoh:
+   - Settings type='ppm' → konfigurasi PPM (min: 800, max: 1000)
+   - Monitoring logs type='ppm' → semua log aktivitas PPM
+   
+   Halaman "Pengaturan PPM" akan:
+   1. Ambil settings untuk PPM: SELECT * FROM settings WHERE type='ppm'
+   2. Ambil monitoring logs untuk PPM: SELECT * FROM monitoring_logs WHERE type='ppm' AND is_deleted=0
+   3. Tampilkan keduanya di halaman yang sama
+   
+   IMPLEMENTASI:
+   ```php
+   // Halaman pengaturan-ppm.php
+   $type = 'ppm';
+   
+   // Ambil konfigurasi
+   $settings = $pdo->prepare("SELECT * FROM settings WHERE type = ?");
+   $settings->execute([$type]);
+   $config = $settings->fetch();
+   $threshold = json_decode($config['config_json'], true);
+   
+   // Ambil monitoring logs
+   $logs = $pdo->prepare("SELECT * FROM monitoring_logs WHERE type = ? AND is_deleted = 0 ORDER BY created_at DESC");
+   $logs->execute([$type]);
+   $monitoring_logs = $logs->fetchAll();
+   
+   // Tampilkan di view
+   // - Form untuk ubah threshold (dari $threshold)
+   // - Tabel log aktivitas (dari $monitoring_logs)
+   ```
+   
+   KENAPA 1:N?
+   - 1 setting type (ppm) punya N monitoring logs
+   - Semua log PPM mengacu ke konfigurasi PPM yang sama
+
+
+5. monitoring_logs → history_logs (1:N)
+   ---------------------------------------------------------------------------
+   TIPE RELASI  : Peer relationship (relasi setara)
+   CARDINALITY  : Monitoring logs dan history logs berbagi tipe yang sama
+   
+   DESKRIPSI DETAIL:
+   Kedua tabel ini SEBENARNYA MIRIP, tapi melayani tujuan yang berbeda:
+   
+   monitoring_logs:
+   - Untuk halaman pengaturan PER PARAMETER
+   - Lebih detail per setting
+   - Tidak ada log_date (hanya day_name)
+   - Query sederhana
+   
+   history_logs:
+   - Untuk halaman history GLOBAL
+   - Menggabungkan SEMUA parameter
+   - Ada log_date untuk filter tanggal
+   - Query kompleks dengan filter + search + pagination
+   
+   Meskipun tidak ada relasi langsung, mereka terhubung melalui ENUM type
+   yang sama ('ppm', 'ph', 'dithane').
+   
+   IMPLEMENTASI:
+   ```php
+   // Halaman pengaturan-ph.php
+   $logs = getMonitoringLogs('ph'); // dari monitoring_logs
+   
+   // Halaman history.php
+   $history = getHistoryLogs([
+       'type' => 'all', // atau 'ppm', 'ph', 'dithane'
+       'date_from' => '2026-01-01',
+       'date_to' => '2026-01-31',
+       'status' => 'all' // atau 'Normal', 'Rendah', 'Tinggi'
+   ]); // dari history_logs
+   ```
+   
+   KENADA DUA TABEL MIRIP?
+   - Separation of concerns: setiap tabel untuk use case berbeda
+   - Performance: query sederhana vs kompleks
+   - Flexibility: bisa optimize setiap tabel untuk use case-nya
+
+
+6. notifications → history_logs (1:N)
+   ---------------------------------------------------------------------------
+   TIPE RELASI  : Context relationship (konteks)
+   CARDINALITY  : Notifikasi memberikan konteks untuk history logs
+   
+   DESKRIPSI DETAIL:
+   Notifikasi dan history logs tidak terhubung langsung, tapi bisa dikorelasikan
+   berdasarkan waktu dan tipe parameter.
+   
+   Contoh use case:
+   1. User lihat notifikasi "PH Alert" di dashboard
+   2. User klik notifikasi → diarahkan ke halaman history
+   3. User filter history: type='ph', date=tanggal notifikasi
+   4. User lihat detail log pH pada waktu tersebut
+   
+   IMPLEMENTASI:
+   ```php
+   // User klik notifikasi dengan href='history.php?type=ph&date=2026-01-15'
+   
+   // history.php
+   $type = $_GET['type'] ?? 'all';
+   $date = $_GET['date'] ?? date('Y-m-d');
+   
+   $history = getHistoryLogs([
+       'type' => $type,
+       'date' => $date
+   ]);
+   
+   // Tampilkan history logs yang relevan dengan notifikasi
+   ```
+   
+   KORELASI BERDASARKAN WAKTU:
+   ```php
+   // Ambil notifikasi
+   $notification = getNotification($id);
+   $notif_time = $notification['created_at'];
+   
+   // Cari history logs di sekitar waktu notifikasi
+   $history = $pdo->prepare("
+       SELECT * FROM history_logs 
+       WHERE created_at BETWEEN ? AND ?
+       ORDER BY created_at DESC
+   ");
+   $history->execute([
+       date('Y-m-d H:i:s', strtotime($notif_time . ' -1 hour')),
+       date('Y-m-d H:i:s', strtotime($notif_time . ' +1 hour'))
+   ]);
+   
+   // Dapat history logs 1 jam sebelum dan sesudah notifikasi
+   ```
+
+
+================================================================================
+ALUR KERJA SISTEM - PENJELASAN DETAIL
+================================================================================
+
+Sistem HYDROTECH bekerja dalam beberapa tahapan yang saling terhubung.
+Berikut adalah alur kerja lengkap dari awal hingga akhir:
+
+================================================================================
+1. DATA INGESTION (Pengambilan Data dari Sensor)
+================================================================================
+
+TAHAP INI: Data dari sensor fisik masuk ke sistem
+
+ALUR LENGKAP:
+1. Sensor pH dan sensor PPM dipasang di larutan nutrisi hidroponik
+2. Sensor membaca nilai pH dan PPM secara periodik (misal: setiap 5 menit)
+3. Mikrokontroler (Arduino/ESP32/Raspberry Pi) mengirim data ke server via HTTP POST
+4. Request diterima oleh api/sensor/save.php
+5. Data divalidasi (cek format, cek range wajar)
+6. Data disimpan ke tabel sensor_readings
+7. Sistem trigger proses alerting (lihat tahap 2)
+
+CONTOH KODE:
+```php
+// api/sensor/save.php
+<?php
+require_once '../includes/auth_check.php';
+require_once '../config/database.php';
+
+// Terima data dari sensor (POST request)
+$ph = $_POST['ph'] ?? null;
+$ppm = $_POST['ppm'] ?? null;
+
+// Validasi
+if ($ph === null || $ppm === null) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Missing pH or PPM value']);
+    exit;
+}
+
+// Validasi range wajar (sanity check)
+if ($ph < 0 || $ph > 14) {
+    http_response_code(400);
+    echo json_encode(['error' => 'pH value out of valid range (0-14)']);
+    exit;
+}
+
+if ($ppm < 0 || $ppm > 5000) {
+    http_response_code(400);
+    echo json_encode(['error' => 'PPM value out of valid range']);
+    exit;
+}
+
+// Simpan ke database
+$stmt = $pdo->prepare("INSERT INTO sensor_readings (ph_value, ppm_value) VALUES (?, ?)");
+$stmt->execute([$ph, $ppm]);
+$reading_id = $pdo->lastInsertId();
+
+// Trigger alerting (tahap 2)
+generateAlerts($ph, $ppm);
+
+// Response
+echo json_encode([
+    'success' => true,
+    'reading_id' => $reading_id,
+    'message' => 'Sensor data saved successfully'
+]);
+?>
+```
+
+HASIL:
+- 1 baris baru di sensor_readings dengan data sensor terbaru
+- Timestamp otomatis tercatat
+- Data siap untuk ditampilkan di dashboard dan diproses untuk alerting
+
+
+================================================================================
+2. THRESHOLD COMPARISON (Perbandingan dengan Threshold)
+================================================================================
+
+TAHAP INI: Data sensor dibandingkan dengan threshold yang dikonfigurasi
+
+ALUR LENGKAP:
+1. Setelah data sensor disimpan (tahap 1), sistem langsung ambil threshold
+2. Ambil settings untuk pH: SELECT config_json FROM settings WHERE type='ph'
+3. Ambil settings untuk PPM: SELECT config_json FROM settings WHERE type='ppm'
+4. Parse JSON untuk dapat min dan max
+5. Bandingkan nilai sensor dengan threshold:
+   - Jika pH < min atau pH > max → pH abnormal
+   - Jika PPM < min atau PPM > max → PPM abnormal
+6. Tentukan status: "Normal", "Rendah", atau "Tinggi"
+7. Lanjut ke tahap 3 (notification generation)
+
+CONTOH KODE:
+```php
+function generateAlerts($ph, $ppm) {
+    global $pdo;
+    
+    // Ambil threshold pH
+    $stmt = $pdo->prepare("SELECT config_json FROM settings WHERE type = 'ph'");
+    $stmt->execute();
+    $ph_settings = json_decode($stmt->fetch()['config_json'], true);
+    $ph_min = floatval(str_replace(',', '.', $ph_settings['min'])); // "5,5" → 5.5
+    $ph_max = floatval(str_replace(',', '.', $ph_settings['max'])); // "6,5" → 6.5
+    
+    // Ambil threshold PPM
+    $stmt = $pdo->prepare("SELECT config_json FROM settings WHERE type = 'ppm'");
+    $stmt->execute();
+    $ppm_settings = json_decode($stmt->fetch()['config_json'], true);
+    $ppm_min = intval($ppm_settings['min']); // "800" → 800
+    $ppm_max = intval($ppm_settings['max']); // "1000" → 1000
+    
+    // Cek pH
+    if ($ph < $ph_min) {
+        createNotification('PH Alert', "pH terdeteksi $ph (di bawah normal $ph_min-$ph_max). Tambahkan pH up.", 'warning', 'pengaturan-ph.php');
+    } elseif ($ph > $ph_max) {
+        createNotification('PH Alert', "pH terdeteksi $ph (di atas normal $ph_min-$ph_max). Tambahkan pH down.", 'warning', 'pengaturan-ph.php');
+    }
+    
+    // Cek PPM
+    if ($ppm < $ppm_min) {
+        createNotification('PPM Alert', "PPM terdeteksi $ppm (di bawah normal $ppm_min-$ppm_max). Tambahkan nutrisi.", 'warning', 'pengaturan-ppm.php');
+    } elseif ($ppm > $ppm_max) {
+        createNotification('PPM Alert', "PPM terdeteksi $ppm (di atas normal $ppm_min-$ppm_max). Ganti air atau kurangi nutrisi.", 'warning', 'pengaturan-ppm.php');
+    }
+}
+
+function createNotification($label, $message, $tone, $href) {
+    global $pdo;
+    $stmt = $pdo->prepare("INSERT INTO notifications (label, message, tone, href) VALUES (?, ?, ?, ?)");
+    $stmt->execute([$label, $message, $tone, $href]);
+}
+?>
+```
+
+HASIL:
+- Status setiap parameter ditentukan (Normal/Rendah/Tinggi)
+- Informasi ini digunakan untuk membuat notifikasi di tahap 3
+
+
+================================================================================
+3. NOTIFICATION GENERATION (Pembuatan Notifikasi Otomatis)
+================================================================================
+
+TAHAP INI: Jika ada parameter abnormal, buat notifikasi alert
+
+ALUR LENGKAP:
+1. Berdasarkan hasil perbandingan (tahap 2), sistem tentukan apakah perlu buat notifikasi
+2. Jika pH abnormal → INSERT notifikasi "PH Alert" dengan tone='warning'
+3. Jika PPM abnormal → INSERT notifikasi "PPM Alert" dengan tone='warning'
+4. Jika keduanya normal → bisa INSERT notifikasi "System Normal" dengan tone='success' (opsional)
+5. Notifikasi tersimpan di tabel notifications
+6. Notifikasi akan muncul di dashboard user saat refresh
+
+CONTOH SCENARIO:
+
+Scenario A: Semua Normal
+- Sensor baca: pH=6.0, PPM=900
+- Threshold: pH 5.5-6.5, PPM 800-1000
+- Hasil: Tidak ada notifikasi (atau notifikasi "System Normal")
+
+Scenario B: pH Tinggi
+- Sensor baca: pH=7.2, PPM=900
+- Threshold: pH 5.5-6.5, PPM 800-1000
+- Hasil: 1 notifikasi "PH Alert: pH terdeteksi 7.2 (di atas normal 5.5-6.5)"
+
+Scenario C: Keduanya Abnormal
+- Sensor baca: pH=4.5, PPM=1200
+- Threshold: pH 5.5-6.5, PPM 800-1000
+- Hasil: 2 notifikasi
+  1. "PH Alert: pH terdeteksi 4.5 (di bawah normal 5.5-6.5)"
+  2. "PPM Alert: PPM terdeteksi 1200 (di atas normal 800-1000)"
+
+HASIL:
+- 0, 1, atau 2 notifikasi baru di tabel notifications
+- Notifikasi memiliki label, message, tone, dan href
+- Notifikasi belum dibaca (is_read=0)
+
+
+================================================================================
+4. LOGGING (Pencatatan Aktivitas Monitoring)
+================================================================================
+
+TAHAP INI: Semua aktivitas monitoring dicatat untuk audit trail
+
+ALUR LENGKAP:
+1. Setiap kali ada pembacaan sensor, sistem bisa buat log di monitoring_logs
+2. Log berisi: tipe parameter, hari, waktu, nilai, status, dan catatan
+3. Log juga bisa dibuat manual oleh user (misal: "Hari ini ganti air")
+4. Semua log juga masuk ke history_logs untuk riwayat global
+5. Log menggunakan soft delete (tidak benar-benar dihapus)
+
+CONTOH KODE:
+```php
+function createMonitoringLog($type, $value, $status, $note = null) {
+    global $pdo;
+    
+    $day_name = date('l'); // "Monday", "Tuesday", dll
+    $log_time = date('H.i'); // "14.30"
+    
+    // Insert ke monitoring_logs
+    $stmt = $pdo->prepare("INSERT INTO monitoring_logs (type, day_name, log_time, value, status, note) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$type, $day_name, $log_time, $value, $status, $note]);
+    
+    // Insert ke history_logs (dengan tanggal lengkap)
+    $log_date = date('Y-m-d');
+    $stmt = $pdo->prepare("INSERT INTO history_logs (day_name, log_date, log_time, type, status, note) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$day_name, $log_date, $log_time, $type, $status, $note]);
+}
+
+// Penggunaan
+createMonitoringLog('ph', '6.8', 'Tinggi', 'pH naik setelah hujan semalam');
+createMonitoringLog('ppm', '950', 'Normal', 'Setelah tambah nutrisi AB Mix');
+?>
+```
+
+HASIL:
+- 1 baris baru di monitoring_logs (untuk halaman pengaturan per parameter)
+- 1 baris baru di history_logs (untuk halaman history global)
+- Kedua log terhubung melalui ENUM type yang sama
+
+
+================================================================================
+5. DASHBOARD DISPLAY (Tampilan Dashboard)
+================================================================================
+
+TAHAP INI: Data dari berbagai tabel ditampilkan di dashboard user
+
+ALUR LENGKAP:
+1. User login → redirect ke dashboard
+2. Dashboard load api/dashboard/summary.php
+3. API mengambil data dari 3 tabel:
+   a. settings → threshold saat ini
+   b. sensor_readings → data sensor terbaru (last 10)
+   c. notifications → notifikasi belum dibaca
+4. Data diolah dan dikembalikan sebagai JSON
+5. Frontend render dashboard dengan:
+   - Summary cards (pH saat ini, PPM saat ini, jumlah alert)
+   - Live charts (grafik pH dan PPM real-time)
+   - Notification bell dengan badge jumlah belum dibaca
+6. Dashboard auto-refresh setiap 30 detik untuk update real-time
+
+CONTOH KODE:
+```php
+// api/dashboard/summary.php
+<?php
+require_once '../../includes/auth_check.php';
+requireAuth();
+require_once '../../config/database.php';
+
+// Ambil data sensor terbaru
+$sensor = $pdo->query("SELECT * FROM sensor_readings ORDER BY recorded_at DESC LIMIT 10")->fetchAll();
+
+// Ambil settings
+$settings = [];
+$types = ['ppm', 'ph', 'dithane'];
+foreach ($types as $type) {
+    $stmt = $pdo->prepare("SELECT config_json FROM settings WHERE type = ?");
+    $stmt->execute([$type]);
+    $settings[$type] = json_decode($stmt->fetch()['config_json'], true);
+}
+
+// Ambil notifikasi belum dibaca
+$notif_count = $pdo->query("SELECT COUNT(*) FROM notifications WHERE is_read = 0")->fetchColumn();
+
+// Response
+echo json_encode([
+    'success' => true,
+    'data' => [
+        'latest_sensor' => $sensor[0] ?? null,
+        'sensor_history' => $sensor,
+        'settings' => $settings,
+        'unread_notifications' => $notif_count
+    ]
+]);
+?>
+```
+
+FRONTEND RENDERING:
+```javascript
+// dashboard.js
+async function loadDashboard() {
+    const response = await fetch('/api/dashboard/summary.php');
+    const data = await response.json();
+    
+    // Update summary cards
+    document.getElementById('ph-value').textContent = data.latest_sensor.ph_value;
+    document.getElementById('ppm-value').textContent = data.latest_sensor.ppm_value;
+    document.getElementById('alert-count').textContent = data.unread_notifications;
+    
+    // Update charts
+    const phChart = new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: data.sensor_history.map(s => s.recorded_at),
+            datasets: [{
+                label: 'pH',
+                data: data.sensor_history.map(s => s.ph_value)
+            }]
+        }
+    });
+    
+    // Update notification bell
+    if (data.unread_notifications > 0) {
+        document.getElementById('notif-badge').textContent = data.unread_notifications;
+        document.getElementById('notif-badge').style.display = 'block';
+    }
+}
+
+// Auto-refresh setiap 30 detik
+setInterval(loadDashboard, 30000);
+loadDashboard(); // Load saat pertama kali
+```
+
+HASIL:
+- Dashboard menampilkan data real-time dari sensor
+- User bisa lihat kondisi terkini tanaman mereka
+- Notifikasi alert langsung terlihat
+- Chart menunjukkan tren pH dan PPM
+
+
+================================================================================
+RINGKASAN ALUR KERJA
+================================================================================
+
+1. SENSOR → api/sensor/save.php → sensor_readings (data masuk)
+2. sensor_readings + settings → compare → tentukan status
+3. Status abnormal → notifications (alert dibuat)
+4. Semua aktivitas → monitoring_logs + history_logs (dicatat)
+5. Dashboard → query semua tabel → tampilkan ke user
+
+FLOW DIAGRAM:
+
+┌─────────────┐
+│   SENSOR    │ (perangkat IoT)
+│  pH & PPM   │
+└──────┬──────┘
+       │ HTTP POST
+       ▼
+┌─────────────────────┐
+│ api/sensor/save.php │
+│  (data ingestion)   │
+└──────┬──────────────┘
+       │
+       ├──────────────────────────────────────┐
+       │                                      │
+       ▼                                      ▼
+┌──────────────────┐              ┌──────────────────┐
+│ sensor_readings  │              │     settings     │
+│  (simpan data)   │              │ (ambil threshold)│
+└────────┬─────────┘              └────────┬─────────┘
+         │                                 │
+         └────────────┬────────────────────┘
+                      │
+                      ▼
+            ┌──────────────────┐
+            │    COMPARE       │
+            │ (bandingkan nilai│
+            │  dg threshold)   │
+            └────────┬─────────┘
+                     │
+                     ▼
+            ┌──────────────────┐
+            │  IF abnormal?    │
+            │  pH < min or     │
+            │  pH > max or     │
+            │  PPM < min or    │
+            │  PPM > max       │
+            └────────┬─────────┘
+                     │
+         ┌───────────┴───────────┐
+         │                       │
+    abnormal                  normal
+         │                       │
+         ▼                       ▼
+┌──────────────────┐    ┌──────────────────┐
+│  notifications   │    │ (tidak ada alert)│
+│ (buat alert)     │    │                  │
+└────────┬─────────┘    └──────────────────┘
+         │
+         │
+         ▼
+┌──────────────────┐    ┌──────────────────┐
+│ monitoring_logs  │    │   history_logs   │
+│ (catat per param)│    │ (catat global)   │
+└──────────────────┘    └──────────────────┘
+         │
+         │
+         ▼
+┌──────────────────┐
+│    DASHBOARD     │
+│ (tampilkan semua)│
+│ - sensor data    │
+│ - charts         │
+│ - notifications  │
+└──────────────────┘
+
+
+
+================================================================================
+PATTERN DESAIN
+================================================================================
+
+1. SOFT DELETE
+   Tabel monitoring_logs dan history_logs menggunakan flag is_deleted 
+   (TINYINT(1)) daripada DELETE statement. Ini memungkinkan audit trail dan 
+   recovery data jika diperlukan.
+
+2. JSON CONFIGURATION
+   Tabel settings menggunakan kolom JSON (config_json) untuk menyimpan 
+   konfigurasi yang berbeda per tipe. Ini memberikan fleksibilitas tanpa perlu 
+   membuat tabel terpisah untuk setiap jenis setting.
+
+3. ENUM-DRIVEN POLYMORPHISM
+   ENUM('ppm','ph','dithane') digunakan di settings, monitoring_logs, dan 
+   history_logs sebagai discriminator logikal yang menghubungkan records terkait.
+
+4. INDEX OPTIMIZATION
+   Composite indexes dibuat untuk query yang sering digunakan:
+   - idx_type_deleted (type, is_deleted) di monitoring_logs
+   - idx_type_date_deleted (type, log_date, is_deleted) di history_logs
+
+5. SEPARATION OF CONCERNS
+   - monitoring_logs: untuk detail per parameter (settings pages)
+   - history_logs: untuk riwayat global (history page dengan filter)
+   Meskipun struktur serupa, keduanya melayani use case yang berbeda.
+
+
+================================================================================
+ENDPOINT API TERKAIT - PENJELASAN DETAIL
+================================================================================
+
+Sistem HYDROTECH menggunakan arsitektur REST-like API dimana frontend (HTML/JS)
+berkomunikasi dengan backend (PHP) melalui HTTP requests. Semua endpoint
+mengembalikan response dalam format JSON.
+
+STRUKTUR URL: /api/[kategori]/[action].php
+CONTOH: /api/sensor/save.php, /api/auth/login.php
+
+================================================================================
+AUTH (Autentikasi)
+================================================================================
+
+1. api/auth/login.php
+   ---------------------------------------------------------------------------
+   FUNGSI       : Endpoint untuk login user ke sistem
+   METHOD       : POST
+   INPUT        : username (string), password (string)
+   OUTPUT       : JSON {success: bool, message: string, user?: object}
+   
+   ALUR KERJA:
+   1. Terima username dan password dari form login
+   2. Query ke tabel users: SELECT * WHERE username = ?
+   3. Jika user tidak ditemukan → return error "Username tidak ditemukan"
+   4. Jika user ditemukan → verify password dengan password_verify()
+   5. Jika password salah → return error "Password salah"
+   6. Jika password benar → buat session dan simpan data user
+   7. Return success dengan data user (tanpa password)
+   
+   CONTOH REQUEST:
+   POST /api/auth/login.php
+   Content-Type: application/x-www-form-urlencoded
+   
+   username=hydrotech&password=Admin123
+   
+   CONTOH RESPONSE SUCCESS:
+   {
+       "success": true,
+       "message": "Login berhasil",
+       "user": {
+           "id": 1,
+           "username": "hydrotech",
+           "email": "admin@hydrotech.com",
+           "role": "admin"
+       }
+   }
+   
+   CONTOH RESPONSE ERROR:
+   {
+       "success": false,
+       "message": "Username tidak ditemukan"
+   }
+   
+   TABEL TERKAIT: users (SELECT)
+
+
+2. api/auth/check.php
+   ---------------------------------------------------------------------------
+   FUNGSI       : Cek apakah user masih login (session masih valid)
+   METHOD       : GET
+   INPUT        : Tidak ada (cek session)
+   OUTPUT       : JSON {authenticated: bool, user?: object}
+   
+   ALUR KERJA:
+   1. Cek apakah $_SESSION['user_id'] ada
+   2. Jika ada → return authenticated: true dengan data user
+   3. Jika tidak ada → return authenticated: false
+   
+   PENGGUNAAN:
+   - Frontend panggil ini saat page load untuk cek login status
+   - Jika tidak authenticated → redirect ke login page
+   - Jika authenticated → tampilkan dashboard
+   
+   CONTOH RESPONSE:
+   {
+       "authenticated": true,
+       "user": {
+           "id": 1,
+           "username": "hydrotech",
+           "email": "admin@hydrotech.com",
+           "role": "admin"
+       }
+   }
+   
+   TABEL TERKAIT: Tidak ada (hanya cek session)
+
+
+3. api/auth/logout.php
+   ---------------------------------------------------------------------------
+   FUNGSI       : Logout user dari sistem
+   METHOD       : POST
+   INPUT        : Tidak ada
+   OUTPUT       : JSON {success: bool, message: string}
+   
+   ALUR KERJA:
+   1. Hapus semua data session dengan session_destroy()
+   2. Return success
+   3. Frontend redirect ke login page
+   
+   CONTOH RESPONSE:
+   {
+       "success": true,
+       "message": "Logout berhasil"
+   }
+   
+   TABEL TERKAIT: Tidak ada
+
+
+================================================================================
+SENSOR (Data Sensor IoT)
+================================================================================
+
+1. api/sensor/latest.php
+   ---------------------------------------------------------------------------
+   FUNGSI       : Ambil data sensor terbaru untuk dashboard
+   METHOD       : GET
+   INPUT        : limit (optional, default 10)
+   OUTPUT       : JSON {success: bool, data: array}
+   
+   ALUR KERJA:
+   1. Query: SELECT * FROM sensor_readings ORDER BY recorded_at DESC LIMIT ?
+   2. Return array of sensor readings (terbaru pertama)
+   
+   PENGGUNAAN:
+   - Dashboard panggil ini untuk tampilkan data sensor real-time
+   - Chart.js gunakan data ini untuk plot grafik
+   - Auto-refresh setiap 30 detik
+   
+   CONTOH REQUEST:
+   GET /api/sensor/latest.php?limit=10
+   
+   CONTOH RESPONSE:
+   {
+       "success": true,
+       "data": [
+           {
+               "id": 123,
+               "ph_value": "6.50",
+               "ppm_value": 950,
+               "recorded_at": "2026-01-15 14:30:00"
+           },
+           {
+               "id": 122,
+               "ph_value": "6.45",
+               "ppm_value": 945,
+               "recorded_at": "2026-01-15 14:25:00"
+           }
+       ]
+   }
+   
+   TABEL TERKAIT: sensor_readings (SELECT)
+
+
+2. api/sensor/save.php
+   ---------------------------------------------------------------------------
+   FUNGSI       : Simpan data sensor baru dari perangkat IoT
+   METHOD       : POST
+   INPUT        : ph_value (decimal), ppm_value (int)
+   OUTPUT       : JSON {success: bool, reading_id: int, message: string}
+   
+   ALUR KERJA:
+   1. Terima ph_value dan ppm_value dari sensor
+   2. Validasi input (cek range wajar)
+   3. INSERT ke sensor_readings
+   4. Ambil threshold dari settings
+   5. Bandingkan nilai sensor dengan threshold
+   6. Jika abnormal → INSERT notifikasi alert
+   7. Return success dengan ID reading baru
+   
+   PENGGUNAAN:
+   - Dipanggil oleh perangkat IoT (Arduino/ESP32) secara periodik
+   - Bisa juga dipanggil manual untuk testing
+   
+   CONTOH REQUEST:
+   POST /api/sensor/save.php
+   Content-Type: application/x-www-form-urlencoded
+   
+   ph_value=6.8&ppm_value=950
+   
+   CONTOH RESPONSE:
+   {
+       "success": true,
+       "reading_id": 124,
+       "message": "Sensor data saved successfully"
+   }
+   
+   TABEL TERKAIT: 
+   - sensor_readings (INSERT)
+   - settings (SELECT untuk threshold)
+   - notifications (INSERT jika abnormal)
+
+
+================================================================================
+SETTINGS (Konfigurasi Sistem)
+================================================================================
+
+1. api/settings/get.php
+   ---------------------------------------------------------------------------
+   FUNGSI       : Ambil konfigurasi untuk tipe tertentu
+   METHOD       : GET
+   INPUT        : type (ppm|ph|dithane)
+   OUTPUT       : JSON {success: bool, data: object}
+   
+   ALUR KERJA:
+   1. Query: SELECT * FROM settings WHERE type = ?
+   2. Parse config_json dari JSON string ke object
+   3. Return data settings
+   
+   CONTOH REQUEST:
+   GET /api/settings/get.php?type=ph
+   
+   CONTOH RESPONSE:
+   {
+       "success": true,
+       "data": {
+           "id": 2,
+           "type": "ph",
+           "config_json": {
+               "min": "5,5",
+               "max": "6,5"
+           },
+           "updated_at": "2026-01-10 08:00:00"
+       }
+   }
+   
+   TABEL TERKAIT: settings (SELECT)
+
+
+2. api/settings/update.php
+   ---------------------------------------------------------------------------
+   FUNGSI       : Update konfigurasi untuk tipe tertentu
+   METHOD       : POST
+   INPUT        : type (ppm|ph|dithane), config_json (object)
+   OUTPUT       : JSON {success: bool, message: string}
+   
+   ALUR KERJA:
+   1. Terima type dan config_json baru
+   2. Convert config_json object ke JSON string
+   3. UPDATE settings SET config_json = ? WHERE type = ?
+   4. Return success
+   
+   CONTOH REQUEST:
+   POST /api/settings/update.php
+   Content-Type: application/x-www-form-urlencoded
+   
+   type=ph&config_json={"min":"5.0","max":"7.0"}
+   
+   CONTOH RESPONSE:
+   {
+       "success": true,
+       "message": "Settings updated successfully"
+   }
+   
+   TABEL TERKAIT: settings (UPDATE)
+
+
+3. api/settings/reset.php
+   ---------------------------------------------------------------------------
+   FUNGSI       : Reset konfigurasi ke nilai default
+   METHOD       : POST
+   INPUT        : type (ppm|ph|dithane)
+   OUTPUT       : JSON {success: bool, message: string}
+   
+   ALUR KERJA:
+   1. Terima type yang ingin di-reset
+   2. Tentukan default config berdasarkan type:
+      - ppm: {"min": "800", "max": "1000"}
+      - ph: {"min": "5,5", "max": "6,5"}
+      - dithane: {"interval": "48", "duration": "10", "start": "08.00"}
+   3. UPDATE settings SET config_json = ? WHERE type = ?
+   4. Return success
+   
+   PENGGUNAAN:
+   - Admin klik tombol "Reset ke Default" di halaman pengaturan
+   - Berguna jika admin salah konfigurasi dan ingin mulai dari awal
+   
+   TABEL TERKAIT: settings (UPDATE)
+
+
+================================================================================
+MONITORING (Log Monitoring Per Parameter)
+================================================================================
+
+1. api/monitoring/list.php
+   ---------------------------------------------------------------------------
+   FUNGSI       : Ambil daftar monitoring logs untuk tipe tertentu
+   METHOD       : GET
+   INPUT        : type (ppm|ph|dithane)
+   OUTPUT       : JSON {success: bool, data: array}
+   
+   ALUR KERJA:
+   1. Query: SELECT * FROM monitoring_logs WHERE type = ? AND is_deleted = 0
+   2. ORDER BY created_at DESC (terbaru pertama)
+   3. Return array of logs
+   
+   CONTOH REQUEST:
+   GET /api/monitoring/list.php?type=ppm
+   
+   CONTOH RESPONSE:
+   {
+       "success": true,
+       "data": [
+           {
+               "id": 15,
+               "type": "ppm",
+               "day_name": "Senin",
+               "log_time": "10.00",
+               "value": "950",
+               "status": "Normal",
+               "note": "Setelah tambah nutrisi",
+               "is_deleted": 0,
+               "created_at": "2026-01-15 10:00:00"
+           }
+       ]
+   }
+   
+   TABEL TERKAIT: monitoring_logs (SELECT)
+
+
+2. api/monitoring/delete.php
+   ---------------------------------------------------------------------------
+   FUNGSI       : Soft-delete monitoring log (tandai sebagai dihapus)
+   METHOD       : POST
+   INPUT        : id (int)
+   OUTPUT       : JSON {success: bool, message: string}
+   
+   ALUR KERJA:
+   1. Terima ID log yang ingin dihapus
+   2. UPDATE monitoring_logs SET is_deleted = 1 WHERE id = ?
+   3. Return success
+   4. Log tidak benar-benar dihapus, hanya ditandai
+   
+   PENGGUNAAN:
+   - User klik tombol "Hapus" di tabel monitoring logs
+   - Frontend tampilkan konfirmasi
+   - Jika user confirm → panggil endpoint ini
+   
+   CONTOH REQUEST:
+   POST /api/monitoring/delete.php
+   
+   id=15
+   
+   TABEL TERKAIT: monitoring_logs (UPDATE is_deleted)
+
+
+================================================================================
+HISTORY (Log Monitoring Global)
+================================================================================
+
+1. api/history/list.php
+   ---------------------------------------------------------------------------
+   FUNGSI       : Ambil daftar history logs dengan filter dan search
+   METHOD       : GET
+   INPUT        : 
+     - type (optional: ppm|ph|dithane|all)
+     - date_from (optional: YYYY-MM-DD)
+     - date_to (optional: YYYY-MM-DD)
+     - status (optional: Normal|Rendah|Tinggi|all)
+     - search (optional: string untuk search di note)
+     - page (optional: int, default 1)
+     - limit (optional: int, default 20)
+   OUTPUT       : JSON {success: bool, data: array, total: int, pages: int}
+   
+   ALUR KERJA:
+   1. Build query dinamis berdasarkan filter:
+      - WHERE is_deleted = 0 (selalu)
+      - AND type = ? (jika type tidak 'all')
+      - AND log_date BETWEEN ? AND ? (jika ada date filter)
+      - AND status = ? (jika status tidak 'all')
+      - AND note LIKE ? (jika ada search)
+   2. Hitung total rows untuk pagination
+   3. Query dengan LIMIT dan OFFSET untuk pagination
+   4. Return data + metadata pagination
+   
+   CONTOH REQUEST:
+   GET /api/history/list.php?type=ppm&date_from=2026-01-01&date_to=2026-01-31&page=1&limit=20
+   
+   CONTOH RESPONSE:
+   {
+       "success": true,
+       "data": [
+           {
+               "id": 100,
+               "day_name": "Senin",
+               "log_date": "2026-01-15",
+               "log_time": "10.00",
+               "type": "ppm",
+               "status": "Normal",
+               "note": "Setelah tambah nutrisi",
+               "created_at": "2026-01-15 10:00:00"
+           }
+       ],
+       "total": 150,
+       "pages": 8,
+       "current_page": 1
+   }
+   
+   TABEL TERKAIT: history_logs (SELECT dengan filter kompleks)
+
+
+2. api/history/delete.php
+   ---------------------------------------------------------------------------
+   FUNGSI       : Soft-delete history log
+   METHOD       : POST
+   INPUT        : id (int)
+   OUTPUT       : JSON {success: bool, message: string}
+   
+   ALUR KERJA:
+   1. UPDATE history_logs SET is_deleted = 1 WHERE id = ?
+   2. Return success
+   
+   TABEL TERKAIT: history_logs (UPDATE is_deleted)
+
+
+================================================================================
+NOTIFICATIONS (Notifikasi Alert)
+================================================================================
+
+1. api/notifications/list.php
+   ---------------------------------------------------------------------------
+   FUNGSI       : Ambil daftar semua notifikasi
+   METHOD       : GET
+   INPUT        : limit (optional, default 50)
+   OUTPUT       : JSON {success: bool, data: array, unread_count: int}
+   
+   ALUR KERJA:
+   1. Query: SELECT * FROM notifications ORDER BY created_at DESC LIMIT ?
+   2. Hitung unread: SELECT COUNT(*) WHERE is_read = 0
+   3. Return data + unread count
+   
+   CONTOH RESPONSE:
+   {
+       "success": true,
+       "data": [
+           {
+               "id": 25,
+               "label": "PH Alert",
+               "message": "pH terdeteksi 7.2 (di atas normal)",
+               "tone": "warning",
+               "href": "pengaturan-ph.php",
+               "is_read": 0,
+               "created_at": "2026-01-15 14:30:00"
+           }
+       ],
+       "unread_count": 3
+   }
+   
+   TABEL TERKAIT: notifications (SELECT, COUNT)
+
+
+2. api/notifications/mark-read.php
+   ---------------------------------------------------------------------------
+   FUNGSI       : Tandai semua notifikasi sebagai sudah dibaca
+   METHOD       : POST
+   INPUT        : Tidak ada
+   OUTPUT       : JSON {success: bool, message: string}
+   
+   ALUR KERJA:
+   1. UPDATE notifications SET is_read = 1 WHERE is_read = 0
+   2. Return success
+   
+   PENGGUNAAN:
+   - User klik "Tandai Semua Dibaca" di dropdown notifikasi
+   - Badge notifikasi hilang setelah ini
+   
+   TABEL TERKAIT: notifications (UPDATE)
+
+
+3. api/notifications/generate.php
+   ---------------------------------------------------------------------------
+   FUNGSI       : Generate notifikasi secara manual (untuk testing)
+   METHOD       : POST
+   INPUT        : Tidak ada (ambil data sensor terbaru otomatis)
+   OUTPUT       : JSON {success: bool, generated: int, message: string}
+   
+   ALUR KERJA:
+   1. Ambil sensor reading terbaru
+   2. Ambil threshold dari settings
+   3. Bandingkan dan generate notifikasi jika abnormal
+   4. Return jumlah notifikasi yang di-generate
+   
+   PENGGUNAAN:
+   - Untuk testing sistem alerting
+   - Untuk generate ulang notifikasi jika ada yang terlewat
+   
+   TABEL TERKAIT: 
+   - sensor_readings (SELECT latest)
+   - settings (SELECT threshold)
+   - notifications (INSERT jika abnormal)
+
+
+================================================================================
+DASHBOARD (Ringkasan Dashboard)
+================================================================================
+
+1. api/dashboard/summary.php
+   ---------------------------------------------------------------------------
+   FUNGSI       : Ambil ringkasan data untuk dashboard
+   METHOD       : GET
+   INPUT        : Tidak ada
+   OUTPUT       : JSON dengan data lengkap untuk dashboard
+   
+   ALUR KERJA:
+   1. Ambil sensor reading terbaru: SELECT * ORDER BY recorded_at DESC LIMIT 1
+   2. Ambil 10 readings terakhir untuk chart
+   3. Ambil semua settings (ppm, ph, dithane)
+   4. Hitung notifikasi belum dibaca
+   5. Return semua data dalam satu response
+   
+   CONTOH RESPONSE:
+   {
+       "success": true,
+       "data": {
+           "latest_sensor": {
+               "id": 124,
+               "ph_value": "6.50",
+               "ppm_value": 950,
+               "recorded_at": "2026-01-15 14:30:00"
+           },
+           "sensor_history": [
+               // 10 readings terakhir
+           ],
+           "settings": {
+               "ppm": {"min": "800", "max": "1000"},
+               "ph": {"min": "5,5", "max": "6,5"},
+               "dithane": {"interval": "48", "duration": "10", "start": "08.00"}
+           },
+           "unread_notifications": 3
+       }
+   }
+   
+   TABEL TERKAIT: 
+   - sensor_readings (SELECT latest + history)
+   - settings (SELECT all)
+   - notifications (COUNT unread)
+
+
+================================================================================
+PROFILE (Profil Pemilik dan Tim)
+================================================================================
+
+1. api/profile/get.php
+   ---------------------------------------------------------------------------
+   FUNGSI       : Ambil data profil owner dan team
+   METHOD       : GET
+   INPUT        : section (optional: owner|team|all)
+   OUTPUT       : JSON {success: bool, data: object}
+   
+   ALUR KERJA:
+   1. Query: SELECT * FROM profile WHERE section = ? ORDER BY sort_order
+   2. Group by section
+   3. Return data terstruktur
+   
+   CONTOH RESPONSE:
+   {
+       "success": true,
+       "data": {
+           "owner": [
+               {"label": "Nama", "value": "Edi Setiawan", "sort_order": 1},
+               {"label": "Email", "value": "EdiSetiawan@gmail.com", "sort_order": 2}
+           ],
+           "team": [
+               {"label": "Nama Team", "value": "Kelompok 1 (Hydrotech)", "sort_order": 1},
+               {"label": "Peran", "value": "Web Developer", "sort_order": 2}
+           ]
+       }
+   }
+   
+   TABEL TERKAIT: profile (SELECT)
+
+
+2. api/profile/update.php
+   ---------------------------------------------------------------------------
+   FUNGSI       : Update data profil untuk section tertentu
+   METHOD       : POST
+   INPUT        : section (owner|team), fields (array of {label, value})
+   OUTPUT       : JSON {success: bool, message: string}
+   
+   ALUR KERJA:
+   1. DELETE FROM profile WHERE section = ? (hapus semua field lama)
+   2. INSERT ulang semua field baru dengan sort_order
+   3. Return success
+   
+   PENGGUNAAN:
+   - Admin edit profil di halaman Profile
+   - Klik "Simpan" → kirim semua field yang di-edit
+   
+   CONTOH REQUEST:
+   POST /api/profile/update.php
+   
+   section=owner&fields[0][label]=Nama&fields[0][value]=Budi&fields[1][label]=Email&fields[1][value]=budi@email.com
+   
+   TABEL TERKAIT: profile (DELETE + INSERT)
+
+
+================================================================================
+CATATAN PENTING TENTANG API
+================================================================================
+
+1. AUTHENTICATION
+   - Semua endpoint (kecuali auth/login.php) memerlukan authentication
+   - Gunakan requireAuth() dari includes/auth_check.php
+   - Jika tidak authenticated → return 401 Unauthorized
+
+2. RESPONSE FORMAT
+   - Semua endpoint return JSON
+   - Format standar: {success: bool, message?: string, data?: any}
+   - Success: true untuk operasi berhasil, false untuk gagal
+
+3. ERROR HANDLING
+   - Validasi input di setiap endpoint
+   - Return error message yang jelas
+   - Gunakan HTTP status code yang sesuai (400, 401, 403, 404, 500)
+
+4. SECURITY
+   - Gunakan prepared statements untuk semua query (cegah SQL injection)
+   - Sanitize semua input user
+   - Password di-hash dengan bcrypt (jangan plain text)
+   - Session timeout untuk keamanan
+
+5. PERFORMANCE
+   - Gunakan index di kolom yang sering di-query
+   - Limit hasil query untuk data yang besar
+   - Cache data yang jarang berubah (seperti settings)
+
+
+================================================================================
+TECH STACK
+================================================================================
+
+Backend      : PHP (Vanilla, no framework)
+Database     : MySQL (InnoDB, utf8mb4)
+Frontend     : HTML5, CSS3, Vanilla JavaScript
+Auth         : PHP sessions + bcrypt password hashing
+Charts       : Chart.js (CDN)
+UI           : SweetAlert2, Font Awesome 6.5.2, Google Fonts Poppins
+Export       : jsPDF + jsPDF-AutoTable (CDN)
+
+
+================================================================================
+KESIMPULAN
+================================================================================
+
+SISTEM HYDROTECH SECARA KESELURUHAN:
+================================================================================
+
+HYDROTECH adalah solusi lengkap untuk monitoring hidroponik berbasis IoT yang
+menggabungkan:
+1. Perangkat keras (sensor pH dan PPM) untuk pengambilan data fisik
+2. Backend PHP untuk pemrosesan data dan business logic
+3. Database MySQL untuk penyimpanan data yang terstruktur
+4. Frontend web untuk visualisasi dan interaksi user
+
+ARSITEKTUR SISTEM:
+- IoT Layer: Sensor → Mikrokontroler → HTTP POST ke API
+- Backend Layer: PHP API endpoints untuk CRUD dan business logic
+- Database Layer: MySQL dengan 7 tabel yang saling terhubung secara logikal
+- Frontend Layer: HTML/JS dashboard dengan Chart.js untuk visualisasi
+
+KEKUATAN DESAIN DATABASE:
+1. Fleksibilitas - JSON config memungkinkan perubahan tanpa migrasi
+2. Scalability - Index optimization untuk query cepat pada data besar
+3. Audit Trail - Soft delete memastikan data tidak hilang permanen
+4. Separation of Concerns - Tabel terpisah untuk use case berbeda
+5. Extensibility - Struktur role dan ENUM memudahkan penambahan fitur
+
+ALUR DATA UTAMA:
+Sensor → API → Database → Alert → Dashboard → User Action
+
+USE CASES YANG DIDUKUNG:
+1. Real-time Monitoring - Lihat kondisi pH dan PPM saat ini
+2. Automatic Alerting - Notifikasi otomatis jika ada masalah
+3. Historical Analysis - Lihat tren data dari waktu ke waktu
+4. Configuration Management - Ubah threshold sesuai kebutuhan
+5. Reporting - Export laporan bulanan ke PDF
+6. Activity Logging - Catat semua aktivitas monitoring
+
+POTENSI PENGEMBANGAN MASA DEPAN:
+1. Multi-user dengan role-based access control (sudah disiapkan)
+2. Mobile app untuk monitoring on-the-go
+3. Email/SMS notification untuk alert critical
+4. Predictive analytics dengan machine learning
+5. Integration dengan actuators (auto pH adjust, auto nutrient dosing)
+6. Multi-location support untuk beberapa greenhouse
+
+FILE-FILE PENTING:
+- database/schema.sql - DDL untuk semua tabel
+- database/install.php - Installer dan seeder
+- database/ERD_HYDROTECH.png - Diagram ERD visual
+- database/PENJELASAN_ERD_HYDROTECH.txt - Dokumentasi lengkap ini
+- config/database.php - Konfigurasi koneksi database
+- includes/auth_check.php - Middleware autentikasi
+- api/* - Semua endpoint API
+- pages/* - Semua halaman frontend
+
+DOKUMENTASI INI:
+File ini (PENJELASAN_ERD_HYDROTECH.txt) berisi dokumentasi lengkap tentang:
+- Detail setiap tabel dan kolom
+- Penjelasan fungsi setiap komponen
+- Relasi antar tabel dan implementasinya
+- Alur kerja sistem dari sensor hingga dashboard
+- Penjelasan endpoint API dengan contoh
+- Pattern desain dan best practices
+
+Gunakan dokumentasi ini sebagai referensi untuk:
+- Memahami struktur database
+- Mengembangkan fitur baru
+- Debugging masalah
+- Onboarding developer baru
+- Presentasi kepada stakeholder
+
+
+================================================================================
+Catatan: File ERD image tersimpan di database/ERD_HYDROTECH.png
+================================================================================

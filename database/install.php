@@ -10,12 +10,14 @@
  * 3. Seed initial data with proper password hashing
  */
 
+if (PHP_SAPI !== 'cli') { http_response_code(403); exit('Installer hanya tersedia melalui CLI.'); }
+
 echo "=== Hydrotech Database Installer ===\n\n";
 
-$host    = 'localhost';
-$user    = 'root';
-$pass    = '';
-$dbname  = 'monitoring_sensor';
+$host = getenv('HYDROTECH_DB_HOST') !== false ? getenv('HYDROTECH_DB_HOST') : 'localhost';
+$user = getenv('HYDROTECH_DB_USER') !== false ? getenv('HYDROTECH_DB_USER') : 'root';
+$pass = getenv('HYDROTECH_DB_PASS') !== false ? getenv('HYDROTECH_DB_PASS') : '';
+$dbname = getenv('HYDROTECH_DB_NAME') !== false ? getenv('HYDROTECH_DB_NAME') : 'monitoring_sensor';
 $charset = 'utf8mb4';
 
 try {
@@ -28,6 +30,9 @@ try {
     // ── 2. Create database ──
     $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbname` DEFAULT CHARACTER SET $charset COLLATE {$charset}_unicode_ci");
     $pdo->exec("USE `$dbname`");
+    if ($pdo->query('SHOW TABLES')->fetchColumn() !== false) {
+        throw new RuntimeException('Database sudah memiliki tabel. Gunakan php database/migrate_sensors.php untuk memperbarui tanpa mereset data.');
+    }
     echo "[OK] Database '$dbname' created/selected.\n";
 
     // ── 3. Execute schema.sql ──
@@ -48,6 +53,7 @@ try {
     echo "[OK] All tables created successfully.\n";
 
     // ── 4. Seed Users ──
+    $pdo->beginTransaction();
     $passwordHash = password_hash('Admin123', PASSWORD_DEFAULT);
     $stmt = $pdo->prepare(
         "INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, ?)
@@ -72,7 +78,6 @@ try {
     echo "[OK] Settings seeded (PPM, pH, Dithane defaults).\n";
 
     // ── 6. Seed Monitoring Logs ──
-    $pdo->exec("DELETE FROM monitoring_logs");
     $monitoringData = [
         // PPM monitoring logs (5 rows)
         ['ppm', 'Senin',  '10.00', '1000', 'Normal', 'Nilai PPM stabil, pertahankan'],
@@ -102,7 +107,6 @@ try {
     echo "[OK] Monitoring logs seeded (15 rows: 5 PPM + 5 pH + 5 Dithane).\n";
 
     // ── 7. Seed History Logs ──
-    $pdo->exec("DELETE FROM history_logs");
     $historyData = [
         ['Senin',   '2026-01-05', '08.00', 'ppm',     'Normal',  'Nilai PPM dalam rentang aman'],
         ['Selasa',  '2026-02-10', '09.30', 'ph',      'Normal',  'pH stabil di rentang optimal'],
@@ -124,7 +128,6 @@ try {
     echo "[OK] History logs seeded (10 rows, Jan-Oct 2026).\n";
 
     // ── 8. Seed Notifications ──
-    $pdo->exec("DELETE FROM notifications");
     $notifData = [
         ['pH perlu dipantau',    'Nilai pH terakhir mendekati batas atas',                   'warning', 'pengaturan-ph.php'],
         ['PPM stabil',           'Nutrisi berada dalam rentang aman',                        'success', 'pengaturan-ppm.php'],
@@ -139,7 +142,6 @@ try {
     echo "[OK] Notifications seeded (3 rows).\n";
 
     // ── 9. Seed Profile ──
-    $pdo->exec("DELETE FROM profile");
     $profileData = [
         ['owner', 'Nama',   'Edi Setiawan',                            1],
         ['owner', 'Email',  'EdiSetiawan@gmail.com',                   2],
@@ -159,29 +161,34 @@ try {
     echo "[OK] Profile data seeded (8 rows: 4 owner + 4 team).\n";
 
     // ── 10. Seed Sample Sensor Readings ──
-    $pdo->exec("DELETE FROM sensor_readings");
+    $pdo->exec("INSERT INTO sensors (id, name, type, unit, status, location) VALUES
+        (1, 'Sensor pH (simulasi)', 'ph', 'pH', 'aktif', 'Simulasi dashboard'),
+        (2, 'Sensor TDS (simulasi)', 'ppm', 'ppm', 'aktif', 'Simulasi dashboard')");
     $sensorData = [
         [6.4, 845], [6.6, 858], [6.9, 874], [7.0, 862],
         [6.8, 892], [6.7, 876], [6.9, 864], [7.1, 863],
     ];
     $stmt = $pdo->prepare(
-        "INSERT INTO sensor_readings (ph_value, ppm_value, recorded_at)
+        "INSERT INTO sensor_readings (sensor_id, value, recorded_at)
          VALUES (?, ?, DATE_SUB(NOW(), INTERVAL ? HOUR))"
     );
     foreach ($sensorData as $i => $row) {
         $hours = count($sensorData) - $i;
-        $stmt->execute([$row[0], $row[1], $hours]);
+        $stmt->execute([1, $row[0], $hours]);
+        $stmt->execute([2, $row[1], $hours]);
     }
-    echo "[OK] Sample sensor readings seeded (8 rows).\n";
+    echo "[OK] Sensor seeded (2 devices), sample readings seeded (16 rows).\n";
 
     // ── Done ──
+    $pdo->commit();
     echo "\n=== Installation Complete! ===\n";
     echo "Database: $dbname\n";
-    echo "Tables: users, settings, monitoring_logs, history_logs, notifications, profile, sensor_readings\n";
+    echo "Tables: users, settings, monitoring_logs, history_logs, notifications, profile, sensors, sensor_readings\n";
     echo "\nTo start the server: php -S localhost:8000\n";
     echo "Login credentials: hydrotech / Admin123\n";
 
-} catch (PDOException $e) {
+} catch (Throwable $e) {
+    if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
     echo "\n[ERROR] Database error: " . $e->getMessage() . "\n";
     exit(1);
 }

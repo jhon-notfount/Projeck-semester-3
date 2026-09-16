@@ -26,11 +26,11 @@ try {
     $stmtDelete = $pdo->prepare("DELETE FROM profile WHERE section = ?");
     $stmtDelete->execute([$section]);
     
-    $stmtInsert = $pdo->prepare("INSERT INTO profile (section, label, value, sort_order) VALUES (?, ?, ?, ?)");
+    $stmtInsert = $pdo->prepare("INSERT INTO profile (section, label, value, sort_order, updated_by) VALUES (?, ?, ?, ?, ?)");
     foreach ($data as $index => $item) {
         $label = $item['label'] ?? '';
         $value = $item['value'] ?? '';
-        $stmtInsert->execute([$section, $label, $value, $index]);
+        $stmtInsert->execute([$section, $label, $value, $index, $_SESSION['user_id']]);
     }
     
     $pdo->commit();

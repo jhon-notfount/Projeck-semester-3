@@ -22,8 +22,8 @@ try {
          errorResponse('Invalid config format', 400);
     }
 
-    $stmt = $pdo->prepare("UPDATE settings SET config_json = ?, updated_at = CURRENT_TIMESTAMP WHERE type = ?");
-    $stmt->execute([$configJson, $type]);
+    $stmt = $pdo->prepare("UPDATE settings SET config_json = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE type = ?");
+    $stmt->execute([$configJson, $_SESSION['user_id'], $type]);
     
     successResponse(null, 'Setting updated successfully');
 } catch (Exception $e) {
