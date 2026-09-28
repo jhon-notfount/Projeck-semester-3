@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../includes/auth_check.php';
 require_once __DIR__ . '/../../includes/response.php';
+require_once __DIR__ . '/../../includes/dithane.php';
 requireAuth();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') { errorResponse('Method not allowed', 405); }
@@ -14,6 +15,11 @@ try {
         errorResponse('Type is required', 400);
     }
     
+    if ($type === 'dithane') {
+        $schedule = readDithane($pdo);
+        if (!$schedule) errorResponse('Jadwal belum tersedia.', 404);
+        successResponse($schedule);
+    }
     $stmt = $pdo->prepare("SELECT * FROM settings WHERE type = ? LIMIT 1");
     $stmt->execute([$type]);
     $setting = $stmt->fetch(PDO::FETCH_ASSOC);

@@ -1,32 +1,10 @@
 <?php
-/** Penyimpanan satu hasil ukur per perangkat; payload pasangan lama tetap didukung. */
+/** Penyimpanan nilai pH/PPM dalam tabel terpisah, tanpa identitas perangkat. */
 function sensorNumber($value, string $name): float {
     if (!is_scalar($value) || !is_numeric($value) || !is_finite((float)$value)) {
         throw new InvalidArgumentException("Nilai $name harus berupa angka valid.");
     }
     return (float)$value;
-}
-
-function resolveSensor(PDO $pdo, $id, ?string $type = null): array {
-    if ($id !== null) {
-        if (filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
-            throw new InvalidArgumentException('ID sensor tidak valid.');
-        }
-        $stmt = $pdo->prepare('SELECT * FROM sensors WHERE id = ? FOR UPDATE');
-        $stmt->execute([$id]);
-        $sensor = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$sensor || $sensor['status'] !== 'aktif' || ($type !== null && $sensor['type'] !== $type)) {
-            throw new InvalidArgumentException('Sensor tidak ditemukan, tidak aktif, atau jenisnya tidak sesuai.');
-        }
-        return $sensor;
-    }
-    $stmt = $pdo->prepare("SELECT * FROM sensors WHERE type = ? AND status = 'aktif' ORDER BY id FOR UPDATE");
-    $stmt->execute([$type]);
-    $sensors = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    if (count($sensors) !== 1) {
-        throw new InvalidArgumentException("Tentukan ID sensor $type: harus ada tepat satu sensor aktif jika ID tidak dikirim.");
-    }
-    return $sensors[0];
 }
 
 function sensorLimits(PDO $pdo): array {
@@ -45,58 +23,63 @@ function sensorLimits(PDO $pdo): array {
     return $limits;
 }
 
+function measurementLock(PDO $pdo): string {
+    $name = 'hydrotech_measurements_' . substr(hash('sha256', $pdo->query('SELECT DATABASE()')->fetchColumn()), 0, 24);
+    $q = $pdo->prepare('SELECT GET_LOCK(?, 10)'); $q->execute([$name]);
+    if ((int)$q->fetchColumn() !== 1) throw new RuntimeException('Database sedang diperbarui. Coba kembali.');
+    return $name;
+}
+function measurementUnlock(PDO $pdo, string $name): void {
+    $q = $pdo->prepare('SELECT RELEASE_LOCK(?)'); $q->execute([$name]);
+}
 function sensorWarning(PDO $pdo, array $reading, array $limits, bool $includeNormal = false): ?array {
     $type = $reading['type'];
+    if (!in_array($type, ['ph','ppm'], true)) throw new InvalidArgumentException('Jenis pembacaan tidak valid.');
     [$min, $max] = $limits[$type];
     $value = (float)$reading['value'];
     $abnormal = $value < $min || $value > $max;
     if (!$abnormal && !$includeNormal) return null;
     $label = ($type === 'ph' ? 'pH' : 'PPM') . ($abnormal ? ' perlu dipantau' : ' normal');
-    $message = "Nilai {$reading['sensor_name']} ($value) " . ($abnormal ? 'di luar' : 'dalam') . " rentang $min - $max.";
+    $message = "Nilai $type ($value) " . ($abnormal ? 'di luar' : 'dalam') . " rentang $min - $max.";
     $tone = $abnormal ? 'warning' : 'success';
-    $stmt = $pdo->prepare('INSERT INTO notifications (label, message, tone, href, sensor_reading_id) VALUES (?, ?, ?, ?, ?)');
+    $column = $type . '_reading_id';
+    $stmt = $pdo->prepare("INSERT INTO notifications (label, message, tone, href, $column) VALUES (?, ?, ?, ?, ?)");
     $stmt->execute([$label, $message, $tone, "pengaturan-$type.php", $reading['id']]);
-    return ['label' => $label, 'message' => $message, 'tone' => $tone, 'sensor_reading_id' => (int)$reading['id']];
+    return ['label'=>$label, 'message'=>$message, 'tone'=>$tone, $column=>(int)$reading['id']];
 }
 
 function saveSensorMeasurements(PDO $pdo, array $input): array {
-    $pdo->beginTransaction();
+    foreach (['sensor_id','ph_sensor_id','ppm_sensor_id','value'] as $old) {
+        if (array_key_exists($old, $input)) throw new InvalidArgumentException('Gunakan ph_value dan/atau ppm_value tanpa ID perangkat.');
+    }
+    $values = [];
+    foreach (['ph','ppm'] as $type) {
+        if (!array_key_exists($type . '_value', $input)) continue;
+        $value = sensorNumber($input[$type . '_value'], $type);
+        if ($value < 0 || $value > ($type === 'ph' ? 14 : 2147483647)) {
+            throw new InvalidArgumentException('pH harus 0-14 dan PPM harus 0-2147483647.');
+        }
+        if ($type === 'ppm' && floor($value) !== $value) throw new InvalidArgumentException('PPM harus berupa bilangan bulat tanpa pecahan.');
+        $values[$type] = $type === 'ppm' ? (int)$value : round($value, 4);
+    }
+    if (!$values) throw new InvalidArgumentException('Kirim ph_value dan/atau ppm_value berupa angka.');
+    $lock = measurementLock($pdo);
     try {
-        if (array_key_exists('sensor_id', $input) || array_key_exists('value', $input)) {
-            if (!isset($input['sensor_id'], $input['value']) || isset($input['ph_value']) || isset($input['ppm_value'])) {
-                throw new InvalidArgumentException('Kirim sensor_id dan value, atau pasangan ph_value dan ppm_value.');
-            }
-            $measurements = [[resolveSensor($pdo, $input['sensor_id']), $input['value']]];
-        } else {
-            if (!isset($input['ph_value'], $input['ppm_value'])) throw new InvalidArgumentException('ph_value dan ppm_value wajib dikirim bersama.');
-            $measurements = [
-                [resolveSensor($pdo, $input['ph_sensor_id'] ?? null, 'ph'), $input['ph_value']],
-                [resolveSensor($pdo, $input['ppm_sensor_id'] ?? null, 'ppm'), $input['ppm_value']],
-            ];
-        }
-        // Validate the entire batch before writing any readings.
-        foreach ($measurements as &$measurement) {
-            [$sensor, $raw] = $measurement;
-            $value = sensorNumber($raw, $sensor['type']);
-            if ($value < 0 || $value > 99999999.9999 || ($sensor['type'] === 'ph' && $value > 14)) {
-                throw new InvalidArgumentException('pH harus 0-14 dan PPM harus 0-99999999.9999.');
-            }
-            $measurement[1] = round($value, 4);
-        }
-        unset($measurement);
+        $pdo->beginTransaction();
         $limits = sensorLimits($pdo);
         $timestamp = $pdo->query('SELECT CURRENT_TIMESTAMP')->fetchColumn();
         $clock = new DateTimeImmutable('now', new DateTimeZone('Asia/Jakarta'));
         $days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-        $insert = $pdo->prepare('INSERT INTO sensor_readings (sensor_id, value, recorded_at) VALUES (?, ?, ?)');
-        $log = $pdo->prepare('INSERT INTO monitoring_logs (type, day_name, log_time, value, status, note, sensor_reading_id) VALUES (?, ?, ?, ?, ?, ?, ?)');
         $result = [];
-        foreach ($measurements as [$sensor, $value]) {
-            $insert->execute([$sensor['id'], $value, $timestamp]);
-            $reading = ['id' => (int)$pdo->lastInsertId(), 'sensor_id' => (int)$sensor['id'], 'sensor_name' => $sensor['name'], 'type' => $sensor['type'], 'unit' => $sensor['unit'], 'value' => $value, 'recorded_at' => $timestamp];
-            [$min, $max] = $limits[$sensor['type']];
+        foreach ($values as $type => $value) {
+            $insert = $pdo->prepare("INSERT INTO {$type}_readings ({$type}_value, recorded_at) VALUES (?, ?)");
+            $insert->execute([$value, $timestamp]);
+            $reading = ['id'=>(int)$pdo->lastInsertId(), 'type'=>$type, 'unit'=>$type === 'ph' ? null : 'ppm',
+                $type . '_value'=>$value, 'value'=>$value, 'recorded_at'=>$timestamp];
+            [$min, $max] = $limits[$type];
             $status = $value < $min ? 'Rendah' : ($value > $max ? 'Tinggi' : 'Normal');
-            $log->execute([$sensor['type'], $days[(int)$clock->format('w')], $clock->format('H.i'), (string)$value, $status, 'Pembacaan ' . $sensor['name'], $reading['id']]);
+            $log = $pdo->prepare("INSERT INTO monitoring_logs (type, day_name, log_time, value, status, note, {$type}_reading_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $log->execute([$type, $days[(int)$clock->format('w')], $clock->format('H.i'), (string)$value, $status, 'Hasil pengukuran ' . $type, $reading['id']]);
             sensorWarning($pdo, $reading, $limits);
             $result[] = $reading;
         }
@@ -105,14 +88,18 @@ function saveSensorMeasurements(PDO $pdo, array $input): array {
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
         throw $e;
-    }
+    } finally { measurementUnlock($pdo, $lock); }
 }
 
 function latestSensorReadings(PDO $pdo): array {
-    return $pdo->query("SELECT r.*, s.name AS sensor_name, s.type, s.unit
-        FROM sensor_readings r JOIN sensors s ON s.id = r.sensor_id
-        WHERE s.status = 'aktif' AND NOT EXISTS (
-            SELECT 1 FROM sensor_readings newer WHERE newer.sensor_id = r.sensor_id
-            AND (newer.recorded_at > r.recorded_at OR (newer.recorded_at = r.recorded_at AND newer.id > r.id))
-        ) ORDER BY r.recorded_at DESC, r.id DESC")->fetchAll(PDO::FETCH_ASSOC);
+    $result = [];
+    foreach (['ph','ppm'] as $type) {
+        $r = $pdo->query("SELECT id, {$type}_value, recorded_at FROM {$type}_readings ORDER BY recorded_at DESC, id DESC LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+        if ($r) {
+            $r['type'] = $type; $r['unit'] = $type === 'ph' ? null : 'ppm';
+            $r[$type . '_value'] = $type === 'ppm' ? (int)$r[$type . '_value'] : (float)$r[$type . '_value'];
+            $r['value'] = $r[$type . '_value']; $result[] = $r;
+        }
+    }
+    return $result;
 }

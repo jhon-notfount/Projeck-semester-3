@@ -7,7 +7,13 @@ requireAuth();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') errorResponse('Method not allowed', 405);
 try {
-    $readings = saveSensorMeasurements(getDBConnection(), $_POST);
+    $input = $_POST;
+    if (str_contains(strtolower($_SERVER['CONTENT_TYPE'] ?? ''), 'application/json')) {
+        try { $input = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR); }
+        catch (JsonException $e) { throw new InvalidArgumentException('JSON tidak valid.'); }
+        if (!is_array($input) || array_is_list($input)) throw new InvalidArgumentException('Kirim objek JSON.');
+    }
+    $readings = saveSensorMeasurements(getDBConnection(), $input);
     successResponse(['readings' => $readings, 'reading_ids' => array_column($readings, 'id')], 'Data sensor tersimpan');
 } catch (InvalidArgumentException $e) {
     errorResponse($e->getMessage(), 400);

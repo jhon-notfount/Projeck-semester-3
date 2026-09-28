@@ -31,7 +31,7 @@ try {
     $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbname` DEFAULT CHARACTER SET $charset COLLATE {$charset}_unicode_ci");
     $pdo->exec("USE `$dbname`");
     if ($pdo->query('SHOW TABLES')->fetchColumn() !== false) {
-        throw new RuntimeException('Database sudah memiliki tabel. Gunakan php database/migrate_sensors.php untuk memperbarui tanpa mereset data.');
+        throw new RuntimeException('Database sudah memiliki tabel. Gunakan php database/migrate_measurements.php untuk memperbarui tanpa mereset data.');
     }
     echo "[OK] Database '$dbname' created/selected.\n";
 
@@ -66,7 +66,7 @@ try {
     $settingsData = [
         ['ppm',     json_encode(['min' => '800', 'max' => '1000'])],
         ['ph',      json_encode(['min' => '5,5', 'max' => '6,5'])],
-        ['dithane', json_encode(['interval' => '48', 'duration' => '10', 'start' => '08.00'])],
+        ['dithane', json_encode((object)[])],
     ];
     $stmt = $pdo->prepare(
         "INSERT INTO settings (type, config_json) VALUES (?, ?)
@@ -161,29 +161,25 @@ try {
     echo "[OK] Profile data seeded (8 rows: 4 owner + 4 team).\n";
 
     // ── 10. Seed Sample Sensor Readings ──
-    $pdo->exec("INSERT INTO sensors (id, name, type, unit, status, location) VALUES
-        (1, 'Sensor pH (simulasi)', 'ph', 'pH', 'aktif', 'Simulasi dashboard'),
-        (2, 'Sensor TDS (simulasi)', 'ppm', 'ppm', 'aktif', 'Simulasi dashboard')");
+    $pdo->exec("INSERT INTO dithane_schedules (id,interval_hours,duration_seconds,start_time) VALUES (1,48,10,'08:00:00')");
     $sensorData = [
         [6.4, 845], [6.6, 858], [6.9, 874], [7.0, 862],
         [6.8, 892], [6.7, 876], [6.9, 864], [7.1, 863],
     ];
-    $stmt = $pdo->prepare(
-        "INSERT INTO sensor_readings (sensor_id, value, recorded_at)
-         VALUES (?, ?, DATE_SUB(NOW(), INTERVAL ? HOUR))"
-    );
     foreach ($sensorData as $i => $row) {
         $hours = count($sensorData) - $i;
-        $stmt->execute([1, $row[0], $hours]);
-        $stmt->execute([2, $row[1], $hours]);
+        foreach (['ph'=>0,'ppm'=>1] as $type=>$column) {
+            $stmt = $pdo->prepare("INSERT INTO {$type}_readings ({$type}_value,recorded_at) VALUES (?,DATE_SUB(NOW(),INTERVAL ? HOUR))");
+            $stmt->execute([$row[$column],$hours]);
+        }
     }
-    echo "[OK] Sensor seeded (2 devices), sample readings seeded (16 rows).\n";
+    echo "[OK] Jadwal Dithane dan 16 pembacaan pH/PPM dibuat.\n";
 
     // ── Done ──
     $pdo->commit();
     echo "\n=== Installation Complete! ===\n";
     echo "Database: $dbname\n";
-    echo "Tables: users, settings, monitoring_logs, history_logs, notifications, profile, sensors, sensor_readings\n";
+    echo "Tables: users, settings, monitoring_logs, history_logs, notifications, profile, ph_readings, ppm_readings, dithane_schedules\n";
     echo "\nTo start the server: php -S localhost:8000\n";
     echo "Login credentials: hydrotech / Admin123\n";
 

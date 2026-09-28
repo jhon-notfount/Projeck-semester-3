@@ -5,19 +5,10 @@ require_once '../config/database.php';
 
 $pdo = getDBConnection();
 
-$stmtConfig = $pdo->prepare("SELECT config_json, updated_at FROM settings WHERE type = 'dithane'");
-$stmtConfig->execute();
-$settings = $stmtConfig->fetch(PDO::FETCH_ASSOC);
-
-$config = ['interval' => 0, 'duration' => 0, 'start' => '00:00'];
-$lastUpdated = 'Belum ada data';
-if ($settings) {
-    $decoded = json_decode($settings['config_json'], true);
-    if (is_array($decoded)) {
-        $config = array_merge($config, $decoded);
-    }
-    $lastUpdated = $settings['updated_at'];
-}
+require_once '../includes/dithane.php';
+$schedule = readDithane($pdo);
+$config = $schedule['config'] ?? ['interval'=>0,'duration'=>0,'start'=>'00.00'];
+$lastUpdated = $schedule['updated_at'] ?? 'Belum ada data';
 
 $stmtLogs = $pdo->query("SELECT * FROM monitoring_logs WHERE type = 'dithane' AND is_deleted = 0 ORDER BY created_at DESC");
 $logs = $stmtLogs->fetchAll(PDO::FETCH_ASSOC);

@@ -1,0 +1,48 @@
+[
+    {
+        "status": "migrated",
+        "backup": "D:\\Semester 3\\Projeck-semester-3\\outputs/../database/backups/monitoring_sensor_before_split_20260923_111316_f5c7ccdb.sql",
+        "readings": {
+            "ph": 1858,
+            "ppm": 1858
+        },
+        "tables": 9,
+        "database": "monitoring_sensor",
+        "counts": {
+            "dithane_schedules": 1,
+            "history_logs": 10,
+            "monitoring_logs": 153,
+            "notifications": 1299,
+            "ph_readings": 1858,
+            "ppm_readings": 1858,
+            "profile": 8,
+            "settings": 3,
+            "users": 1
+        },
+        "foreign_keys": 9,
+        "columns": 60
+    },
+    {
+        "status": "migrated",
+        "backup": "D:\\Semester 3\\Projeck-semester-3\\outputs/../database/backups/hydrotech_before_split_20260923_111319_be86ff1f.sql",
+        "readings": {
+            "ph": 8,
+            "ppm": 8
+        },
+        "tables": 9,
+        "database": "hydrotech",
+        "counts": {
+            "dithane_schedules": 1,
+            "history_logs": 10,
+            "monitoring_logs": 15,
+            "notifications": 3,
+            "ph_readings": 8,
+            "ppm_readings": 8,
+            "profile": 8,
+            "settings": 3,
+            "users": 1
+        },
+        "foreign_keys": 9,
+        "columns": 60
+    }
+]

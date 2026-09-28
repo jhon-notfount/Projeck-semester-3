@@ -1,0 +1,94 @@
+=== Hydrotech Database Installer ===
+
+[OK] Database 'hydrotech_http_test_5d1df3d77b' created/selected.
+[OK] All tables created successfully.
+[OK] Admin user created (username: hydrotech, password: Admin123).
+[OK] Settings seeded (PPM, pH, Dithane defaults).
+[OK] Monitoring logs seeded (15 rows: 5 PPM + 5 pH + 5 Dithane).
+[OK] History logs seeded (10 rows, Jan-Oct 2026).
+[OK] Notifications seeded (3 rows).
+[OK] Profile data seeded (8 rows: 4 owner + 4 team).
+[OK] Jadwal Dithane dan 16 pembacaan pH/PPM dibuat.
+
+=== Installation Complete! ===
+Database: hydrotech_http_test_5d1df3d77b
+Tables: users, settings, monitoring_logs, history_logs, notifications, profile, ph_readings, ppm_readings, dithane_schedules
+
+To start the server: php -S localhost:8000
+Login credentials: hydrotech / Admin123
+[Wed Sep 23 22:16:17 2026] PHP 8.5.8 Development Server (http://127.0.0.1:50813) started
+[Wed Sep 23 22:16:17 2026] 127.0.0.1:50814 Accepted
+[Wed Sep 23 22:16:17 2026] 127.0.0.1:50814 [200]: GET /pages/login.php
+[Wed Sep 23 22:16:17 2026] 127.0.0.1:50814 Closing
+[Wed Sep 23 22:16:17 2026] 127.0.0.1:50815 Accepted
+[Wed Sep 23 22:16:17 2026] 127.0.0.1:50815 [401]: GET /api/sensor/latest.php
+[Wed Sep 23 22:16:17 2026] 127.0.0.1:50815 Closing
+[Wed Sep 23 22:16:17 2026] 127.0.0.1:50816 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50816 [200]: POST /api/auth/login.php
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50816 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50818 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50818 [200]: GET /pages/hydrotech-dashboard-panel-2026.php
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50818 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50819 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50819 [200]: GET /pages/pengaturan-ph.php
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50819 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50821 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50821 [200]: GET /pages/pengaturan-ppm.php
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50821 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50823 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50823 [200]: GET /pages/pengaturan-dithane.php
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50823 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50825 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50825 [200]: GET /pages/history.php
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50825 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50827 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50827 [200]: GET /pages/profile.php
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50827 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50829 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50829 [200]: POST /api/sensor/save.php
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50829 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50831 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50831 [200]: GET /api/sensor/latest.php?type=ph
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50831 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50833 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50833 [200]: GET /api/sensor/latest.php?type=ppm
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50833 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50835 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50835 [200]: GET /api/sensor/latest.php
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50835 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50837 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50837 [400]: POST /api/sensor/save.php
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50837 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50839 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50839 [400]: POST /api/sensor/save.php
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50839 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50841 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50841 [400]: POST /api/sensor/save.php
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50841 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50843 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50843 [400]: GET /api/sensor/latest.php?sensor_id=1
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50843 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50845 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50845 [200]: POST /api/settings/update.php
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50845 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50847 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50847 [200]: GET /api/settings/get.php?type=dithane
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50847 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50849 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50849 [400]: POST /api/settings/update.php
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50849 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50851 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50851 [200]: GET /pages/pengaturan-dithane.php
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50851 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50853 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50853 [200]: GET /api/dashboard/summary.php
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50853 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50855 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50855 [200]: POST /api/settings/reset.php
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50855 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50857 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50857 [200]: GET /api/settings/get.php?type=dithane
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50857 Closing
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50859 Accepted
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50859 [200]: POST /api/notifications/generate.php
+[Wed Sep 23 22:16:18 2026] 127.0.0.1:50859 Closing

@@ -3,7 +3,7 @@
 require_once __DIR__ . '/../config/database.php';
 
 function sensorSchemaStatements(): array {
-    $sql = preg_replace('/--[^\r\n]*/', '', file_get_contents(__DIR__ . '/schema.sql'));
+    $sql = preg_replace('/--[^\r\n]*/', '', file_get_contents(__DIR__ . '/../tests/fixtures/schema_sensors.sql'));
     $statements = [];
     foreach (array_filter(array_map('trim', explode(';', $sql))) as $stmt) {
         if (preg_match('/CREATE TABLE IF NOT EXISTS `(\w+)`/', $stmt, $m)) $statements[$m[1]] = $stmt;

@@ -47,20 +47,7 @@
 
   await applySettingRanges();
 
-  // Dashboard remains a simulator. Resolve explicit device IDs before saving.
-  let simulationSensors = null;
-  try {
-    const response = await fetch('../api/sensor/list.php');
-    const result = await response.json();
-    if (!response.ok || !result.success) throw new Error(result.message || 'Daftar sensor gagal dimuat');
-    const demoSensors = result.data.filter(sensor => `${sensor.name} ${sensor.location || ''}`.toLowerCase().includes('simulasi'));
-    const ph = demoSensors.filter(sensor => sensor.type === 'ph' && sensor.status === 'aktif');
-    const ppm = demoSensors.filter(sensor => sensor.type === 'ppm' && sensor.status === 'aktif');
-    if (ph.length !== 1 || ppm.length !== 1) throw new Error('Simulasi memerlukan satu sensor pH dan satu sensor PPM aktif.');
-    simulationSensors = { ph: ph[0].id, ppm: ppm[0].id };
-  } catch (error) {
-    console.error(error);
-  }
+  // Simulasi mengirim nilai numerik pH dan PPM tanpa identitas perangkat.
   let savingReading = false;
 
   if (!chartCanvas || typeof Chart === "undefined") return;
@@ -324,19 +311,14 @@
     if (updateText) updateText.textContent = "baru saja";
     updateActivityPulse();
 
-    if (!simulationSensors) {
-      if (updateText) updateText.textContent = "simulasi tidak tersimpan";
-      return;
-    }
     if (savingReading) return;
     savingReading = true;
     try {
-      const formData = new FormData();
-      formData.append("ph_sensor_id", simulationSensors.ph);
-      formData.append("ppm_sensor_id", simulationSensors.ppm);
-      formData.append("ph_value", latestPh);
-      formData.append("ppm_value", latestPpm);
-      const response = await fetch("../api/sensor/save.php", { method: "POST", body: formData });
+      const response = await fetch("../api/sensor/save.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ph_value: latestPh, ppm_value: latestPpm })
+      });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || "Penyimpanan gagal");
       if (updateText) updateText.textContent = "simulasi tersimpan";

@@ -3,6 +3,7 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../includes/auth_check.php';
 require_once __DIR__ . '/../../includes/response.php';
 require_once __DIR__ . '/../../includes/sensors.php';
+require_once __DIR__ . '/../../includes/dithane.php';
 requireAuth();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') { errorResponse('Method not allowed', 405); }
@@ -18,6 +19,8 @@ try {
         $parsedSettings[$type] = json_decode($config, true);
     }
     
+    $schedule = readDithane($pdo);
+    if ($schedule) $parsedSettings['dithane'] = $schedule['config'];
     $latestReadings = latestSensorReadings($pdo);
     // Compatibility fields: newest available reading per parameter, with its own timestamp.
     $latestReading = null;
@@ -25,8 +28,8 @@ try {
         if ($latestReading === null) $latestReading = [];
         $key = $reading['type'] . '_value';
         if (!array_key_exists($key, $latestReading)) {
-            $latestReading[$key] = (float)$reading['value'];
-            $latestReading[$reading['type'] . '_sensor_id'] = (int)$reading['sensor_id'];
+            $latestReading[$key] = $reading['type'] === 'ppm' ? (int)$reading['value'] : (float)$reading['value'];
+            $latestReading[$reading['type'] . '_reading_id'] = (int)$reading['id'];
             $latestReading[$reading['type'] . '_recorded_at'] = $reading['recorded_at'];
         }
     }
