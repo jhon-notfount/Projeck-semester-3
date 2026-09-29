@@ -1,0 +1,70 @@
+{
+  "tables": 9,
+  "columns": 60,
+  "foreign_keys": 9,
+  "relationships": [
+    [
+      "users",
+      "id_pengguna",
+      "settings",
+      "diubah_oleh_id",
+      true
+    ],
+    [
+      "users",
+      "id_pengguna",
+      "profile",
+      "diubah_oleh_id",
+      true
+    ],
+    [
+      "users",
+      "id_pengguna",
+      "dithane_schedules",
+      "diubah_oleh_id",
+      true
+    ],
+    [
+      "settings",
+      "jenis",
+      "monitoring_logs",
+      "jenis",
+      false
+    ],
+    [
+      "ph_readings",
+      "id_pembacaan_ph",
+      "monitoring_logs",
+      "id_pembacaan_ph",
+      true
+    ],
+    [
+      "ppm_readings",
+      "id_pembacaan_ppm",
+      "monitoring_logs",
+      "id_pembacaan_ppm",
+      true
+    ],
+    [
+      "settings",
+      "jenis",
+      "history_logs",
+      "jenis",
+      false
+    ],
+    [
+      "ph_readings",
+      "id_pembacaan_ph",
+      "notifications",
+      "id_pembacaan_ph",
+      true
+    ],
+    [
+      "ppm_readings",
+      "id_pembacaan_ppm",
+      "notifications",
+      "id_pembacaan_ppm",
+      true
+    ]
+  ]
+}

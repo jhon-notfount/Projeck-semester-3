@@ -56,6 +56,22 @@ try:
     assert req('api/settings/reset.php',{'type':'dithane'})['success']
     assert req('api/settings/get.php?type=dithane')['data']['config']['interval']=='48'
     assert req('api/notifications/generate.php',{})['success']
+    for kind in ['ph','ppm']:
+        assert req('api/settings/update.php',{'type':kind,'config':json.dumps({'min':'5.5','max':'6.5'} if kind=='ph' else {'min':'700','max':'1000'})})['success']
+        assert req('api/settings/get.php?type='+kind)['success']
+        assert req('api/settings/reset.php',{'type':kind})['success']
+    assert req('api/profile/update.php',{'section':'team','data':json.dumps([{'label':'Nama Team','value':'Uji Nama Kolom'}])})['success']
+    assert req('api/profile/get.php')['data']['team'][0]['value']=='Uji Nama Kolom'
+    for route in ['api/history/list.php?type=ph&search=ph&month=2','api/monitoring/list.php?type=ppm&status=Normal','api/notifications/list.php']:
+        assert req(route)['success']
+    history=req('api/history/list.php')['data']; hid=history[0]['id']
+    assert req('api/history/delete.php',{'id':hid})['success']
+    assert all(row['id']!=hid for row in req('api/history/list.php')['data'])
+    logs=req('api/monitoring/list.php?type=ppm')['data']; mid=logs[0]['id']
+    assert req('api/monitoring/delete.php',{'id':mid})['success']
+    assert all(row['id']!=mid for row in req('api/monitoring/list.php?type=ppm')['data'])
+    assert req('api/notifications/mark-read.php',{})['success']
+    assert req('api/dashboard/summary.php')['data']['unread_notifications']==0
     print('PASS HTTP: fresh install, login, six pages, JSON save, latest, validation, schedule edit/reset, summary, notifications.')
 finally:
     if server:

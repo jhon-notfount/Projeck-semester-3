@@ -35,7 +35,7 @@ function migrateMeasurements(PDO $pdo, string $backupDirectory): array {
         $db = $pdo->query('SELECT DATABASE()')->fetchColumn();
         $backup = $backupDirectory . '/' . $db . '_before_split_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.sql';
         sensorBackup($pdo,$backup);
-        $sql = preg_replace('/--[^\r\n]*/','',file_get_contents(__DIR__.'/schema.sql'));
+        $sql = preg_replace('/--[^\r\n]*/','',file_get_contents(__DIR__.'/../tests/fixtures/schema_before_indonesian.sql'));
         $schema = [];
         foreach (array_filter(array_map('trim',explode(';',$sql))) as $stmt) {
             if (preg_match('/CREATE TABLE IF NOT EXISTS `(\w+)`/',$stmt,$m)) $schema[$m[1]]=$stmt;

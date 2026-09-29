@@ -4,7 +4,7 @@ requireAuth();
 require_once __DIR__.'/../config/database.php';
 
 $pdo = getDBConnection();
-$stmt = $pdo->query("SELECT * FROM profile ORDER BY section, sort_order");
+$stmt = $pdo->query("SELECT `id_profil` AS `id`, `bagian` AS `section`, `label`, `isi` AS `value`, `urutan` AS `sort_order`, `diubah_oleh_id` AS `updated_by` FROM profile ORDER BY bagian, urutan");
 $profileRows = $stmt->fetchAll();
 $owner = array_filter($profileRows, fn($r) => $r['section'] === 'owner');
 $team = array_filter($profileRows, fn($r) => $r['section'] === 'team');

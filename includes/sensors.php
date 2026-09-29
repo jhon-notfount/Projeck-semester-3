@@ -8,7 +8,7 @@ function sensorNumber($value, string $name): float {
 }
 
 function sensorLimits(PDO $pdo): array {
-    $rows = $pdo->query("SELECT type, config_json FROM settings WHERE type IN ('ph','ppm')")->fetchAll(PDO::FETCH_KEY_PAIR);
+    $rows = $pdo->query("SELECT jenis AS type, konfigurasi_json AS config_json FROM settings WHERE jenis IN ('ph','ppm')")->fetchAll(PDO::FETCH_KEY_PAIR);
     $limits = [];
     foreach (['ph' => [5.5, 6.5], 'ppm' => [800, 1000]] as $type => $defaults) {
         $config = isset($rows[$type]) ? json_decode($rows[$type], true) : ['min' => $defaults[0], 'max' => $defaults[1]];
@@ -42,8 +42,8 @@ function sensorWarning(PDO $pdo, array $reading, array $limits, bool $includeNor
     $label = ($type === 'ph' ? 'pH' : 'PPM') . ($abnormal ? ' perlu dipantau' : ' normal');
     $message = "Nilai $type ($value) " . ($abnormal ? 'di luar' : 'dalam') . " rentang $min - $max.";
     $tone = $abnormal ? 'warning' : 'success';
-    $column = $type . '_reading_id';
-    $stmt = $pdo->prepare("INSERT INTO notifications (label, message, tone, href, $column) VALUES (?, ?, ?, ?, ?)");
+    $column = 'id_pembacaan_' . $type;
+    $stmt = $pdo->prepare("INSERT INTO notifications (label, pesan, tingkat_pesan, tautan, $column) VALUES (?, ?, ?, ?, ?)");
     $stmt->execute([$label, $message, $tone, "pengaturan-$type.php", $reading['id']]);
     return ['label'=>$label, 'message'=>$message, 'tone'=>$tone, $column=>(int)$reading['id']];
 }
@@ -72,13 +72,13 @@ function saveSensorMeasurements(PDO $pdo, array $input): array {
         $days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
         $result = [];
         foreach ($values as $type => $value) {
-            $insert = $pdo->prepare("INSERT INTO {$type}_readings ({$type}_value, recorded_at) VALUES (?, ?)");
+            $insert = $pdo->prepare("INSERT INTO {$type}_readings (nilai_{$type}, direkam_pada) VALUES (?, ?)");
             $insert->execute([$value, $timestamp]);
             $reading = ['id'=>(int)$pdo->lastInsertId(), 'type'=>$type, 'unit'=>$type === 'ph' ? null : 'ppm',
                 $type . '_value'=>$value, 'value'=>$value, 'recorded_at'=>$timestamp];
             [$min, $max] = $limits[$type];
             $status = $value < $min ? 'Rendah' : ($value > $max ? 'Tinggi' : 'Normal');
-            $log = $pdo->prepare("INSERT INTO monitoring_logs (type, day_name, log_time, value, status, note, {$type}_reading_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $log = $pdo->prepare("INSERT INTO monitoring_logs (jenis, nama_hari, jam_catatan, nilai, status, keterangan, id_pembacaan_{$type}) VALUES (?, ?, ?, ?, ?, ?, ?)");
             $log->execute([$type, $days[(int)$clock->format('w')], $clock->format('H.i'), (string)$value, $status, 'Hasil pengukuran ' . $type, $reading['id']]);
             sensorWarning($pdo, $reading, $limits);
             $result[] = $reading;
@@ -94,7 +94,7 @@ function saveSensorMeasurements(PDO $pdo, array $input): array {
 function latestSensorReadings(PDO $pdo): array {
     $result = [];
     foreach (['ph','ppm'] as $type) {
-        $r = $pdo->query("SELECT id, {$type}_value, recorded_at FROM {$type}_readings ORDER BY recorded_at DESC, id DESC LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+        $r = $pdo->query("SELECT id_pembacaan_{$type} AS id, nilai_{$type} AS {$type}_value, direkam_pada AS recorded_at FROM {$type}_readings ORDER BY direkam_pada DESC, id_pembacaan_{$type} DESC LIMIT 1")->fetch(PDO::FETCH_ASSOC);
         if ($r) {
             $r['type'] = $type; $r['unit'] = $type === 'ph' ? null : 'ppm';
             $r[$type . '_value'] = $type === 'ppm' ? (int)$r[$type . '_value'] : (float)$r[$type . '_value'];

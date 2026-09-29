@@ -15,7 +15,7 @@ try {
         errorResponse('Username and password are required', 400);
     }
     
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT `id_pengguna` AS `id`, `nama_pengguna` AS `username`, `kata_sandi` AS `password`, `email`, `peran` AS `role`, `dibuat_pada` AS `created_at`, `diperbarui_pada` AS `updated_at` FROM users WHERE nama_pengguna = ? LIMIT 1");
     $stmt->execute([$username]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     

@@ -14,7 +14,7 @@ try {
         errorResponse('ID is required', 400);
     }
     
-    $stmt = $pdo->prepare("UPDATE history_logs SET is_deleted = 1 WHERE id = ?");
+    $stmt = $pdo->prepare("UPDATE history_logs SET dihapus = 1 WHERE id_riwayat = ?");
     $stmt->execute([$id]);
     
     successResponse(null, 'History deleted successfully');

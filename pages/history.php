@@ -4,7 +4,7 @@ requireAuth();
 require_once '../config/database.php';
 
 $pdo = getDBConnection();
-$stmt = $pdo->query("SELECT * FROM history_logs WHERE is_deleted=0 ORDER BY log_date DESC, log_time DESC");
+$stmt = $pdo->query("SELECT `id_riwayat` AS `id`, `nama_hari` AS `day_name`, `tanggal_catatan` AS `log_date`, `jam_catatan` AS `log_time`, `jenis` AS `type`, `status`, `keterangan` AS `note`, `dihapus` AS `is_deleted`, `dibuat_pada` AS `created_at` FROM history_logs WHERE dihapus=0 ORDER BY tanggal_catatan DESC, jam_catatan DESC");
 $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!doctype html>

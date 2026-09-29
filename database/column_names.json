@@ -1,0 +1,80 @@
+{
+  "users": {
+    "id": "id_pengguna",
+    "username": "nama_pengguna",
+    "password": "kata_sandi",
+    "email": "email",
+    "role": "peran",
+    "created_at": "dibuat_pada",
+    "updated_at": "diperbarui_pada"
+  },
+  "settings": {
+    "id": "id_pengaturan",
+    "type": "jenis",
+    "config_json": "konfigurasi_json",
+    "updated_at": "diperbarui_pada",
+    "updated_by": "diubah_oleh_id"
+  },
+  "profile": {
+    "id": "id_profil",
+    "section": "bagian",
+    "label": "label",
+    "value": "isi",
+    "sort_order": "urutan",
+    "updated_by": "diubah_oleh_id"
+  },
+  "ph_readings": {
+    "id": "id_pembacaan_ph",
+    "ph_value": "nilai_ph",
+    "recorded_at": "direkam_pada"
+  },
+  "ppm_readings": {
+    "id": "id_pembacaan_ppm",
+    "ppm_value": "nilai_ppm",
+    "recorded_at": "direkam_pada"
+  },
+  "dithane_schedules": {
+    "id": "id_jadwal_dithane",
+    "interval_hours": "interval_jam",
+    "duration_seconds": "durasi_detik",
+    "start_time": "jam_mulai",
+    "updated_by": "diubah_oleh_id",
+    "created_at": "dibuat_pada",
+    "updated_at": "diperbarui_pada"
+  },
+  "monitoring_logs": {
+    "id": "id_monitoring",
+    "type": "jenis",
+    "day_name": "nama_hari",
+    "log_time": "jam_catatan",
+    "value": "nilai",
+    "status": "status",
+    "note": "keterangan",
+    "is_deleted": "dihapus",
+    "created_at": "dibuat_pada",
+    "ph_reading_id": "id_pembacaan_ph",
+    "ppm_reading_id": "id_pembacaan_ppm"
+  },
+  "history_logs": {
+    "id": "id_riwayat",
+    "day_name": "nama_hari",
+    "log_date": "tanggal_catatan",
+    "log_time": "jam_catatan",
+    "type": "jenis",
+    "status": "status",
+    "note": "keterangan",
+    "is_deleted": "dihapus",
+    "created_at": "dibuat_pada"
+  },
+  "notifications": {
+    "id": "id_notifikasi",
+    "label": "label",
+    "message": "pesan",
+    "tone": "tingkat_pesan",
+    "href": "tautan",
+    "is_read": "sudah_dibaca",
+    "created_at": "dibuat_pada",
+    "ph_reading_id": "id_pembacaan_ph",
+    "ppm_reading_id": "id_pembacaan_ppm"
+  }
+}

@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') { errorResponse('Method not allowed',
 try {
     $pdo = getDBConnection();
     
-    $stmt = $pdo->prepare("UPDATE notifications SET is_read = 1 WHERE is_read = 0");
+    $stmt = $pdo->prepare("UPDATE notifications SET sudah_dibaca = 1 WHERE sudah_dibaca = 0");
     $stmt->execute();
     
     successResponse(null, 'All notifications marked as read');

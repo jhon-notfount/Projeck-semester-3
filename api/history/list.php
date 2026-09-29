@@ -15,26 +15,26 @@ try {
     $month = $_GET['month'] ?? '';
     $status = $_GET['status'] ?? '';
     
-    $query = "SELECT * FROM history_logs WHERE is_deleted = 0";
+    $query = "SELECT `id_riwayat` AS `id`, `nama_hari` AS `day_name`, `tanggal_catatan` AS `log_date`, `jam_catatan` AS `log_time`, `jenis` AS `type`, `status`, `keterangan` AS `note`, `dihapus` AS `is_deleted`, `dibuat_pada` AS `created_at` FROM history_logs WHERE dihapus = 0";
     $params = [];
     
     if (!empty($search)) {
-        $query .= " AND (day_name LIKE ? OR note LIKE ? OR type LIKE ?)";
+        $query .= " AND (nama_hari LIKE ? OR keterangan LIKE ? OR jenis LIKE ?)";
         $searchTerm = "%$search%";
         $params[] = $searchTerm;
         $params[] = $searchTerm;
         $params[] = $searchTerm;
     }
     if (!empty($type)) {
-        $query .= " AND type = ?";
+        $query .= " AND jenis = ?";
         $params[] = $type;
     }
     if (!empty($day)) {
-        $query .= " AND day_name = ?";
+        $query .= " AND nama_hari = ?";
         $params[] = $day;
     }
     if (!empty($month)) {
-        $query .= " AND MONTH(log_date) = ?";
+        $query .= " AND MONTH(tanggal_catatan) = ?";
         $params[] = $month;
     }
     if (!empty($status)) {
@@ -42,7 +42,7 @@ try {
         $params[] = $status;
     }
     
-    $query .= " ORDER BY log_date DESC, log_time DESC";
+    $query .= " ORDER BY tanggal_catatan DESC, jam_catatan DESC";
     
     $stmt = $pdo->prepare($query);
     $stmt->execute($params);

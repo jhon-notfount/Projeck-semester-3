@@ -23,10 +23,10 @@ try {
     
     $pdo->beginTransaction();
     
-    $stmtDelete = $pdo->prepare("DELETE FROM profile WHERE section = ?");
+    $stmtDelete = $pdo->prepare("DELETE FROM profile WHERE bagian = ?");
     $stmtDelete->execute([$section]);
     
-    $stmtInsert = $pdo->prepare("INSERT INTO profile (section, label, value, sort_order, updated_by) VALUES (?, ?, ?, ?, ?)");
+    $stmtInsert = $pdo->prepare("INSERT INTO profile (bagian, label, isi, urutan, diubah_oleh_id) VALUES (?, ?, ?, ?, ?)");
     foreach ($data as $index => $item) {
         $label = $item['label'] ?? '';
         $value = $item['value'] ?? '';

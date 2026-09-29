@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__.'/../database/migrate_measurements.php';
+require_once __DIR__.'/../database/migrate_column_names.php';
 function check($value,$message) { if (!$value) throw new RuntimeException($message); }
 function rejects(callable $fn) { try {$fn();} catch(Throwable $e) {return;} throw new RuntimeException('Expected rejection'); }
 $p=new PDO("mysql:host=$DB_HOST;charset=utf8mb4",$DB_USER,$DB_PASS,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
@@ -29,6 +30,7 @@ try {
     check($p->query('SELECT password FROM users')->fetchColumn()==='hash-unchanged','User preserved');
     check($p->query('SELECT value FROM profile')->fetchColumn()==='Tetap','Profile preserved');
     check((int)$p->query('SELECT COUNT(*) FROM history_logs')->fetchColumn()===1,'History preserved');
+    migrateColumnNames($p,__DIR__.'/../database/backups');
     check(readDithane($p)['config']===['interval'=>'48','duration'=>'10','start'=>'08.00'],'Schedule converted');
     check(migrateMeasurements($p,__DIR__.'/../database/backups')['status']==='already_current','Idempotent');
     $readings=saveSensorMeasurements($p,['ph_value'=>7.1,'ppm_value'=>1200]);
@@ -37,10 +39,10 @@ try {
     $before=$p->query('SELECT COUNT(*) FROM ph_readings')->fetchColumn();
     foreach([['ph_value'=>6,'ppm_value'=>850.5],['ppm_value'=>2147483648],['ph_value'=>6,'ppm_value'=>-1],['ph_value'=>15],['ph_value'=>null],['ph_value'=>[]],['sensor_id'=>1,'value'=>6]] as $bad) rejects(fn()=>saveSensorMeasurements($p,$bad));
     check($p->query('SELECT COUNT(*) FROM ph_readings')->fetchColumn()===$before,'Rejected pair leaves no writes');
-    rejects(fn()=>$p->exec('DELETE FROM ph_readings WHERE id=3'));
-    rejects(fn()=>$p->exec('UPDATE notifications SET ph_reading_id=3,ppm_reading_id=7 WHERE id=1'));
-    rejects(fn()=>$p->exec("UPDATE monitoring_logs SET type='ppm' WHERE ph_reading_id=3"));
-    rejects(fn()=>$p->exec('INSERT INTO ph_readings (ph_value) VALUES (15)'));
+    rejects(fn()=>$p->exec('DELETE FROM ph_readings WHERE id_pembacaan_ph=3'));
+    rejects(fn()=>$p->exec('UPDATE notifications SET id_pembacaan_ph=3,id_pembacaan_ppm=7 WHERE id_notifikasi=1'));
+    rejects(fn()=>$p->exec("UPDATE monitoring_logs SET jenis='ppm' WHERE id_pembacaan_ph=3"));
+    rejects(fn()=>$p->exec('INSERT INTO ph_readings (nilai_ph) VALUES (15)'));
     writeDithane($p,['interval'=>'24','duration'=>'15','start'=>'09:30'],1);
     check(readDithane($p)['config']['start']==='09.30','Schedule edit');
     rejects(fn()=>writeDithane($p,['interval'=>0,'duration'=>10,'start'=>'25:00'],1));

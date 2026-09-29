@@ -30,7 +30,7 @@ try {
         writeDithane($pdo, $data, (int)$_SESSION['user_id']);
         successResponse(null, 'Jadwal Dithane tersimpan');
     }
-    $stmt = $pdo->prepare("UPDATE settings SET config_json = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE type = ?");
+    $stmt = $pdo->prepare("UPDATE settings SET konfigurasi_json = ?, diubah_oleh_id = ?, diperbarui_pada = CURRENT_TIMESTAMP WHERE jenis = ?");
     $stmt->execute([$defaultConfig, $_SESSION['user_id'], $type]);
     
     successResponse(null, 'Setting reset to default successfully');

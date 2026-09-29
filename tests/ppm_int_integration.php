@@ -4,7 +4,7 @@ $p=new PDO("mysql:host=$DB_HOST;charset=utf8mb4",$DB_USER,$DB_PASS,[PDO::ATTR_ER
 $name='hydrotech_ppm_int_test_'.bin2hex(random_bytes(5));
 $p->exec("CREATE DATABASE `$name`");$p->exec("USE `$name`");
 try {
-    $sql=file_get_contents(__DIR__.'/../database/schema.sql');
+    $sql=file_get_contents(__DIR__.'/fixtures/schema_before_indonesian.sql');
     $sql=str_replace('`ppm_value` INT','`ppm_value` DECIMAL(12,4)',$sql);
     foreach(array_filter(array_map('trim',explode(';',preg_replace('/--[^\r\n]*/','',$sql)))) as $q) $p->exec($q);
     $p->exec('INSERT INTO ppm_readings (ppm_value) VALUES (850.5)');

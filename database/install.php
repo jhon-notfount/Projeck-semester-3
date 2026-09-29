@@ -31,7 +31,7 @@ try {
     $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbname` DEFAULT CHARACTER SET $charset COLLATE {$charset}_unicode_ci");
     $pdo->exec("USE `$dbname`");
     if ($pdo->query('SHOW TABLES')->fetchColumn() !== false) {
-        throw new RuntimeException('Database sudah memiliki tabel. Gunakan php database/migrate_measurements.php untuk memperbarui tanpa mereset data.');
+        throw new RuntimeException('Database sudah memiliki tabel. Gunakan php database/migrate_column_names.php untuk memperbarui tanpa mereset data.');
     }
     echo "[OK] Database '$dbname' created/selected.\n";
 
@@ -56,8 +56,8 @@ try {
     $pdo->beginTransaction();
     $passwordHash = password_hash('Admin123', PASSWORD_DEFAULT);
     $stmt = $pdo->prepare(
-        "INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE password = VALUES(password), email = VALUES(email)"
+        "INSERT INTO users (nama_pengguna, kata_sandi, email, peran) VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE kata_sandi = VALUES(kata_sandi), email = VALUES(email)"
     );
     $stmt->execute(['hydrotech', $passwordHash, 'admin@hydrotech.com', 'admin']);
     echo "[OK] Admin user created (username: hydrotech, password: Admin123).\n";
@@ -69,8 +69,8 @@ try {
         ['dithane', json_encode((object)[])],
     ];
     $stmt = $pdo->prepare(
-        "INSERT INTO settings (type, config_json) VALUES (?, ?)
-         ON DUPLICATE KEY UPDATE config_json = VALUES(config_json)"
+        "INSERT INTO settings (jenis, konfigurasi_json) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE konfigurasi_json = VALUES(konfigurasi_json)"
     );
     foreach ($settingsData as $s) {
         $stmt->execute($s);
@@ -99,7 +99,7 @@ try {
         ['dithane', 'Jumat',  '08.00', '0.5 l', 'Sudah Menyemprot', 'Penyemprotan selesai sesuai jadwal'],
     ];
     $stmt = $pdo->prepare(
-        "INSERT INTO monitoring_logs (type, day_name, log_time, value, status, note) VALUES (?, ?, ?, ?, ?, ?)"
+        "INSERT INTO monitoring_logs (jenis, nama_hari, jam_catatan, nilai, status, keterangan) VALUES (?, ?, ?, ?, ?, ?)"
     );
     foreach ($monitoringData as $row) {
         $stmt->execute($row);
@@ -120,7 +120,7 @@ try {
         ['Jumat',   '2026-10-08', '15.00', 'ph',      'Normal',  'pH dalam kondisi normal'],
     ];
     $stmt = $pdo->prepare(
-        "INSERT INTO history_logs (day_name, log_date, log_time, type, status, note) VALUES (?, ?, ?, ?, ?, ?)"
+        "INSERT INTO history_logs (nama_hari, tanggal_catatan, jam_catatan, jenis, status, keterangan) VALUES (?, ?, ?, ?, ?, ?)"
     );
     foreach ($historyData as $row) {
         $stmt->execute($row);
@@ -134,7 +134,7 @@ try {
         ['Jadwal Dithane aktif', 'Penyemprotan berikutnya mengikuti jadwal otomatis',         'info',    'pengaturan-dithane.php'],
     ];
     $stmt = $pdo->prepare(
-        "INSERT INTO notifications (label, message, tone, href) VALUES (?, ?, ?, ?)"
+        "INSERT INTO notifications (label, pesan, tingkat_pesan, tautan) VALUES (?, ?, ?, ?)"
     );
     foreach ($notifData as $row) {
         $stmt->execute($row);
@@ -153,7 +153,7 @@ try {
         ['team',  'Alamat',    'Sumbersari Jember',                     4],
     ];
     $stmt = $pdo->prepare(
-        "INSERT INTO profile (section, label, value, sort_order) VALUES (?, ?, ?, ?)"
+        "INSERT INTO profile (bagian, label, isi, urutan) VALUES (?, ?, ?, ?)"
     );
     foreach ($profileData as $row) {
         $stmt->execute($row);
@@ -161,7 +161,7 @@ try {
     echo "[OK] Profile data seeded (8 rows: 4 owner + 4 team).\n";
 
     // ── 10. Seed Sample Sensor Readings ──
-    $pdo->exec("INSERT INTO dithane_schedules (id,interval_hours,duration_seconds,start_time) VALUES (1,48,10,'08:00:00')");
+    $pdo->exec("INSERT INTO dithane_schedules (id_jadwal_dithane,interval_jam,durasi_detik,jam_mulai) VALUES (1,48,10,'08:00:00')");
     $sensorData = [
         [6.4, 845], [6.6, 858], [6.9, 874], [7.0, 862],
         [6.8, 892], [6.7, 876], [6.9, 864], [7.1, 863],
@@ -169,7 +169,7 @@ try {
     foreach ($sensorData as $i => $row) {
         $hours = count($sensorData) - $i;
         foreach (['ph'=>0,'ppm'=>1] as $type=>$column) {
-            $stmt = $pdo->prepare("INSERT INTO {$type}_readings ({$type}_value,recorded_at) VALUES (?,DATE_SUB(NOW(),INTERVAL ? HOUR))");
+            $stmt = $pdo->prepare("INSERT INTO {$type}_readings (nilai_{$type},direkam_pada) VALUES (?,DATE_SUB(NOW(),INTERVAL ? HOUR))");
             $stmt->execute([$row[$column],$hours]);
         }
     }

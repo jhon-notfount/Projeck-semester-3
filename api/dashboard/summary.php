@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') { errorResponse('Method not allowed', 
 try {
     $pdo = getDBConnection();
     
-    $stmtSettings = $pdo->query("SELECT type, config_json FROM settings");
+    $stmtSettings = $pdo->query("SELECT jenis AS type, konfigurasi_json AS config_json FROM settings");
     $settings = $stmtSettings->fetchAll(PDO::FETCH_KEY_PAIR);
     
     $parsedSettings = [];
@@ -34,7 +34,7 @@ try {
         }
     }
     
-    $stmtUnread = $pdo->query("SELECT COUNT(*) FROM notifications WHERE is_read = 0");
+    $stmtUnread = $pdo->query("SELECT COUNT(*) FROM notifications WHERE sudah_dibaca = 0");
     $unreadNotifications = (int)$stmtUnread->fetchColumn();
     
     $result = [

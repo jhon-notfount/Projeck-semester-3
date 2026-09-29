@@ -16,7 +16,7 @@ try {
         errorResponse('Type is required', 400);
     }
     
-    $query = "SELECT * FROM monitoring_logs WHERE type = ? AND is_deleted = 0";
+    $query = "SELECT `id_monitoring` AS `id`, `jenis` AS `type`, `nama_hari` AS `day_name`, `jam_catatan` AS `log_time`, `nilai` AS `value`, `status`, `keterangan` AS `note`, `dihapus` AS `is_deleted`, `dibuat_pada` AS `created_at`, `id_pembacaan_ph` AS `ph_reading_id`, `id_pembacaan_ppm` AS `ppm_reading_id` FROM monitoring_logs WHERE jenis = ? AND dihapus = 0";
     $params = [$type];
     
     if (!empty($status)) {
@@ -24,7 +24,7 @@ try {
         $params[] = $status;
     }
     
-    $query .= " ORDER BY created_at DESC";
+    $query .= " ORDER BY dibuat_pada DESC";
     
     $stmt = $pdo->prepare($query);
     $stmt->execute($params);

@@ -13,7 +13,7 @@ try {
     if ($type !== null && !in_array($type, ['ph','ppm'], true)) errorResponse('Jenis pengukuran tidak valid.', 400);
     $parts = [];
     foreach ($type === null ? ['ph','ppm'] : [$type] as $kind) {
-        $parts[] = "(SELECT id, '$kind' AS type, {$kind}_value AS value, recorded_at FROM {$kind}_readings ORDER BY recorded_at DESC, id DESC LIMIT 10)";
+        $parts[] = "(SELECT id_pembacaan_{$kind} AS id, '$kind' AS type, nilai_{$kind} AS value, direkam_pada AS recorded_at FROM {$kind}_readings ORDER BY direkam_pada DESC, id_pembacaan_{$kind} DESC LIMIT 10)";
     }
     $stmt = $pdo->query(implode(' UNION ALL ', $parts) . ' ORDER BY recorded_at DESC, id DESC, type LIMIT 10');
     $rows = $stmt->fetchAll();

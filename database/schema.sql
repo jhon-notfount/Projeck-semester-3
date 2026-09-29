@@ -1,136 +1,136 @@
 -- Hydrotech: 9 tabel, 60 kolom, 9 foreign key.
 -- Data numerik pH/PPM terpisah, jadwal Dithane berulang.
--- Database 8 tabel: jalankan php database/migrate_measurements.php.
+-- Penamaan Indonesia: php database/migrate_column_names.php.
 
 CREATE TABLE IF NOT EXISTS `users` (
-`id` INT AUTO_INCREMENT PRIMARY KEY,
-    `username` VARCHAR(50) NOT NULL UNIQUE,
-    `password` VARCHAR(255) NOT NULL,
+`id_pengguna` INT AUTO_INCREMENT PRIMARY KEY,
+    `nama_pengguna` VARCHAR(50) NOT NULL UNIQUE,
+    `kata_sandi` VARCHAR(255) NOT NULL,
     `email` VARCHAR(100) DEFAULT NULL,
-    `role` ENUM('admin','user') NOT NULL DEFAULT 'admin',
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    `peran` ENUM('admin','user') NOT NULL DEFAULT 'admin',
+    `dibuat_pada` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `diperbarui_pada` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `settings` (
-`id` INT AUTO_INCREMENT PRIMARY KEY,
-    `type` ENUM('ppm','ph','dithane') NOT NULL UNIQUE,
-    `config_json` JSON NOT NULL,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    `updated_by` INT NULL,
-    INDEX `idx_settings_updated_by` (`updated_by`),
-    CONSTRAINT `fk_settings_user` FOREIGN KEY (`updated_by`)
-        REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE RESTRICT
+`id_pengaturan` INT AUTO_INCREMENT PRIMARY KEY,
+    `jenis` ENUM('ppm','ph','dithane') NOT NULL UNIQUE,
+    `konfigurasi_json` JSON NOT NULL,
+    `diperbarui_pada` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `diubah_oleh_id` INT NULL,
+    INDEX `idx_settings_updated_by` (`diubah_oleh_id`),
+    CONSTRAINT `fk_settings_user` FOREIGN KEY (`diubah_oleh_id`)
+        REFERENCES `users` (`id_pengguna`) ON DELETE SET NULL ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `profile` (
-`id` INT AUTO_INCREMENT PRIMARY KEY,
-    `section` ENUM('owner','team') NOT NULL,
+`id_profil` INT AUTO_INCREMENT PRIMARY KEY,
+    `bagian` ENUM('owner','team') NOT NULL,
     `label` VARCHAR(100) NOT NULL,
-    `value` TEXT NOT NULL,
-    `sort_order` INT NOT NULL DEFAULT 0,
-    `updated_by` INT NULL,
-    INDEX `idx_profile_updated_by` (`updated_by`),
-    CONSTRAINT `fk_profile_user` FOREIGN KEY (`updated_by`)
-        REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE RESTRICT
+    `isi` TEXT NOT NULL,
+    `urutan` INT NOT NULL DEFAULT 0,
+    `diubah_oleh_id` INT NULL,
+    INDEX `idx_profile_updated_by` (`diubah_oleh_id`),
+    CONSTRAINT `fk_profile_user` FOREIGN KEY (`diubah_oleh_id`)
+        REFERENCES `users` (`id_pengguna`) ON DELETE SET NULL ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `ph_readings` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `ph_value` DECIMAL(6,4) NOT NULL COMMENT 'Hasil pengukuran: pH tanpa satuan',
-    `recorded_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX `idx_ph_time` (`recorded_at`, `id`),
-    CONSTRAINT `chk_ph_value` CHECK (`ph_value` BETWEEN 0 AND 14)
+    `id_pembacaan_ph` INT AUTO_INCREMENT PRIMARY KEY,
+    `nilai_ph` DECIMAL(6,4) NOT NULL COMMENT 'Hasil pengukuran: pH tanpa satuan',
+    `direkam_pada` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_ph_time` (`direkam_pada`, `id_pembacaan_ph`),
+    CONSTRAINT `chk_ph_value` CHECK (`nilai_ph` BETWEEN 0 AND 14)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `ppm_readings` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `ppm_value` INT NOT NULL COMMENT 'Hasil pengukuran: konsentrasi dalam ppm',
-    `recorded_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX `idx_ppm_time` (`recorded_at`, `id`),
-    CONSTRAINT `chk_ppm_value` CHECK (`ppm_value` BETWEEN 0 AND 2147483647)
+    `id_pembacaan_ppm` INT AUTO_INCREMENT PRIMARY KEY,
+    `nilai_ppm` INT NOT NULL COMMENT 'Hasil pengukuran: konsentrasi dalam ppm',
+    `direkam_pada` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_ppm_time` (`direkam_pada`, `id_pembacaan_ppm`),
+    CONSTRAINT `chk_ppm_value` CHECK (`nilai_ppm` BETWEEN 0 AND 2147483647)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `dithane_schedules` (
-    `id` INT PRIMARY KEY,
-    `interval_hours` INT NOT NULL,
-    `duration_seconds` INT NOT NULL,
-    `start_time` TIME NOT NULL,
-    `updated_by` INT NULL,
-    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `chk_dithane_single_schedule` CHECK (`id` = 1),
-    CONSTRAINT `chk_dithane_interval` CHECK (`interval_hours` > 0),
-    CONSTRAINT `chk_dithane_duration` CHECK (`duration_seconds` > 0),
-    CONSTRAINT `chk_dithane_start` CHECK (`start_time` BETWEEN '00:00:00' AND '23:59:59'),
-    CONSTRAINT `fk_dithane_user` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+    `id_jadwal_dithane` INT PRIMARY KEY,
+    `interval_jam` INT NOT NULL,
+    `durasi_detik` INT NOT NULL,
+    `jam_mulai` TIME NOT NULL,
+    `diubah_oleh_id` INT NULL,
+    `dibuat_pada` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `diperbarui_pada` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT `chk_dithane_single_schedule` CHECK (`id_jadwal_dithane` = 1),
+    CONSTRAINT `chk_dithane_interval` CHECK (`interval_jam` > 0),
+    CONSTRAINT `chk_dithane_duration` CHECK (`durasi_detik` > 0),
+    CONSTRAINT `chk_dithane_start` CHECK (`jam_mulai` BETWEEN '00:00:00' AND '23:59:59'),
+    CONSTRAINT `fk_dithane_user` FOREIGN KEY (`diubah_oleh_id`) REFERENCES `users` (`id_pengguna`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `monitoring_logs` (
-`id` INT AUTO_INCREMENT PRIMARY KEY,
-    `type` ENUM('ppm','ph','dithane') NOT NULL,
-    `day_name` VARCHAR(20) NOT NULL,
-    `log_time` VARCHAR(10) NOT NULL,
-    `value` VARCHAR(20) NOT NULL,
+`id_monitoring` INT AUTO_INCREMENT PRIMARY KEY,
+    `jenis` ENUM('ppm','ph','dithane') NOT NULL,
+    `nama_hari` VARCHAR(20) NOT NULL,
+    `jam_catatan` VARCHAR(10) NOT NULL,
+    `nilai` VARCHAR(20) NOT NULL,
     `status` VARCHAR(30) NOT NULL,
-    `note` TEXT,
-    `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX `idx_type` (`type`),
-    INDEX `idx_is_deleted` (`is_deleted`),
-    INDEX `idx_type_deleted` (`type`, `is_deleted`),
-    `ph_reading_id` INT NULL,
-    `ppm_reading_id` INT NULL,
-    INDEX `idx_monitoring_ph` (`ph_reading_id`),
-    INDEX `idx_monitoring_ppm` (`ppm_reading_id`),
-    CONSTRAINT `fk_monitoring_type` FOREIGN KEY (`type`)
-        REFERENCES `settings` (`type`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-    CONSTRAINT `fk_monitoring_ph` FOREIGN KEY (`ph_reading_id`)
-        REFERENCES `ph_readings` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-    CONSTRAINT `fk_monitoring_ppm` FOREIGN KEY (`ppm_reading_id`)
-        REFERENCES `ppm_readings` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+    `keterangan` TEXT,
+    `dihapus` TINYINT(1) NOT NULL DEFAULT 0,
+    `dibuat_pada` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_type` (`jenis`),
+    INDEX `idx_is_deleted` (`dihapus`),
+    INDEX `idx_type_deleted` (`jenis`, `dihapus`),
+    `id_pembacaan_ph` INT NULL,
+    `id_pembacaan_ppm` INT NULL,
+    INDEX `idx_monitoring_ph` (`id_pembacaan_ph`),
+    INDEX `idx_monitoring_ppm` (`id_pembacaan_ppm`),
+    CONSTRAINT `fk_monitoring_type` FOREIGN KEY (`jenis`)
+        REFERENCES `settings` (`jenis`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+    CONSTRAINT `fk_monitoring_ph` FOREIGN KEY (`id_pembacaan_ph`)
+        REFERENCES `ph_readings` (`id_pembacaan_ph`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+    CONSTRAINT `fk_monitoring_ppm` FOREIGN KEY (`id_pembacaan_ppm`)
+        REFERENCES `ppm_readings` (`id_pembacaan_ppm`) ON DELETE RESTRICT ON UPDATE RESTRICT,
     CONSTRAINT `chk_monitoring_one_reading` CHECK (
-        (`ph_reading_id` IS NULL OR (`type` = 'ph' AND `ppm_reading_id` IS NULL)) AND
-        (`ppm_reading_id` IS NULL OR (`type` = 'ppm' AND `ph_reading_id` IS NULL)))
+        (`id_pembacaan_ph` IS NULL OR (`jenis` = 'ph' AND `id_pembacaan_ppm` IS NULL)) AND
+        (`id_pembacaan_ppm` IS NULL OR (`jenis` = 'ppm' AND `id_pembacaan_ph` IS NULL)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `history_logs` (
-`id` INT AUTO_INCREMENT PRIMARY KEY,
-    `day_name` VARCHAR(20) NOT NULL,
-    `log_date` DATE NOT NULL,
-    `log_time` VARCHAR(10) NOT NULL,
-    `type` ENUM('ppm','ph','dithane') NOT NULL,
+`id_riwayat` INT AUTO_INCREMENT PRIMARY KEY,
+    `nama_hari` VARCHAR(20) NOT NULL,
+    `tanggal_catatan` DATE NOT NULL,
+    `jam_catatan` VARCHAR(10) NOT NULL,
+    `jenis` ENUM('ppm','ph','dithane') NOT NULL,
     `status` VARCHAR(30) NOT NULL,
-    `note` TEXT,
-    `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX `idx_type` (`type`),
-    INDEX `idx_log_date` (`log_date`),
-    INDEX `idx_is_deleted` (`is_deleted`),
+    `keterangan` TEXT,
+    `dihapus` TINYINT(1) NOT NULL DEFAULT 0,
+    `dibuat_pada` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_type` (`jenis`),
+    INDEX `idx_log_date` (`tanggal_catatan`),
+    INDEX `idx_is_deleted` (`dihapus`),
     INDEX `idx_status` (`status`),
-    INDEX `idx_type_date_deleted` (`type`, `log_date`, `is_deleted`),
-    CONSTRAINT `fk_history_type` FOREIGN KEY (`type`)
-        REFERENCES `settings` (`type`) ON DELETE RESTRICT ON UPDATE RESTRICT
+    INDEX `idx_type_date_deleted` (`jenis`, `tanggal_catatan`, `dihapus`),
+    CONSTRAINT `fk_history_type` FOREIGN KEY (`jenis`)
+        REFERENCES `settings` (`jenis`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `notifications` (
-`id` INT AUTO_INCREMENT PRIMARY KEY,
+`id_notifikasi` INT AUTO_INCREMENT PRIMARY KEY,
     `label` VARCHAR(100) NOT NULL,
-    `message` TEXT NOT NULL,
-    `tone` ENUM('warning','success','info') NOT NULL DEFAULT 'info',
-    `href` VARCHAR(255) DEFAULT NULL,
-    `is_read` TINYINT(1) NOT NULL DEFAULT 0,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX `idx_is_read` (`is_read`),
-    INDEX `idx_created_at` (`created_at`),
-    `ph_reading_id` INT NULL,
-    `ppm_reading_id` INT NULL,
-    INDEX `idx_notifications_ph` (`ph_reading_id`),
-    INDEX `idx_notifications_ppm` (`ppm_reading_id`),
-    CONSTRAINT `fk_notifications_ph` FOREIGN KEY (`ph_reading_id`)
-        REFERENCES `ph_readings` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-    CONSTRAINT `fk_notifications_ppm` FOREIGN KEY (`ppm_reading_id`)
-        REFERENCES `ppm_readings` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-    CONSTRAINT `chk_notifications_one_reading` CHECK (`ph_reading_id` IS NULL OR `ppm_reading_id` IS NULL)
+    `pesan` TEXT NOT NULL,
+    `tingkat_pesan` ENUM('warning','success','info') NOT NULL DEFAULT 'info',
+    `tautan` VARCHAR(255) DEFAULT NULL,
+    `sudah_dibaca` TINYINT(1) NOT NULL DEFAULT 0,
+    `dibuat_pada` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_is_read` (`sudah_dibaca`),
+    INDEX `idx_created_at` (`dibuat_pada`),
+    `id_pembacaan_ph` INT NULL,
+    `id_pembacaan_ppm` INT NULL,
+    INDEX `idx_notifications_ph` (`id_pembacaan_ph`),
+    INDEX `idx_notifications_ppm` (`id_pembacaan_ppm`),
+    CONSTRAINT `fk_notifications_ph` FOREIGN KEY (`id_pembacaan_ph`)
+        REFERENCES `ph_readings` (`id_pembacaan_ph`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+    CONSTRAINT `fk_notifications_ppm` FOREIGN KEY (`id_pembacaan_ppm`)
+        REFERENCES `ppm_readings` (`id_pembacaan_ppm`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+    CONSTRAINT `chk_notifications_one_reading` CHECK (`id_pembacaan_ph` IS NULL OR `id_pembacaan_ppm` IS NULL)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
