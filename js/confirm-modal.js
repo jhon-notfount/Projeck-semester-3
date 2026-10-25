@@ -1,4 +1,27 @@
 (function () {
+  /* ESCAPE HELPER: mengamankan teks tidak terpercaya sebelum masuk template HTML. */
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  /* CSRF HELPER: token dari meta tag halaman; dipakai semua fetch POST browser. */
+  window.HydrotechCsrf = {
+    token: function () {
+      const meta = document.querySelector('meta[name="csrf-token"]');
+      return meta ? meta.getAttribute("content") || "" : "";
+    },
+    form: function () {
+      const fd = new FormData();
+      fd.append("csrf_token", this.token());
+      return fd;
+    },
+  };
+
   /* CONFIRM ICON: memilih ikon SweetAlert berdasarkan jenis konfirmasi. */
   function getIcon(icon, variant) {
     if (variant === "danger") return "warning";
@@ -207,15 +230,16 @@
     panel.setAttribute("aria-label", "Daftar notifikasi");
     
     const itemsHtml = items.map((item) => {
-      // Pastikan URL mengarah ke .php
-      const href = item.href ? item.href.replace(".html", ".php") : "#";
+      // Pastikan URL mengarah ke .php dan hanya jalur relatif (blokir skema berbahaya).
+      const rawHref = item.href ? item.href.replace(".html", ".php") : "#";
+      const href = /^[a-z0-9_./-]+\.php$/i.test(rawHref) ? rawHref : "#";
       return `
         <a class="notification-item ${item.tone || 'info'} ${isRead ? 'read' : ''}" href="${href}">
           <span class="notification-dot"></span>
           <span>
-            <b>${item.label}</b>
-            <small>${item.text}</small>
-            <em>${item.time}</em>
+            <b>${escapeHtml(item.label)}</b>
+            <small>${escapeHtml(item.text)}</small>
+            <em>${escapeHtml(item.time)}</em>
           </span>
         </a>
       `;
@@ -255,7 +279,10 @@
     panel
       .querySelector("[data-notification-read]")
       ?.addEventListener("click", async function () {
-          fetch("../api/notifications/mark-read.php", { method: "POST" })
+          fetch("../api/notifications/mark-read.php", {
+            method: "POST",
+            body: window.HydrotechCsrf.form(),
+          })
             .then(response => response.json())
             .then(result => {
               if (result.success) {
@@ -300,7 +327,8 @@
     });
 
     if (confirmed) {
-      await fetch("../api/auth/logout.php", { method: "POST" }).catch(e => {});
+      const logoutForm = window.HydrotechCsrf.form();
+      await fetch("../api/auth/logout.php", { method: "POST", body: logoutForm }).catch(e => {});
       window.location.href = "login.php";
     }
   });
@@ -334,26 +362,9 @@
     });
   });
 
-  /* TRASH CONFIRM: fallback konfirmasi hapus baris history jika tombol khusus tidak menangani. */
-  document.addEventListener("click", async function (event) {
-    if (event.target.closest(".trash-btn")) return;
-
-    const trashCell = event.target.closest(".history-card .trash");
-    if (!trashCell) return;
-
-    event.preventDefault();
-    const confirmed = await openConfirm({
-      icon: "X",
-      title: "Hapus data history?",
-      message: "Baris data ini akan dihapus dari tabel history.",
-      confirmText: "Ya, Hapus",
-      variant: "danger",
-    });
-
-    if (confirmed) {
-      trashCell.closest("tr")?.remove();
-    }
-  });
+  /* CATATAN: penghapusan baris history/pengaturan ditangani masing-masing
+     halaman melalui API (soft-delete server) — tidak ada lagi penghapusan
+     DOM-only di file ini. */
 
   /* GLOBAL INIT: menjalankan fitur umum setelah file dimuat. */
   setupNotificationBell();

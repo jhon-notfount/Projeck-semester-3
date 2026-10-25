@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../includes/sensors.php';
 requireAuth();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') errorResponse('Method not allowed', 405);
+requireCsrfToken();
 try {
     $pdo = getDBConnection();
     $lock = measurementLock($pdo);
@@ -13,7 +14,9 @@ try {
     $limits = sensorLimits($pdo);
     $generated = [];
     foreach (latestSensorReadings($pdo) as $reading) {
-        $generated[] = sensorWarning($pdo, $reading, $limits, true);
+        // dedup=true: pemanggilan berulang tidak menciptakan notifikasi ganda
+        // untuk kejadian (pembacaan) yang sudah pernah diberi notifikasi.
+        $generated[] = sensorWarning($pdo, $reading, $limits, true, true);
     }
     $pdo->commit();
     measurementUnlock($pdo, $lock);

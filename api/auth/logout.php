@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../includes/response.php';
 requireAuth();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { errorResponse('Method not allowed', 405); }
+requireCsrfToken();
 
 try {
     session_destroy();

@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../includes/response.php';
 requireAuth();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { errorResponse('Method not allowed', 405); }
+requireCsrfToken();
 
 try {
     $pdo = getDBConnection();
@@ -23,14 +24,14 @@ try {
     
     $pdo->beginTransaction();
     
-    $stmtDelete = $pdo->prepare("DELETE FROM profile WHERE bagian = ?");
+    $stmtDelete = $pdo->prepare("DELETE FROM profile WHERE section = ?");
     $stmtDelete->execute([$section]);
     
-    $stmtInsert = $pdo->prepare("INSERT INTO profile (bagian, label, isi, urutan, diubah_oleh_id) VALUES (?, ?, ?, ?, ?)");
+    $stmtInsert = $pdo->prepare("INSERT INTO profile (section, label, value, sort_order) VALUES (?, ?, ?, ?)");
     foreach ($data as $index => $item) {
         $label = $item['label'] ?? '';
         $value = $item['value'] ?? '';
-        $stmtInsert->execute([$section, $label, $value, $index, $_SESSION['user_id']]);
+        $stmtInsert->execute([$section, $label, $value, $index]);
     }
     
     $pdo->commit();

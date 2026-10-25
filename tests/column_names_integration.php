@@ -18,12 +18,21 @@ try {
     $p->exec("INSERT INTO monitoring_logs (type,day_name,log_time,value,status,ph_reading_id) VALUES ('ph','Senin','08.00','6.2512','Normal',10)");
     $p->exec("INSERT INTO notifications (label,message,ppm_reading_id) VALUES ('PPM','Tetap',20)");
     $p->exec("INSERT INTO history_logs (type,day_name,log_date,log_time,status) VALUES ('ppm','Senin','2026-09-28','08.00','Normal')");
+    // Exercise the Indonesian schema actually installed locally, then rename to English.
+    $indo=[];
+    foreach(columnNameMap() as $table=>$columns) {
+        foreach($columns as $old=>$new) {
+            $english = array_key_first($columns)===$old ? 'id' : $new;
+            $indo[$table][$english]=$old;
+        }
+    }
+    migrateColumnNames($p,__DIR__.'/../database/backups',$indo);
     $r=migrateColumnNames($p,__DIR__.'/../database/backups');
     ensure($r['data_verified'] && $r['foreign_keys']===9,'Migration verification');
     ensure(is_file($r['backup']),'Backup missing');
-    ensure($p->query('SELECT kata_sandi FROM users WHERE id_pengguna=1')->fetchColumn()==='hash-tetap','Account changed');
-    ensure($p->query('SELECT nilai_ph FROM ph_readings WHERE id_pembacaan_ph=10')->fetchColumn()==='6.2512','Precision changed');
-    ensure((int)$p->query('SELECT id_pembacaan_ppm FROM notifications')->fetchColumn()===20,'FK mapping changed');
+    ensure($p->query('SELECT password FROM users WHERE user_id=1')->fetchColumn()==='hash-tetap','Account changed');
+    ensure($p->query('SELECT ph_value FROM ph_readings WHERE ph_reading_id=10')->fetchColumn()==='6.2512','Precision changed');
+    ensure((int)$p->query('SELECT ppm_reading_id FROM notifications')->fetchColumn()===20,'FK mapping changed');
     ensure(migrateColumnNames($p,__DIR__.'/../database/backups')['status']==='already_current','Repeat migration');
     $readings=saveSensorMeasurements($p,['ph_value'=>7.2,'ppm_value'=>1200]);
     ensure(count($readings)===2,'Measurement save');
@@ -31,7 +40,7 @@ try {
     writeDithane($p,['interval'=>24,'duration'=>15,'start'=>'09:30'],1);
     ensure(readDithane($p)['config']['start']==='09.30','Schedule editing');
     ensure(count(latestSensorReadings($p))===2,'Latest readings');
-    foreach (['INSERT INTO ph_readings (nilai_ph) VALUES (15)', 'UPDATE notifications SET id_pembacaan_ph=10,id_pembacaan_ppm=20 WHERE id_notifikasi=1', 'DELETE FROM ppm_readings WHERE id_pembacaan_ppm=20'] as $invalid) {
+    foreach (['INSERT INTO ph_readings (ph_value) VALUES (15)', 'UPDATE notifications SET ph_reading_id=10,ppm_reading_id=20 WHERE notification_id=1', 'DELETE FROM ppm_readings WHERE ppm_reading_id=20'] as $invalid) {
         $rejected=false; try {$p->exec($invalid);}catch(PDOException $e){$rejected=true;} ensure($rejected,'Constraint not enforced');
     }
     echo "PASS: rename all columns, preserve every row, FK/CHECK enforcement, backup, idempotence, measurement and schedule services.\n";

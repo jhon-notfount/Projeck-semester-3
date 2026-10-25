@@ -1,13 +1,164 @@
 <!DOCTYPE html>
 <html lang="id">
   <head>
-    <!-- META SETUP: pengaturan karakter dan redirect otomatis ke halaman login. -->
+    <!-- META SETUP: pengaturan dasar dokumen halaman akses ditolak. -->
     <meta charset="UTF-8" />
-    <meta http-equiv="refresh" content="0; url=pages/login.html" />
-    <title>Hydrotech</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>403 - Akses Dilarang</title>
+    <style>
+      /* DASAR: reset ringan dan tata letak tengah layar penuh. */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: #f4f6f5;
+        color: #2a3630;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial,
+          sans-serif;
+        text-align: center;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* KARTU: wadah utama peringatan dengan tampilan bersih. */
+      .card {
+        width: 100%;
+        max-width: 420px;
+        background: #ffffff;
+        border: 1px solid #e4eae7;
+        border-radius: 16px;
+        padding: 48px 32px 40px;
+        box-shadow: 0 12px 32px rgba(42, 54, 48, 0.08);
+      }
+
+      /* IKON: gembok sebagai penanda akses terkunci. */
+      .icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: #fdecec;
+        color: #c0392b;
+        margin-bottom: 24px;
+      }
+
+      .icon svg {
+        width: 30px;
+        height: 30px;
+      }
+
+      /* KODE DAN TEKS: hierarki 403, judul, dan pesan peringatan. */
+      .code {
+        font-size: clamp(44px, 12vw, 64px);
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        color: #c0392b;
+        line-height: 1;
+      }
+
+      h1 {
+        margin-top: 12px;
+        font-size: clamp(18px, 5vw, 22px);
+        font-weight: 700;
+        color: #2a3630;
+      }
+
+      p {
+        margin-top: 14px;
+        font-size: 15px;
+        line-height: 1.65;
+        color: #5f6f66;
+      }
+
+      .divider {
+        width: 44px;
+        height: 3px;
+        border: 0;
+        border-radius: 2px;
+        background: #e4eae7;
+        margin: 26px auto 0;
+      }
+
+      .identity {
+        margin-top: 22px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #9aa8a0;
+      }
+
+      /* RESPONSIF: penyesuaian untuk layar sempit. */
+      @media (max-width: 380px) {
+        .card {
+          padding: 40px 22px 34px;
+        }
+      }
+
+      /* MODE GELAP: mengikuti preferensi sistem pengguna. */
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #141a17;
+          color: #e8eeea;
+        }
+
+        .card {
+          background: #1c2420;
+          border-color: #2c3833;
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        h1 {
+          color: #e8eeea;
+        }
+
+        p {
+          color: #a4b2aa;
+        }
+
+        .divider {
+          background: #2c3833;
+        }
+      }
+    </style>
   </head>
   <body>
-    <!-- FALLBACK LINK: tautan manual jika redirect otomatis belum berjalan. -->
-    <a href="pages/login.html">Buka Hydrotech</a>
+    <main class="card">
+      <span class="icon" aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round">
+          <rect x="4" y="10" width="16" height="11" rx="2" />
+          <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+        </svg>
+      </span>
+      <div class="code" aria-hidden="true">403</div>
+      <h1>Akses Dilarang</h1>
+      <p>
+        Akses ke direktori ini dilarang demi alasan keamanan. Jika Anda
+        memang memiliki hak akses, silakan masuk melalui halaman aplikasi
+        yang tersedia.
+      </p>
+      <hr class="divider" />
+      <div class="identity">Hydrotech</div>
+    </main>
   </body>
 </html>

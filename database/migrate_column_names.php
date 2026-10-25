@@ -9,13 +9,25 @@ function columnNameMap(): array {
 function renameRelations(PDO $pdo): array {
     return $pdo->query('SELECT TABLE_NAME,COLUMN_NAME,REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND REFERENCED_TABLE_NAME IS NOT NULL')->fetchAll(PDO::FETCH_NUM);
 }
-function migrateColumnNames(PDO $pdo, string $backupDirectory): array {
+function migrateColumnNames(PDO $pdo, string $backupDirectory, ?array $mapping = null): array {
     $lock = measurementLock($pdo);
     try {
-        $mapping = columnNameMap();
-        $plans = []; $hashes = [];
+        $mapping = $mapping ?? columnNameMap();
+        $plans = []; $hashes = []; $primaryKeys = [];
         foreach ($mapping as $table => $columns) {
-            $actual = $pdo->query("SHOW COLUMNS FROM `$table`")->fetchAll(PDO::FETCH_COLUMN);
+            $metadata = $pdo->query("SHOW COLUMNS FROM `$table`")->fetchAll(PDO::FETCH_ASSOC);
+            $actual = array_column($metadata, 'Field');
+            $pk = array_values(array_filter($metadata, fn($c)=>$c['Key']==='PRI'))[0]['Field'];
+            // Also accept the earliest English schema with a generic id primary key.
+            if ($pk === 'id' && !isset($columns['id'])) {
+                foreach ($columns as $old=>$new) {
+                    if (str_starts_with($old,'id_') && !in_array($old,$actual,true) && !in_array($new,$actual,true)) {
+                        unset($columns[$old]); $columns=['id'=>$new]+$columns; break;
+                    }
+                }
+                $mapping[$table]=$columns;
+            }
+            $primaryKeys[$table]=$columns[$pk] ?? $pk;
             foreach ($columns as $old => $new) {
                 if ($old === $new) {
                     if (!in_array($old,$actual,true)) throw new RuntimeException("Kolom $table.$old tidak ditemukan.");
@@ -25,7 +37,6 @@ function migrateColumnNames(PDO $pdo, string $backupDirectory): array {
                 if ($hasOld === $hasNew) throw new RuntimeException("Nama kolom $table.$old / $new tidak sesuai; migrasi dihentikan.");
                 if ($hasOld) $plans[$table][$old] = $new;
             }
-            $pk = in_array('id',$actual,true) ? 'id' : $columns['id'];
             $hashes[$table] = hash('sha256',json_encode($pdo->query("SELECT * FROM `$table` ORDER BY `$pk`")->fetchAll(PDO::FETCH_NUM)));
         }
         if (!$plans) return ['status'=>'already_current','tables'=>count($mapping)];
@@ -64,7 +75,7 @@ function migrateColumnNames(PDO $pdo, string $backupDirectory): array {
             }
         }
         foreach ($mapping as $table => $columns) {
-            $pk = $columns['id'];
+            $pk = $primaryKeys[$table];
             $after = hash('sha256',json_encode($pdo->query("SELECT * FROM `$table` ORDER BY `$pk`")->fetchAll(PDO::FETCH_NUM)));
             if ($hashes[$table] !== $after) throw new RuntimeException("Verifikasi isi tabel $table gagal. Tinjau cadangan.");
         }

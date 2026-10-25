@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../includes/dithane.php';
 requireAuth();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { errorResponse('Method not allowed', 405); }
+requireCsrfToken();
 
 try {
     $pdo = getDBConnection();
@@ -27,11 +28,11 @@ try {
     if ($type === 'dithane') {
         $data = json_decode($defaultConfig, true);
         if (!is_array($data)) throw new InvalidArgumentException('Konfigurasi jadwal harus berupa objek.');
-        writeDithane($pdo, $data, (int)$_SESSION['user_id']);
+        writeDithane($pdo, $data);
         successResponse(null, 'Jadwal Dithane tersimpan');
     }
-    $stmt = $pdo->prepare("UPDATE settings SET konfigurasi_json = ?, diubah_oleh_id = ?, diperbarui_pada = CURRENT_TIMESTAMP WHERE jenis = ?");
-    $stmt->execute([$defaultConfig, $_SESSION['user_id'], $type]);
+    $stmt = $pdo->prepare("UPDATE settings SET config_json = ?, updated_at = CURRENT_TIMESTAMP WHERE type = ?");
+    $stmt->execute([$defaultConfig, $type]);
     
     successResponse(null, 'Setting reset to default successfully');
 } catch (InvalidArgumentException $e) {

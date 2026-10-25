@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includes/auth_check.php';
 if (isset($_SESSION['user_id'])) {
     header("Location: hydrotech-dashboard-panel-2026.php");
     exit;
@@ -12,6 +12,7 @@ if (isset($_SESSION['user_id'])) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hydrotech Login</title>
+    <?php echo csrfMetaTag(); ?>
     <link rel="stylesheet" href="../css/login.css" />
     <link
       rel="stylesheet"
@@ -50,6 +51,7 @@ if (isset($_SESSION['user_id'])) {
         const form = new FormData();
         form.append('username', username);
         form.append('password', password);
+        form.append('csrf_token', (document.querySelector('meta[name="csrf-token"]') || {}).content || '');
         const res = await fetch('../api/auth/login.php', {method:'POST',body:form});
         const data = await res.json();
         if (data.success) {

@@ -1,119 +1,83 @@
-# Database Hydrotech - penamaan Indonesia
+# Database Hydrotech - English naming
 
-Struktur aktif: **9 tabel, 60 kolom, 9 foreign key**. Nama tabel mengikuti ERD sebelumnya; nama ID dan kolom menggunakan bahasa Indonesia. Perubahan hanya penamaan, bukan perubahan nilai data, tipe, atau target hubungan.
+Struktur aktif: **7 tabel, tanpa foreign key**. Tabel dan kolom memakai bahasa Inggris. Primary key memakai nama spesifik agar mudah dibedakan di ERD phpMyAdmin.
 
-## Tabel dan kolom
+| Tabel | Primary key | Fungsi |
+|---|---|---|
+| users | user_id | Akun login admin |
+| settings | type (ENUM) | Konfigurasi rentang PPM/pH |
+| sensor_readings | reading_id | Hasil pengukuran asli ESP (pH + PPM per baris) |
+| dithane_schedules | schedule_id | Jadwal penyemprotan global (schedule_id = 1) |
+| monitoring_logs | monitoring_id | Satu-satunya log aktivitas: dipakai dashboard, halaman pengaturan, dan halaman history |
+| notifications | notification_id | Peringatan ambang batas |
+| profile | profile_id | Identitas pemilik/tim (label-nilai) |
+
+## Kolom
 
 ### users
 
-`id_pengguna`, `nama_pengguna`, `kata_sandi`, `email`, `peran`, `dibuat_pada`, `diperbarui_pada`.
+`user_id`, `username`, `password`, `email`, `created_at`, `updated_at`.
 
 ### settings
 
-`id_pengaturan`, `jenis`, `konfigurasi_json`, `diperbarui_pada`, `diubah_oleh_id`.
+`type` ENUM('ppm','ph') sebagai primary key, `config_json`, `updated_at`. Jadwal Dithane tidak disimpan di sini — tabelnya sendiri di dithane_schedules.
 
-### profile
+### sensor_readings
 
-`id_profil`, `bagian`, `label`, `isi`, `urutan`, `diubah_oleh_id`.
-
-### ph_readings
-
-`id_pembacaan_ph`, `nilai_ph`, `direkam_pada`.
-
-### ppm_readings
-
-`id_pembacaan_ppm`, `nilai_ppm`, `direkam_pada`.
+`reading_id`, `ph_value` (NULL boleh), `ppm_value` (NULL boleh), `recorded_at`. CHECK menjamin minimal satu nilai terisi, pH 0-14, PPM nonnegatif.
 
 ### dithane_schedules
 
-`id_jadwal_dithane`, `interval_jam`, `durasi_detik`, `jam_mulai`, `diubah_oleh_id`, `dibuat_pada`, `diperbarui_pada`.
+`schedule_id` (CHECK = 1, satu baris global), `interval_hours`, `duration_seconds`, `start_time`, `updated_at`.
 
 ### monitoring_logs
 
-`id_monitoring`, `jenis`, `nama_hari`, `jam_catatan`, `nilai`, `status`, `keterangan`, `dihapus`, `dibuat_pada`, `id_pembacaan_ph`, `id_pembacaan_ppm`.
-
-### history_logs
-
-`id_riwayat`, `nama_hari`, `tanggal_catatan`, `jam_catatan`, `jenis`, `status`, `keterangan`, `dihapus`, `dibuat_pada`.
+`monitoring_id`, `type` ENUM('ppm','ph','dithane'), `day_name`, `log_time`, `value`, `status`, `note`, `reading_id` (opsional), `is_deleted`, `created_at`. Tanggal untuk halaman history diambil dari `DATE(created_at)`; halaman history menampilkan 500 log terbaru.
 
 ### notifications
 
-`id_notifikasi`, `label`, `pesan`, `tingkat_pesan`, `tautan`, `sudah_dibaca`, `dibuat_pada`, `id_pembacaan_ph`, `id_pembacaan_ppm`.
+`notification_id`, `label`, `message`, `tone` ENUM('warning','success','info'), `href`, `is_read`, `created_at`.
+
+### profile
+
+`profile_id`, `section` ENUM('owner','team'), `label`, `value`, `sort_order`.
 
 ## Relasi
 
-| Foreign key | Referensi |
-|---|---|
-| settings.diubah_oleh_id | users.id_pengguna |
-| profile.diubah_oleh_id | users.id_pengguna |
-| dithane_schedules.diubah_oleh_id | users.id_pengguna |
-| monitoring_logs.jenis | settings.jenis (UNIQUE) |
-| history_logs.jenis | settings.jenis (UNIQUE) |
-| monitoring_logs.id_pembacaan_ph | ph_readings.id_pembacaan_ph |
-| monitoring_logs.id_pembacaan_ppm | ppm_readings.id_pembacaan_ppm |
-| notifications.id_pembacaan_ph | ph_readings.id_pembacaan_ph |
-| notifications.id_pembacaan_ppm | ppm_readings.id_pembacaan_ppm |
+Sengaja **tanpa foreign key**. Audit seluruh kode menunjukkan tidak ada query yang JOIN antar tabel; kategori memakai ENUM `type`, bukan relasi ke settings. `monitoring_logs.reading_id` hanyalah penunjung longgar (tanpa constraint) untuk ketertelusuran pengukuran, sehingga data sensor lama boleh diarsip/dihapus tanpa merusak log.
 
-Pengaturan dan riwayat tetap terhubung melalui kategori jenis; penamaan tidak mengganti hubungan itu menjadi id_pengaturan. ID pengaturan adalah primary key, sedangkan jenis merupakan unique key yang dirujuk log.
+Tabel `history_logs` lama sudah digabung ke `monitoring_logs`: tabel tersebut tidak pernah terisi otomatis dan strukturnya nyaris sama, sehingga hanya satu sumber log yang dibutuhkan.
 
-Sumber pembacaan bersifat opsional (NULL). Kedua ID pembacaan tidak boleh terisi sekaligus. Jenis monitoring harus cocok dengan sumber pH/PPM. Satu pembacaan dapat dirujuk 0..N catatan. Jadwal Dithane dibatasi satu baris global dengan CHECK id_jadwal_dithane = 1; referensi pengubahnya dapat kosong.
+Integritas harian dijaga transaksi aplikasi (satu pengukuran = satu baris sensor_readings + log + notifikasi dalam satu COMMIT) dan CHECK constraint (`schedule_id = 1`, interval/durasi positif, minimal satu nilai sensor terisi).
 
-Menghapus pengguna mengosongkan diubah_oleh_id (SET NULL). Penghapusan pembacaan atau kategori yang masih dirujuk ditolak (RESTRICT). Monitoring dan riwayat memakai dihapus untuk soft delete.
+## Data dan API
 
-## Tipe dan satuan
-
-- ph_readings.nilai_ph: DECIMAL(6,4), rentang 0-14, tanpa satuan fisik.
-- ppm_readings.nilai_ppm: INT, bilangan bulat nonnegatif; API menolak pecahan.
-- direkam_pada: waktu pencatatan server, bukan otomatis waktu sampling perangkat.
-- Jadwal: interval_jam, durasi_detik, jam_mulai (TIME).
-- Batas normal dari settings.konfigurasi_json; nilai di luar batas normal tetap disimpan untuk evaluasi.
-
-## Web dan kontrak API
-
-SQL di PHP menggunakan kolom baru. SELECT memakai alias untuk menjaga nama field respons, formulir, JavaScript, dan sesi yang sudah digunakan. Nama field API tidak harus sama dengan nama kolom fisik.
-
-Contoh JSON tetap: `{"ph_value": 6.25, "ppm_value": 850}`. Backend menyimpannya ke nilai_ph dan nilai_ppm. Form login tetap username/password, tetapi SQL membaca nama_pengguna/kata_sandi. Respons jadwal tetap interval/duration/start, sedangkan kolom database interval_jam/durasi_detik/jam_mulai.
-
-Endpoint utama: api/sensor/save.php, latest.php, api/settings/get.php, update.php, reset.php, api/dashboard/summary.php. Semua tetap memakai sesi login; belum autentikasi perangkat ESP32.
+- ph_value DECIMAL(6,4), rentang 0-14; ppm_value INT nonnegatif, pecahan ditolak API.
+- recorded_at adalah waktu pencatatan server.
+- Jadwal: interval_hours, duration_seconds, start_time.
+- HTTP tetap menerima ph_value/ppm_value, username/password, serta konfigurasi interval/duration/start.
+- Endpoint simpan, ringkasan, pengaturan, profil, riwayat, monitoring, dan notifikasi menggunakan kolom fisik Inggris.
+- Dashboard menampilkan data asli dari database (tanpa simulasi). Perangkat ESP mengirim pengukuran melalui `api/sensor/ingest.php` dengan API key dari `config/esp.php`; penggerak pompa belum terintegrasi. Jadwal tidak membuktikan pelaksanaan dan status baca notifikasi masih global.
 
 ## Instalasi dan migrasi
 
-Database baru: `php database/install.php`. Installer membaca schema.sql terbaru dan menolak database berisi tabel.
+Database kosong: `php database/install.php`.
 
-Database sembilan tabel dengan nama lama: `php database/migrate_column_names.php`.
+Skrip migrasi historis (migrate_sensors.php, migrate_measurements.php, migrate_ppm_int.php, migrate_column_names.php) hanya untuk database versi lama (7/8/9 tabel dengan kolom lama) dan tidak diperlukan untuk instalasi baru.
 
-Untuk versi lebih lama: migrate_sensors.php (7 ke 8 tabel), migrate_measurements.php (8 ke 9), migrate_ppm_int.php bila PPM masih desimal, kemudian migrate_column_names.php. Skrip historis memakai snapshot skema lama. Jangan menjalankan migrasi lama setelah penamaan sudah diubah.
+Database aplikasi bernama **hydrotech** (default di config/database.php). Nama lama `monitoring_sensor` sudah tidak dipakai; variabel lingkungan HYDROTECH_DB_NAME dapat mengganti nama bila diperlukan. phpMyAdmin perlu diarahkan ke server dan nama database yang sama.
 
-Cadangan lengkap tersimpan di database/backups. Migrasi nama memverifikasi hash seluruh isi sembilan tabel dan semua foreign key. ID, waktu, hash password, nilai pengukuran, serta tipe data dipertahankan. Jika sudah sesuai, migrasi nama tidak melakukan perubahan lagi.
-
-Hentikan aktivitas aplikasi saat migrasi. DDL lintas tabel bukan satu transaksi; bila terputus, tinjau kondisi dan cadangan sebelum melanjutkan. Untuk pemulihan, impor backup ke database kosong yang dipilih eksplisit dan gunakan versi kode yang sesuai.
-
-Default konfigurasi aplikasi: monitoring_sensor. HYDROTECH_DB_NAME dapat memilih hydrotech. Keduanya database terpisah, meskipun struktur sama. Pastikan server dan database di phpMyAdmin cocok dengan aplikasi.
-
-## Demonstrasi SQL
+## Contoh SQL
 
 ```sql
-USE hydrotech;
-SHOW TABLES;
-SELECT id_pembacaan_ph, nilai_ph, direkam_pada
-FROM ph_readings ORDER BY direkam_pada DESC LIMIT 5;
-SELECT id_pembacaan_ppm, nilai_ppm, direkam_pada
-FROM ppm_readings ORDER BY direkam_pada DESC LIMIT 5;
-SELECT m.id_monitoring, p.nilai_ppm, m.status
-FROM monitoring_logs m
-JOIN ppm_readings p ON p.id_pembacaan_ppm=m.id_pembacaan_ppm
-WHERE m.dihapus=0;
+SELECT reading_id, ph_value, ppm_value, recorded_at
+FROM sensor_readings ORDER BY recorded_at DESC, reading_id DESC LIMIT 5;
+SELECT monitoring_id, day_name, log_time, value, status, DATE(created_at) AS log_date
+FROM monitoring_logs WHERE type='ppm' AND is_deleted=0 ORDER BY created_at DESC;
 ```
 
-## Pengujian
+## Pengujian dan ERD
 
-- `php tests/column_names_integration.php`: backup, seluruh data, relasi, CHECK, pengulangan migrasi, pengukuran, dan jadwal.
-- `php tests/measurement_integration.php`: jalur migrasi lama, validasi, serta rollback.
-- `php tests/ppm_int_integration.php`: migrasi PPM integer.
-- `python tests/http_measurements.py`: instalasi baru, login, halaman, pengukuran, profil, filter, penghapusan log, notifikasi, dan pengaturan/reset.
+`php tests/column_names_integration.php`, `php tests/measurement_integration.php`, dan `python tests/sensor_http.py` menggunakan database sementara. Dua test pertama menguji jalur migrasi skema lama (dengan fixture di tests/fixtures); sensor_http.py menguji alur HTTP aplikasi.
 
-## Batas implementasi
-
-Dashboard masih simulasi JavaScript. Penyimpanan jadwal belum mengendalikan pompa fisik. Riwayat tidak otomatis ditulis setiap pengukuran. Status baca notifikasi global; diubah_oleh_id hanya pengubah terakhir. Tanpa tabel perangkat, sumber beberapa sensor sejenis belum dibedakan.
-
-Gambar ERD terbaru di outputs/ERD_Hydrotech_Terbaru_9_Tabel.png memakai nama baru. Dokumen Word lama perlu disesuaikan jika masih menyebut kolom id atau nama Inggris.
+ERD di outputs/ dibuat sebelum penyederhanaan menjadi 7 tabel dan hanya relevan untuk database versi lama.

@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../includes/response.php';
 requireAuth();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { errorResponse('Method not allowed', 405); }
+requireCsrfToken();
 
 try {
     $pdo = getDBConnection();
@@ -14,7 +15,7 @@ try {
         errorResponse('ID is required', 400);
     }
     
-    $stmt = $pdo->prepare("UPDATE history_logs SET dihapus = 1 WHERE id_riwayat = ?");
+    $stmt = $pdo->prepare("UPDATE monitoring_logs SET is_deleted = 1 WHERE monitoring_id = ?");
     $stmt->execute([$id]);
     
     successResponse(null, 'History deleted successfully');

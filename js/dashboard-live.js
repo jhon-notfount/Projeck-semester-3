@@ -47,26 +47,31 @@
 
   await applySettingRanges();
 
-  // Simulasi mengirim nilai numerik pH dan PPM tanpa identitas perangkat.
-  let savingReading = false;
+  /* LIVE DATA: membaca pengukuran asli dari database (diisi perangkat ESP). */
+  const MAX_POINTS = 10;
+  const POLL_INTERVAL = 5000;
 
   if (!chartCanvas || typeof Chart === "undefined") return;
 
-  const timeLabels = ["08.00", "09.00", "10.00", "11.00", "12.00", "13.00", "14.00", "Live"];
-  let ppmValues = [845, 858, 874, 862, 892, 876, 864, 863];
-  let phValues = [6.4, 6.6, 6.9, 7.0, 6.8, 6.7, 6.9, 7.1];
-  let tick = 0;
-  let displayedPpm = ppmValues[ppmValues.length - 1];
-  let displayedPh = phValues[phValues.length - 1];
-
-  /* VALUE HELPERS: menjaga angka tetap dalam batas dan membuat perubahan kecil acak. */
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
   }
 
-  function randomStep(value, step, min, max, decimals) {
-    const next = clamp(value + (Math.random() - 0.5) * step, min, max);
-    return Number(next.toFixed(decimals));
+  /* TIME HELPERS: menampilkan jam pengukuran dan selisih waktu sejak data terakhir. */
+  function formatClock(recordedAt) {
+    const match = String(recordedAt || "").match(/(\d{2}:\d{2})/);
+    return match ? match[1].replace(":", ".") : "-";
+  }
+
+  function relativeTime(recordedAt) {
+    if (!recordedAt) return "belum ada data";
+    const then = new Date(String(recordedAt).replace(" ", "T")).getTime();
+    const diffSeconds = Math.floor((Date.now() - then) / 1000);
+    if (!Number.isFinite(diffSeconds) || diffSeconds < 0) return "-";
+    if (diffSeconds < 60) return "baru saja";
+    if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)} menit lalu`;
+    if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)} jam lalu`;
+    return `${Math.floor(diffSeconds / 86400)} hari lalu`;
   }
 
   /* NUMBER ANIMATION: membuat perubahan angka terlihat halus di kartu dashboard. */
@@ -93,13 +98,10 @@
 
   /* ACTIVITY PULSE: memberi efek sorot pada aktivitas terbaru yang sedang aktif. */
   function updateActivityPulse() {
-    const visibleActivityRows = Array.from(
-      document.querySelectorAll(".activity-row:not([hidden])"),
-    );
-    if (!visibleActivityRows.length) return;
-    const activeRow = visibleActivityRows[tick % visibleActivityRows.length];
-    activeRow?.classList.add("live-pulse");
-    window.setTimeout(() => activeRow?.classList.remove("live-pulse"), 850);
+    const activeRow = document.querySelector(".activity-row:not([hidden])");
+    if (!activeRow) return;
+    activeRow.classList.add("live-pulse");
+    window.setTimeout(() => activeRow.classList.remove("live-pulse"), 850);
   }
 
   /* RESPONSIVE CHART: menyesuaikan tinggi grafik agar tetap rapi di layar kecil. */
@@ -132,11 +134,11 @@
   const chart = new Chart(chartCanvas, {
     type: "line",
     data: {
-      labels: timeLabels,
+      labels: [],
       datasets: [
         {
           label: "pH",
-          data: phValues,
+          data: [],
           yAxisID: "yPh",
           borderColor: "#ff7777",
           backgroundColor: makeGradient(context, "rgb(255, 119, 119)"),
@@ -148,10 +150,11 @@
           pointBorderWidth: 3,
           tension: 0.42,
           fill: true,
+          spanGaps: true,
         },
         {
           label: "PPM",
-          data: ppmValues,
+          data: [],
           yAxisID: "yPpm",
           borderColor: "#07a64f",
           backgroundColor: makeGradient(context, "rgb(7, 166, 79)"),
@@ -163,6 +166,7 @@
           pointBorderWidth: 3,
           tension: 0.42,
           fill: true,
+          spanGaps: true,
         },
       ],
     },
@@ -227,8 +231,8 @@
         },
         yPh: {
           position: "left",
-          min: 4.5,
-          max: 8,
+          suggestedMin: 4.5,
+          suggestedMax: 8,
           ticks: {
             color: "#d95f5f",
             font: {
@@ -252,8 +256,8 @@
         },
         yPpm: {
           position: "right",
-          min: 300,
-          max: 1000,
+          suggestedMin: 300,
+          suggestedMax: 1000,
           ticks: {
             color: "#078d43",
             font: {
@@ -283,53 +287,101 @@
     chart.resize();
   });
 
-  /* LIVE RENDER: memperbarui ringkasan grafik, diagram, dan status update secara berkala. */
+  /* SERIES FETCH: mengambil riwayat pengukuran asli per jenis sensor. */
+  async function fetchSeries(type) {
+    try {
+      const response = await fetch(`../api/sensor/latest.php?type=${type}`);
+      const result = await response.json();
+      if (!result.success || !Array.isArray(result.data)) return [];
+      return result.data.map((row) => ({
+        at: row.recorded_at,
+        value: Number(row.value),
+      }));
+    } catch (error) {
+      console.error(`Gagal membaca data ${type}:`, error);
+      return [];
+    }
+  }
+
+  /* SERIES MERGE: menggabungkan pH dan PPM pada sumbu waktu yang sama. */
+  function mergeSeries(phSeries, ppmSeries) {
+    const byTime = new Map();
+    phSeries.forEach((point) => {
+      byTime.set(point.at, { ph: point.value });
+    });
+    ppmSeries.forEach((point) => {
+      const entry = byTime.get(point.at) || {};
+      entry.ppm = point.value;
+      byTime.set(point.at, entry);
+    });
+
+    const points = Array.from(byTime.entries())
+      .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+      .slice(-MAX_POINTS);
+
+    return {
+      labels: points.map(([at]) => formatClock(at)),
+      ph: points.map(([, entry]) => (entry.ph === undefined ? null : entry.ph)),
+      ppm: points.map(([, entry]) => (entry.ppm === undefined ? null : entry.ppm)),
+    };
+  }
+
+  /* LIVE RENDER: memperbarui ringkasan grafik dan status update dari data asli.
+     Sequence guard: respons dari siklus lama tidak boleh menimpa data terbaru. */
+  let renderSeq = 0;
+
   async function render() {
-    tick += 1;
-    const latestPpm = randomStep(ppmValues[ppmValues.length - 1], 62, 780, 940, 0);
-    const latestPh = randomStep(phValues[phValues.length - 1], 0.42, 5.6, 7.4, 1);
+    const seq = ++renderSeq;
+    const [phSeries, ppmSeries] = await Promise.all([
+      fetchSeries("ph"),
+      fetchSeries("ppm"),
+    ]);
 
-    ppmValues = [...ppmValues.slice(1), latestPpm];
-    phValues = [...phValues.slice(1), latestPh];
+    if (seq !== renderSeq) return;
 
-    animateValue(displayedPpm, latestPpm, 760, (value) => {
-      if (ppmSummary) ppmSummary.textContent = Math.round(value);
-    });
-    animateValue(displayedPh, latestPh, 760, (value) => {
-      if (phSummary) phSummary.textContent = value.toFixed(1);
-    });
-    displayedPpm = latestPpm;
-    displayedPh = latestPh;
+    const series = mergeSeries(phSeries, ppmSeries);
+    const latestPh = phSeries.length ? phSeries[phSeries.length - 1] : null;
+    const latestPpm = ppmSeries.length ? ppmSeries[ppmSeries.length - 1] : null;
+
+    if (phSummary) {
+      if (latestPh) {
+        const previous = Number(phSummary.textContent);
+        animateValue(previous, latestPh.value, 600, (value) => {
+          phSummary.textContent = value.toFixed(1);
+        });
+      } else {
+        phSummary.textContent = "-";
+      }
+    }
+    if (ppmSummary) {
+      if (latestPpm) {
+        const previous = Number(ppmSummary.textContent) || latestPpm.value;
+        animateValue(previous, latestPpm.value, 600, (value) => {
+          ppmSummary.textContent = Math.round(value);
+        });
+      } else {
+        ppmSummary.textContent = "-";
+      }
+    }
 
     chartCanvas.classList.add("live-refresh");
     window.setTimeout(() => chartCanvas.classList.remove("live-refresh"), 900);
 
-    chart.data.datasets[0].data = phValues;
-    chart.data.datasets[1].data = ppmValues;
+    chart.data.labels = series.labels;
+    chart.data.datasets[0].data = series.ph;
+    chart.data.datasets[1].data = series.ppm;
     chart.update();
 
-    if (updateText) updateText.textContent = "baru saja";
-    updateActivityPulse();
-
-    if (savingReading) return;
-    savingReading = true;
-    try {
-      const response = await fetch("../api/sensor/save.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ph_value: latestPh, ppm_value: latestPpm })
-      });
-      const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.message || "Penyimpanan gagal");
-      if (updateText) updateText.textContent = "simulasi tersimpan";
-    } catch (error) {
-      if (updateText) updateText.textContent = "gagal menyimpan simulasi";
-      console.error("Gagal menyimpan data sensor:", error);
-    } finally {
-      savingReading = false;
+    if (updateText) {
+      const newest = [latestPh, latestPpm]
+        .filter(Boolean)
+        .sort((a, b) => (a.at > b.at ? -1 : 1))[0];
+      updateText.textContent = newest ? relativeTime(newest.at) : "belum ada data";
     }
+
+    if (latestPh || latestPpm) updateActivityPulse();
   }
 
   render();
-  window.setInterval(render, 1800);
+  window.setInterval(render, POLL_INTERVAL);
 })();

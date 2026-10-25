@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3900" height="3210" viewBox="0 0 3900 3210">
+<rect width="100%" height="100%" fill="white"/>
+<text x="140" y="90" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="43" font-weight="bold" fill="#155e63">HYDROTECH - ERD RELATIONSHIPS</text>
+<text x="140" y="153" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="28" font-weight="normal" fill="#24333c">Diagram reference - all foreign keys and cardinality rules</text>
+<rect x="140" y="240" width="3620" height="190" fill="#f3f8f9" stroke="#d2dfe3" stroke-width="1"/>
+<text x="180" y="286" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="34" font-weight="bold" fill="#24333c">R1   profile.updated_by  →  users.user_id</text>
+<text x="180" y="339" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="28" font-weight="normal" fill="#24333c">One parent may be referenced by zero to many child rows.</text>
+<text x="180" y="385" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#24333c">A child may have no parent (NULL foreign key), or reference exactly one parent.</text>
+<rect x="140" y="460" width="3620" height="190" fill="#f3f8f9" stroke="#d2dfe3" stroke-width="1"/>
+<text x="180" y="506" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="34" font-weight="bold" fill="#24333c">R2   settings.updated_by  →  users.user_id</text>
+<text x="180" y="559" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="28" font-weight="normal" fill="#24333c">One parent may be referenced by zero to many child rows.</text>
+<text x="180" y="605" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#24333c">A child may have no parent (NULL foreign key), or reference exactly one parent.</text>
+<rect x="140" y="680" width="3620" height="190" fill="#f3f8f9" stroke="#d2dfe3" stroke-width="1"/>
+<text x="180" y="726" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="34" font-weight="bold" fill="#24333c">R3   dithane_schedules.updated_by  →  users.user_id</text>
+<text x="180" y="779" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="28" font-weight="normal" fill="#24333c">At most one schedule in the entire system; a user may be referenced by zero or one schedule.</text>
+<text x="180" y="825" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#24333c">A child may have no parent (NULL foreign key), or reference exactly one parent.</text>
+<rect x="140" y="900" width="3620" height="190" fill="#f3f8f9" stroke="#d2dfe3" stroke-width="1"/>
+<text x="180" y="946" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="34" font-weight="bold" fill="#24333c">R4   monitoring_logs.type  →  settings.type</text>
+<text x="180" y="999" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="28" font-weight="normal" fill="#24333c">One parent may be referenced by zero to many child rows.</text>
+<text x="180" y="1045" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#24333c">Each child must reference exactly one parent (NOT NULL foreign key).</text>
+<rect x="140" y="1120" width="3620" height="190" fill="#f3f8f9" stroke="#d2dfe3" stroke-width="1"/>
+<text x="180" y="1166" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="34" font-weight="bold" fill="#24333c">R5   history_logs.type  →  settings.type</text>
+<text x="180" y="1219" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="28" font-weight="normal" fill="#24333c">One parent may be referenced by zero to many child rows.</text>
+<text x="180" y="1265" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#24333c">Each child must reference exactly one parent (NOT NULL foreign key).</text>
+<rect x="140" y="1340" width="3620" height="190" fill="#f3f8f9" stroke="#d2dfe3" stroke-width="1"/>
+<text x="180" y="1386" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="34" font-weight="bold" fill="#24333c">R6   monitoring_logs.ph_reading_id  →  ph_readings.ph_reading_id</text>
+<text x="180" y="1439" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="28" font-weight="normal" fill="#24333c">One parent may be referenced by zero to many child rows.</text>
+<text x="180" y="1485" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#24333c">A child may have no parent (NULL foreign key), or reference exactly one parent.</text>
+<rect x="140" y="1560" width="3620" height="190" fill="#f3f8f9" stroke="#d2dfe3" stroke-width="1"/>
+<text x="180" y="1606" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="34" font-weight="bold" fill="#24333c">R7   monitoring_logs.ppm_reading_id  →  ppm_readings.ppm_reading_id</text>
+<text x="180" y="1659" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="28" font-weight="normal" fill="#24333c">One parent may be referenced by zero to many child rows.</text>
+<text x="180" y="1705" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#24333c">A child may have no parent (NULL foreign key), or reference exactly one parent.</text>
+<rect x="140" y="1780" width="3620" height="190" fill="#f3f8f9" stroke="#d2dfe3" stroke-width="1"/>
+<text x="180" y="1826" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="34" font-weight="bold" fill="#24333c">R8   notifications.ph_reading_id  →  ph_readings.ph_reading_id</text>
+<text x="180" y="1879" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="28" font-weight="normal" fill="#24333c">One parent may be referenced by zero to many child rows.</text>
+<text x="180" y="1925" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#24333c">A child may have no parent (NULL foreign key), or reference exactly one parent.</text>
+<rect x="140" y="2000" width="3620" height="190" fill="#f3f8f9" stroke="#d2dfe3" stroke-width="1"/>
+<text x="180" y="2046" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="34" font-weight="bold" fill="#24333c">R9   notifications.ppm_reading_id  →  ppm_readings.ppm_reading_id</text>
+<text x="180" y="2099" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="28" font-weight="normal" fill="#24333c">One parent may be referenced by zero to many child rows.</text>
+<text x="180" y="2145" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#24333c">A child may have no parent (NULL foreign key), or reference exactly one parent.</text>
+<text x="140" y="2300" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="31" font-weight="bold" fill="#155e63">REFERENCE AND DELETION RULES</text>
+<text x="140" y="2370" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="28" font-weight="normal" fill="#24333c">R1, R2, R3: deleting a user sets updated_by to NULL (ON DELETE SET NULL).</text>
+<text x="140" y="2440" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="28" font-weight="normal" fill="#24333c">R4-R9: referenced parent rows cannot be deleted (ON DELETE RESTRICT).</text>
+<text x="140" y="2510" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="28" font-weight="normal" fill="#24333c">settings.type is UNIQUE and can be referenced by a foreign key even though it is not the primary key.</text>
+<text x="140" y="2580" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="28" font-weight="normal" fill="#24333c">monitoring_logs: ph_reading_id is only valid for type ph; ppm_reading_id is only valid for type ppm.</text>
+<text x="140" y="2650" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="28" font-weight="normal" fill="#24333c">Monitoring and notification rows cannot reference both pH and PPM readings at once.</text>
+<text x="140" y="2720" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="28" font-weight="normal" fill="#24333c">history_logs has no direct foreign key to readings or the Dithane schedule.</text>
+<text x="140" y="2790" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="28" font-weight="normal" fill="#24333c">updated_by identifies only the last editor; it is not a complete audit trail.</text>
+<text x="140" y="2860" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="28" font-weight="normal" fill="#24333c">ERD edges describe stored relationships; they do not establish a physical ESP32 connection.</text>
+<text x="140" y="3045" dominant-baseline="central" text-anchor="start" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#526670">Based on the project schema checked on 30 September 2026.</text>
+</svg>

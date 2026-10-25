@@ -14,16 +14,16 @@ function normalizeDithane(array $config): array {
     return ['interval_hours'=>(int)$config['interval'], 'duration_seconds'=>(int)$config['duration'], 'start_time'=>str_replace('.', ':', $start) . ':00'];
 }
 function readDithane(PDO $pdo): ?array {
-    $row = $pdo->query('SELECT `id_jadwal_dithane` AS `id`, `interval_jam` AS `interval_hours`, `durasi_detik` AS `duration_seconds`, `jam_mulai` AS `start_time`, `diubah_oleh_id` AS `updated_by`, `dibuat_pada` AS `created_at`, `diperbarui_pada` AS `updated_at` FROM dithane_schedules WHERE id_jadwal_dithane=1')->fetch(PDO::FETCH_ASSOC);
+    $row = $pdo->query('SELECT `schedule_id` AS `id`, `interval_hours`, `duration_seconds`, `start_time`, `updated_at` FROM dithane_schedules WHERE schedule_id=1')->fetch(PDO::FETCH_ASSOC);
     if (!$row) return null;
     return ['type'=>'dithane', 'config'=>['interval'=>(string)$row['interval_hours'], 'duration'=>(string)$row['duration_seconds'], 'start'=>str_replace(':', '.', substr($row['start_time'],0,5))], 'updated_at'=>$row['updated_at']];
 }
-function writeDithane(PDO $pdo, array $config, ?int $userId): void {
+function writeDithane(PDO $pdo, array $config): void {
     $data = normalizeDithane($config);
     $lock = measurementLock($pdo);
     try {
-        $q = $pdo->prepare('INSERT INTO dithane_schedules (id_jadwal_dithane,interval_jam,durasi_detik,jam_mulai,diubah_oleh_id) VALUES (1,?,?,?,?) ON DUPLICATE KEY UPDATE interval_jam=?,durasi_detik=?,jam_mulai=?,diubah_oleh_id=?,diperbarui_pada=CURRENT_TIMESTAMP');
-        $values = [$data['interval_hours'],$data['duration_seconds'],$data['start_time'],$userId];
+        $q = $pdo->prepare('INSERT INTO dithane_schedules (schedule_id,interval_hours,duration_seconds,start_time) VALUES (1,?,?,?) ON DUPLICATE KEY UPDATE interval_hours=?,duration_seconds=?,start_time=?,updated_at=CURRENT_TIMESTAMP');
+        $values = [$data['interval_hours'],$data['duration_seconds'],$data['start_time']];
         $q->execute(array_merge($values,$values));
     } finally { measurementUnlock($pdo, $lock); }
 }

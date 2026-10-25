@@ -1,4 +1,19 @@
 (async function () {
+  /* ESCAPE HELPER: mengamankan nilai dinamis sebelum masuk template HTML. */
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  /* CSRF: token dari meta halaman (helper didefinisikan di confirm-modal.js). */
+  function csrfToken() {
+    return window.HydrotechCsrf ? window.HydrotechCsrf.token() : "";
+  }
+
   /* SETTINGS CONFIG: konfigurasi halaman PPM, pH, dan Dithane beserta nilai defaultnya. */
   const configs = {
     ppm: {
@@ -206,7 +221,8 @@
 
       const formData = new FormData();
       formData.append("id", rowId);
-      
+      formData.append("csrf_token", csrfToken());
+
       fetch("../api/monitoring/delete.php", {
         method: "POST",
         body: formData
@@ -263,18 +279,18 @@
 
         return `
           <label class="${fieldClass}">
-            <span>${field.label}</span>
+            <span>${escapeHtml(field.label)}</span>
             <div class="settings-modal-control">
               ${clockIcon}
               <input
                 type="${type}"
                 inputmode="${inputMode}"
-                data-setting-key="${field.key}"
-                value="${value}"
-                placeholder="${placeholder}"
+                data-setting-key="${escapeHtml(field.key)}"
+                value="${escapeHtml(value)}"
+                placeholder="${escapeHtml(placeholder)}"
                 ${timeAttributes}
               />
-              <small>${field.unit}</small>
+              <small>${escapeHtml(field.unit)}</small>
             </div>
           </label>
         `;
@@ -288,10 +304,10 @@
       <section class="settings-modal-card" role="dialog" aria-modal="true">
         <div class="settings-modal-head">
           <div class="settings-modal-title">
-            <span class="settings-modal-icon">⚙</span>
-            <div>
-              <span>Edit Pengaturan</span>
-              <h2>${document.querySelector(".page-title h1")?.textContent || "Pengaturan"}</h2>
+              <span class="settings-modal-icon">⚙</span>
+              <div>
+                <span>Edit Pengaturan</span>
+                <h2>${escapeHtml(document.querySelector(".page-title h1")?.textContent || "Pengaturan")}</h2>
               <p>Perbarui nilai sistem, lalu simpan untuk menerapkan perubahan.</p>
             </div>
           </div>
@@ -388,12 +404,13 @@
         return;
       }
 
-      nextSettings.updatedAt = "Baru saja";
-      
+      /* Waktu "Terakhir Diperbarui" diambil dari kolom updated_at di database. */
+
       const formData = new FormData();
       formData.append("type", config.type);
       formData.append("config", JSON.stringify(nextSettings));
-      
+      formData.append("csrf_token", csrfToken());
+
       fetch("../api/settings/update.php", {
         method: "POST",
         body: formData
@@ -494,12 +511,13 @@
         return;
       }
 
-      nextSettings.updatedAt = "Baru saja";
-      
+      /* Waktu "Terakhir Diperbarui" diambil dari kolom updated_at di database. */
+
       const formData = new FormData();
       formData.append("type", config.type);
       formData.append("config", JSON.stringify(nextSettings));
-      
+      formData.append("csrf_token", csrfToken());
+
       fetch("../api/settings/update.php", {
         method: "POST",
         body: formData

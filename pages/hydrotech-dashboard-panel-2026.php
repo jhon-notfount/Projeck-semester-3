@@ -1,4 +1,76 @@
-<?php require_once __DIR__.'/../includes/auth_check.php'; requireAuth(); ?>
+<?php
+require_once __DIR__.'/../includes/auth_check.php';
+requireAuth();
+require_once __DIR__.'/../config/database.php';
+require_once __DIR__.'/../includes/sensors.php';
+require_once __DIR__.'/../includes/dithane.php';
+
+$pdo = getDBConnection();
+
+/* SETTINGS: rentang PPM/pH aktif dari tabel settings. */
+$settingRows = $pdo->query("SELECT type, config_json FROM settings WHERE type IN ('ppm','ph')")->fetchAll(PDO::FETCH_KEY_PAIR);
+$ppmConfig = json_decode($settingRows['ppm'] ?? 'null', true) ?: [];
+$phConfig = json_decode($settingRows['ph'] ?? 'null', true) ?: [];
+$ppmRange = trim(($ppmConfig['min'] ?? '800') . ' - ' . ($ppmConfig['max'] ?? '1000'));
+$phRange = trim(($phConfig['min'] ?? '5,5') . ' - ' . ($phConfig['max'] ?? '6,5'));
+
+/* DITHANE: jadwal penyemprotan aktif (tampilan rencana, bukan bukti eksekusi). */
+$dithane = readDithane($pdo);
+$dithaneStart = $dithane['config']['start'] ?? null;
+$dithaneInterval = $dithane['config']['interval'] ?? null;
+$dithaneLabel = $dithaneStart ? str_replace('.', ':', (string)$dithaneStart) : '-';
+$dithaneNote = $dithaneStart && $dithaneInterval
+    ? "setiap {$dithaneInterval} jam, mulai pukul " . str_replace(':', '.', (string)$dithaneStart)
+    : 'belum ada jadwal aktif';
+
+/* LATEST READINGS: pengukuran asli terakhir dari perangkat.
+   latestSensorReadings() berurutan terbaru-dulu — ambil entri PERTAMA
+   tiap jenis (jangan menimpa, agar tidak tertukar dengan yang tertua). */
+$latestReadings = latestSensorReadings($pdo);
+$phLatest = null;
+$ppmLatest = null;
+foreach ($latestReadings as $reading) {
+    if ($reading['type'] === 'ph' && !$phLatest) $phLatest = $reading;
+    if ($reading['type'] === 'ppm' && !$ppmLatest) $ppmLatest = $reading;
+}
+$phNow = $phLatest ? (string)$phLatest['value'] : '-';
+$ppmNow = $ppmLatest ? (string)$ppmLatest['value'] : '-';
+
+/* RELATIVE TIME: teks "x menit lalu" untuk update terakhir. */
+function relativeTimeId(?string $timestamp): string {
+    if (!$timestamp) return 'belum ada data';
+    $ts = strtotime($timestamp);
+    if ($ts === false) return '-';
+    $diff = time() - $ts;
+    if ($diff < 0) {
+        // Timestamp di masa depan = selisih jam perangkat/server;
+        // hanya selisih kecil (di bawah 1 menit) dianggap "baru saja".
+        return $diff > -60 ? 'baru saja' : '-';
+    }
+    if ($diff < 60) return 'baru saja';
+    if ($diff < 3600) return floor($diff / 60) . ' menit lalu';
+    if ($diff < 86400) return floor($diff / 3600) . ' jam lalu';
+    return floor($diff / 86400) . ' hari lalu';
+}
+$lastUpdateAt = null;
+foreach ([$phLatest, $ppmLatest] as $reading) {
+    if ($reading && (!$lastUpdateAt || $reading['recorded_at'] > $lastUpdateAt)) {
+        $lastUpdateAt = $reading['recorded_at'];
+    }
+}
+$lastUpdateText = $lastUpdateAt ? relativeTimeId($lastUpdateAt) : 'belum ada data';
+
+/* ACTIVITIES: log monitoring asli terbaru (sensor, nutrisi, pH, Dithane). */
+$activities = $pdo->query(
+    "SELECT type, day_name, log_time, value, status, note, created_at
+     FROM monitoring_logs WHERE is_deleted = 0
+     ORDER BY created_at DESC, monitoring_id DESC LIMIT 8"
+)->fetchAll(PDO::FETCH_ASSOC);
+$activityCount = count($activities);
+function activityIcon(string $type): string {
+    return ['ppm' => 'PPM', 'ph' => 'pH', 'dithane' => 'DT'][$type] ?? strtoupper(substr($type, 0, 2));
+}
+?>
 <!doctype html>
 <html lang="id">
   <head>
@@ -6,6 +78,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Dashboard Hydrotech</title>
+    <?php echo csrfMetaTag(); ?>
     <link rel="stylesheet" href="../css/hydrotech-dashboard-panel-2026.css" />
   </head>
   <body>
@@ -47,7 +120,7 @@
               </div>
               <div>
                 <small>Update Terakhir</small>
-                <b>2 menit lalu</b>
+                <b data-last-update><?php echo htmlspecialchars($lastUpdateText); ?></b>
               </div>
             </div>
           </section>
@@ -57,7 +130,7 @@
               <div class="mini-ico icon-ppm" aria-hidden="true"></div>
               <div class="pill">DISETEL</div>
               <div class="stat-title">Rentang PPM</div>
-              <div class="stat-num stat-range">800 - 1000</div>
+              <div class="stat-num stat-range"><?php echo htmlspecialchars($ppmRange); ?></div>
               <div class="stat-note">Dari halaman Pengaturan PPM</div>
               <div class="bar"><span style="width: 100%"></span></div>
             </div>
@@ -65,7 +138,7 @@
               <div class="mini-ico icon-ph" aria-hidden="true"></div>
               <div class="pill">DISETEL</div>
               <div class="stat-title">Rentang pH</div>
-              <div class="stat-num stat-range">5,5 - 6,5</div>
+              <div class="stat-num stat-range"><?php echo htmlspecialchars($phRange); ?></div>
               <div class="stat-note">Dari halaman Pengaturan pH</div>
               <div class="bar"><span style="width: 100%"></span></div>
             </div>
@@ -73,8 +146,8 @@
               <div class="mini-ico icon-dithane" aria-hidden="true"></div>
               <div class="pill">TERJADWAL</div>
               <div class="stat-title">Penyemprotan Dithane</div>
-              <div class="stat-num">14:00</div>
-              <div class="stat-note">setiap hari pada pukul 14.00</div>
+              <div class="stat-num"><?php echo htmlspecialchars($dithaneLabel); ?></div>
+              <div class="stat-note"><?php echo htmlspecialchars($dithaneNote); ?></div>
             </div>
           </section>
           <!-- DASHBOARD GRID: area grafik nutrisi dan riwayat aktivitas terbaru. -->
@@ -94,11 +167,11 @@
               <div class="chart-summary">
                 <div>
                   <small>pH saat ini</small>
-                  <b>7.1</b>
+                  <b data-current-ph><?php echo htmlspecialchars($phNow); ?></b>
                 </div>
                 <div>
                   <small>PPM saat ini</small>
-                  <b>863</b>
+                  <b data-current-ppm><?php echo htmlspecialchars($ppmNow); ?></b>
                 </div>
               </div>
               <div class="dashboard-chart-wrap">
@@ -148,68 +221,51 @@
                 </div>
               </div>
               <div class="activity-list">
-                <div class="activity-row" data-activity-type="ppm">
-                  <span class="nicon">PPM</span>
+                <?php if (!$activityCount): ?>
+                <div class="activity-row" data-activity-type="all">
+                  <span class="nicon">--</span>
                   <div>
-                    <b>Penyesuaian PPM</b>
-                    <small>PPM disesuaikan dari 845 ke 863</small>
+                    <b>Belum ada aktivitas</b>
+                    <small>Aktivitas akan muncul saat perangkat mengirim data.</small>
                   </div>
-                  <span class="status">Berhasil</span>
-                  <span class="ago">2 jam lalu</span>
+                  <span class="status">Kosong</span>
+                  <span class="ago">-</span>
                 </div>
-                <div class="activity-row" data-activity-type="ph">
-                  <span class="nicon">pH</span>
+                <?php else: ?>
+                <?php foreach ($activities as $activity): ?>
+                <?php
+                    $activityStatus = (string)($activity['status'] ?? '');
+                    $statusClass = in_array(strtolower($activityStatus), ['normal', 'berhasil'], true)
+                        ? '' : (strtolower($activityStatus) === 'terjadwal' ? ' wait' : ' warn');
+                ?>
+                <div class="activity-row" data-activity-type="<?php echo htmlspecialchars($activity['type']); ?>">
+                  <span class="nicon"><?php echo htmlspecialchars(activityIcon($activity['type'])); ?></span>
                   <div>
-                    <b>Kalibrasi pH</b
-                    ><small>pH dikalibrasi ke level 7.1</small>
+                    <b><?php echo htmlspecialchars(ucfirst($activity['type']) . ' - ' . $activity['day_name'] . ' ' . $activity['log_time']); ?></b>
+                    <small><?php echo htmlspecialchars((string)($activity['note'] ?? '')); ?></small>
                   </div>
-                  <span class="status">Berhasil</span>
-                  <span class="ago">2 jam lalu</span>
+                  <span class="status<?php echo $statusClass; ?>"><?php echo htmlspecialchars($activityStatus ?: '-'); ?></span>
+                  <span class="ago"><?php echo htmlspecialchars(relativeTimeId($activity['created_at'])); ?></span>
                 </div>
-                <div class="activity-row" data-activity-type="dithane">
-                  <span class="nicon">DT</span>
-                  <div>
-                    <b>Jadwal Dithane Aktif</b>
-                    <small>Penyemprotan berikutnya pukul 14.00</small>
-                  </div>
-                  <span class="status wait">Terjadwal</span>
-                  <span class="ago">35 menit lalu</span>
-                </div>
-                <div class="activity-row" data-activity-type="ppm">
-                  <span class="nicon">PPM</span>
-                  <div>
-                    <b>Sensor Nutrisi Dibaca</b>
-                    <small>Nilai PPM masuk dalam rentang aman</small>
-                  </div>
-                  <span class="status">Normal</span>
-                  <span class="ago">12 menit lalu</span>
-                </div>
-                <div class="activity-row" data-activity-type="ph">
-                  <span class="nicon">pH</span>
-                  <div>
-                    <b>pH Mulai Naik</b>
-                    <small>Sistem memantau perubahan pH secara otomatis</small>
-                  </div>
-                  <span class="status warn">Dipantau</span>
-                  <span class="ago">baru saja</span>
-                </div>
+                <?php endforeach; ?>
+                <?php endif; ?>
               </div>
               <div class="activity-empty" data-activity-empty>
                 Tidak ada aktivitas pada kategori ini.
               </div>
               <div class="activity-foot">
-                <span data-activity-count>Menampilkan 5 aktivitas</span>
+                <span data-activity-count>Menampilkan <?php echo $activityCount; ?> aktivitas</span>
               </div>
             </div>
           </section>
         </div>
       </main>
     </div>
-    <!-- PAGE SCRIPTS: dialog, filter aktivitas, Chart.js, dan simulasi data live. -->
+    <!-- PAGE SCRIPTS: dialog, filter aktivitas, Chart.js, dan pembaca data live. -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../js/confirm-modal.js"></script>
     <script src="../js/dashboard-activity.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="../js/dashboard-live.js"></script>
+    <script src="../js/dashboard-live.js?v=2"></script>
   </body>
 </html>

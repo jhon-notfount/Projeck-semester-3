@@ -8,18 +8,13 @@ requireAuth();
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') errorResponse('Method not allowed', 405);
 try {
     $pdo = getDBConnection();
-    if (isset($_GET['sensor_id'])) errorResponse('Gunakan filter type=ph atau type=ppm.', 400);
     $type = $_GET['type'] ?? null;
     if ($type !== null && !in_array($type, ['ph','ppm'], true)) errorResponse('Jenis pengukuran tidak valid.', 400);
-    $parts = [];
-    foreach ($type === null ? ['ph','ppm'] : [$type] as $kind) {
-        $parts[] = "(SELECT id_pembacaan_{$kind} AS id, '$kind' AS type, nilai_{$kind} AS value, direkam_pada AS recorded_at FROM {$kind}_readings ORDER BY direkam_pada DESC, id_pembacaan_{$kind} DESC LIMIT 10)";
+    $readings = latestSensorReadings($pdo, 10);
+    if ($type !== null) {
+        $readings = array_values(array_filter($readings, fn($r) => $r['type'] === $type));
     }
-    $stmt = $pdo->query(implode(' UNION ALL ', $parts) . ' ORDER BY recorded_at DESC, id DESC, type LIMIT 10');
-    $rows = $stmt->fetchAll();
-    foreach ($rows as &$row) $row['value'] = $row['type'] === 'ppm' ? (int)$row['value'] : (float)$row['value'];
-    unset($row);
-    successResponse($rows);
+    successResponse($readings);
 } catch (Throwable $e) {
     errorResponse('Tidak dapat membaca hasil sensor.', 500);
 }

@@ -4,15 +4,17 @@ requireAuth();
 require_once __DIR__.'/../config/database.php';
 
 $pdo = getDBConnection();
-$stmt = $pdo->query("SELECT `id_profil` AS `id`, `bagian` AS `section`, `label`, `isi` AS `value`, `urutan` AS `sort_order`, `diubah_oleh_id` AS `updated_by` FROM profile ORDER BY bagian, urutan");
+$stmt = $pdo->query("SELECT `profile_id` AS `id`, `section`, `label`, `value`, `sort_order` FROM profile ORDER BY section, sort_order");
 $profileRows = $stmt->fetchAll();
 $owner = array_filter($profileRows, fn($r) => $r['section'] === 'owner');
 $team = array_filter($profileRows, fn($r) => $r['section'] === 'team');
 
-// Helper to get value by label
-function getProfileVal($rows, $label) {
-    foreach ($rows as $r) {
-        if ($r['label'] === $label) return htmlspecialchars($r['value']);
+/* Helper to get value by label — mendukung label lama ('Nama', 'WA') sebagai alias. */
+function getProfileVal($rows, $label, array $aliases = []) {
+    foreach ([...[$label], ...$aliases] as $want) {
+        foreach ($rows as $r) {
+            if ($r['label'] === $want) return htmlspecialchars($r['value']);
+        }
     }
     return '';
 }
@@ -24,6 +26,7 @@ function getProfileVal($rows, $label) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Profile</title>
+    <?php echo csrfMetaTag(); ?>
     <link rel="stylesheet" href="../css/profile.css" />
     <style>
       .edit-btn {
@@ -123,32 +126,32 @@ function getProfileVal($rows, $label) {
                 <span class="li">N</span>
                 <div>
                   <small>Nama Pemilik</small>
-                  <b class="editable-text"><?php echo getProfileVal($owner, 'Nama Pemilik') ?: 'Edi Setiawan'; ?></b>
-                  <input type="text" class="editable-input" name="owner_name" value="<?php echo getProfileVal($owner, 'Nama Pemilik') ?: 'Edi Setiawan'; ?>">
+                  <b class="editable-text"><?php echo getProfileVal($owner, 'Nama Pemilik', ['Nama']) ?: 'Edi Setiawan'; ?></b>
+                  <input type="text" class="editable-input" name="owner_name" value="<?php echo getProfileVal($owner, 'Nama Pemilik', ['Nama']) ?: 'Edi Setiawan'; ?>">
                 </div>
               </div>
               <div class="info-line">
                 <span class="li">@</span>
                 <div>
                   <small>Email</small>
-                  <b class="editable-text"><?php echo getProfileVal($owner, 'Email') ?: 'EdiSetiawan@gmail.com'; ?></b>
-                  <input type="text" class="editable-input" name="owner_email" value="<?php echo getProfileVal($owner, 'Email') ?: 'EdiSetiawan@gmail.com'; ?>">
+                  <b class="editable-text"><?php echo getProfileVal($owner, 'Email', ['Email']) ?: 'EdiSetiawan@gmail.com'; ?></b>
+                  <input type="text" class="editable-input" name="owner_email" value="<?php echo getProfileVal($owner, 'Email', ['Email']) ?: 'EdiSetiawan@gmail.com'; ?>">
                 </div>
               </div>
               <div class="info-line">
                 <span class="li">WA</span>
                 <div>
                   <small>WhatsApp</small>
-                  <b class="editable-text"><?php echo getProfileVal($owner, 'WhatsApp') ?: '0856-4584-2028'; ?></b>
-                  <input type="text" class="editable-input" name="owner_wa" value="<?php echo getProfileVal($owner, 'WhatsApp') ?: '0856-4584-2028'; ?>">
+                  <b class="editable-text"><?php echo getProfileVal($owner, 'WhatsApp', ['WA']) ?: '0856-4584-2028'; ?></b>
+                  <input type="text" class="editable-input" name="owner_wa" value="<?php echo getProfileVal($owner, 'WhatsApp', ['WA']) ?: '0856-4584-2028'; ?>">
                 </div>
               </div>
               <div class="info-line">
                 <span class="li">L</span>
                 <div>
                   <small>Lokasi</small>
-                  <b class="editable-text"><?php echo getProfileVal($owner, 'Lokasi') ?: 'Jl. Raung, Gumuk Kerang, Ajung, Jember'; ?></b>
-                  <input type="text" class="editable-input" name="owner_loc" value="<?php echo getProfileVal($owner, 'Lokasi') ?: 'Jl. Raung, Gumuk Kerang, Ajung, Jember'; ?>">
+                  <b class="editable-text"><?php echo getProfileVal($owner, 'Lokasi', ['Lokasi']) ?: 'Jl. Raung, Gumuk Kerang, Ajung, Jember'; ?></b>
+                  <input type="text" class="editable-input" name="owner_loc" value="<?php echo getProfileVal($owner, 'Lokasi', ['Lokasi']) ?: 'Jl. Raung, Gumuk Kerang, Ajung, Jember'; ?>">
                 </div>
               </div>
             </article>
@@ -189,8 +192,8 @@ function getProfileVal($rows, $label) {
                 <span class="li">A</span>
                 <div>
                   <small>Alamat</small>
-                  <b class="editable-text"><?php echo getProfileVal($team, 'Alamat') ?: 'Sumber sari Jember'; ?></b>
-                  <input type="text" class="editable-input" name="team_address" value="<?php echo getProfileVal($team, 'Alamat') ?: 'Sumber sari Jember'; ?>">
+                  <b class="editable-text"><?php echo getProfileVal($team, 'Alamat') ?: 'Sumbersari Jember'; ?></b>
+                  <input type="text" class="editable-input" name="team_address" value="<?php echo getProfileVal($team, 'Alamat') ?: 'Sumbersari Jember'; ?>">
                 </div>
               </div>
             </article>
@@ -252,6 +255,7 @@ function getProfileVal($rows, $label) {
             const ownerForm = new FormData();
             ownerForm.append('section', 'owner');
             ownerForm.append('data', JSON.stringify(ownerData));
+            ownerForm.append('csrf_token', window.HydrotechCsrf ? window.HydrotechCsrf.token() : '');
             const ownerRes = await fetch('../api/profile/update.php', { method: 'POST', body: ownerForm });
             const ownerResult = await ownerRes.json();
 
@@ -259,6 +263,7 @@ function getProfileVal($rows, $label) {
             const teamForm = new FormData();
             teamForm.append('section', 'team');
             teamForm.append('data', JSON.stringify(teamData));
+            teamForm.append('csrf_token', window.HydrotechCsrf ? window.HydrotechCsrf.token() : '');
             const teamRes = await fetch('../api/profile/update.php', { method: 'POST', body: teamForm });
             const teamResult = await teamRes.json();
 

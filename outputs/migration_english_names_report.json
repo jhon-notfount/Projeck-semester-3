@@ -1,0 +1,18 @@
+[
+    {
+        "status": "migrated",
+        "database": "hydrotech",
+        "backup": "D:\\Semester 3\\Projeck-semester-3/database/backups/hydrotech_before_column_names_20260929_233439_c61bcff0.sql",
+        "renamed_columns": 55,
+        "foreign_keys": 9,
+        "data_verified": true
+    },
+    {
+        "status": "migrated",
+        "database": "monitoring_sensor",
+        "backup": "D:\\Semester 3\\Projeck-semester-3/database/backups/monitoring_sensor_before_column_names_20260929_233441_a9d490b3.sql",
+        "renamed_columns": 55,
+        "foreign_keys": 9,
+        "data_verified": true
+    }
+]

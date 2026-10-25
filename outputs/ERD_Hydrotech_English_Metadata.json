@@ -1,0 +1,70 @@
+{
+  "tables": 9,
+  "columns": 60,
+  "foreign_keys": 9,
+  "relationships": [
+    [
+      "users",
+      "user_id",
+      "settings",
+      "updated_by",
+      true
+    ],
+    [
+      "users",
+      "user_id",
+      "profile",
+      "updated_by",
+      true
+    ],
+    [
+      "users",
+      "user_id",
+      "dithane_schedules",
+      "updated_by",
+      true
+    ],
+    [
+      "settings",
+      "type",
+      "monitoring_logs",
+      "type",
+      false
+    ],
+    [
+      "ph_readings",
+      "ph_reading_id",
+      "monitoring_logs",
+      "ph_reading_id",
+      true
+    ],
+    [
+      "ppm_readings",
+      "ppm_reading_id",
+      "monitoring_logs",
+      "ppm_reading_id",
+      true
+    ],
+    [
+      "settings",
+      "type",
+      "history_logs",
+      "type",
+      false
+    ],
+    [
+      "ph_readings",
+      "ph_reading_id",
+      "notifications",
+      "ph_reading_id",
+      true
+    ],
+    [
+      "ppm_readings",
+      "ppm_reading_id",
+      "notifications",
+      "ppm_reading_id",
+      true
+    ]
+  ]
+}

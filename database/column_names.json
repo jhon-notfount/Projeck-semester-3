@@ -1,80 +1,80 @@
 {
   "users": {
-    "id": "id_pengguna",
-    "username": "nama_pengguna",
-    "password": "kata_sandi",
+    "id_pengguna": "user_id",
+    "nama_pengguna": "username",
+    "kata_sandi": "password",
     "email": "email",
-    "role": "peran",
-    "created_at": "dibuat_pada",
-    "updated_at": "diperbarui_pada"
+    "peran": "role",
+    "dibuat_pada": "created_at",
+    "diperbarui_pada": "updated_at"
   },
   "settings": {
-    "id": "id_pengaturan",
-    "type": "jenis",
-    "config_json": "konfigurasi_json",
-    "updated_at": "diperbarui_pada",
-    "updated_by": "diubah_oleh_id"
+    "id_pengaturan": "setting_id",
+    "jenis": "type",
+    "konfigurasi_json": "config_json",
+    "diperbarui_pada": "updated_at",
+    "diubah_oleh_id": "updated_by"
   },
   "profile": {
-    "id": "id_profil",
-    "section": "bagian",
+    "id_profil": "profile_id",
+    "bagian": "section",
     "label": "label",
-    "value": "isi",
-    "sort_order": "urutan",
-    "updated_by": "diubah_oleh_id"
+    "isi": "value",
+    "urutan": "sort_order",
+    "diubah_oleh_id": "updated_by"
   },
   "ph_readings": {
-    "id": "id_pembacaan_ph",
-    "ph_value": "nilai_ph",
-    "recorded_at": "direkam_pada"
+    "id_pembacaan_ph": "ph_reading_id",
+    "nilai_ph": "ph_value",
+    "direkam_pada": "recorded_at"
   },
   "ppm_readings": {
-    "id": "id_pembacaan_ppm",
-    "ppm_value": "nilai_ppm",
-    "recorded_at": "direkam_pada"
+    "id_pembacaan_ppm": "ppm_reading_id",
+    "nilai_ppm": "ppm_value",
+    "direkam_pada": "recorded_at"
   },
   "dithane_schedules": {
-    "id": "id_jadwal_dithane",
-    "interval_hours": "interval_jam",
-    "duration_seconds": "durasi_detik",
-    "start_time": "jam_mulai",
-    "updated_by": "diubah_oleh_id",
-    "created_at": "dibuat_pada",
-    "updated_at": "diperbarui_pada"
+    "id_jadwal_dithane": "schedule_id",
+    "interval_jam": "interval_hours",
+    "durasi_detik": "duration_seconds",
+    "jam_mulai": "start_time",
+    "diubah_oleh_id": "updated_by",
+    "dibuat_pada": "created_at",
+    "diperbarui_pada": "updated_at"
   },
   "monitoring_logs": {
-    "id": "id_monitoring",
-    "type": "jenis",
-    "day_name": "nama_hari",
-    "log_time": "jam_catatan",
-    "value": "nilai",
+    "id_monitoring": "monitoring_id",
+    "jenis": "type",
+    "nama_hari": "day_name",
+    "jam_catatan": "log_time",
+    "nilai": "value",
     "status": "status",
-    "note": "keterangan",
-    "is_deleted": "dihapus",
-    "created_at": "dibuat_pada",
-    "ph_reading_id": "id_pembacaan_ph",
-    "ppm_reading_id": "id_pembacaan_ppm"
+    "keterangan": "note",
+    "dihapus": "is_deleted",
+    "dibuat_pada": "created_at",
+    "id_pembacaan_ph": "ph_reading_id",
+    "id_pembacaan_ppm": "ppm_reading_id"
   },
   "history_logs": {
-    "id": "id_riwayat",
-    "day_name": "nama_hari",
-    "log_date": "tanggal_catatan",
-    "log_time": "jam_catatan",
-    "type": "jenis",
+    "id_riwayat": "history_id",
+    "nama_hari": "day_name",
+    "tanggal_catatan": "log_date",
+    "jam_catatan": "log_time",
+    "jenis": "type",
     "status": "status",
-    "note": "keterangan",
-    "is_deleted": "dihapus",
-    "created_at": "dibuat_pada"
+    "keterangan": "note",
+    "dihapus": "is_deleted",
+    "dibuat_pada": "created_at"
   },
   "notifications": {
-    "id": "id_notifikasi",
+    "id_notifikasi": "notification_id",
     "label": "label",
-    "message": "pesan",
-    "tone": "tingkat_pesan",
-    "href": "tautan",
-    "is_read": "sudah_dibaca",
-    "created_at": "dibuat_pada",
-    "ph_reading_id": "id_pembacaan_ph",
-    "ppm_reading_id": "id_pembacaan_ppm"
+    "pesan": "message",
+    "tingkat_pesan": "tone",
+    "tautan": "href",
+    "sudah_dibaca": "is_read",
+    "dibuat_pada": "created_at",
+    "id_pembacaan_ph": "ph_reading_id",
+    "id_pembacaan_ppm": "ppm_reading_id"
   }
 }

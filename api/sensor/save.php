@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../includes/sensors.php';
 requireAuth();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') errorResponse('Method not allowed', 405);
+requireCsrfToken();
 try {
     $input = $_POST;
     if (str_contains(strtolower($_SERVER['CONTENT_TYPE'] ?? ''), 'application/json')) {

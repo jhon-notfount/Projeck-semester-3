@@ -172,15 +172,6 @@
     "November",
     "Desember",
   ];
-  const dayNames = [
-    "Minggu",
-    "Senin",
-    "Selasa",
-    "Rabu",
-    "Kamis",
-    "Jumat",
-    "Sabtu",
-  ];
 
   /* MONTH DATA: memilih data aktual dan tren berdasarkan bulan laporan. */
   function getCurrentMonthIndex() {
@@ -222,10 +213,10 @@
     if (statusCounts.Rendah) {
       notes.push("Ada status Rendah, pemilik perlu memastikan nutrisi, pH, dan jadwal penyemprotan tidak berada di bawah kebutuhan tanaman.");
     }
-    if (averagePh < 5.5 || averagePh > 6.5) {
+    if (Number.isFinite(averagePh) && (averagePh < 5.5 || averagePh > 6.5)) {
       notes.push(`Rata-rata pH ${averagePh} berada di luar rentang aman 5.5 - 6.5, sehingga kalibrasi larutan disarankan.`);
     }
-    if (averagePpm < 800 || averagePpm > 1000) {
+    if (Number.isFinite(averagePpm) && (averagePpm < 800 || averagePpm > 1000)) {
       notes.push(`Rata-rata PPM ${averagePpm} berada di luar target 800 - 1000 PPM, sehingga komposisi nutrisi perlu dievaluasi.`);
     }
     if (!notes.length) {
@@ -310,10 +301,14 @@
   function getOutOfRangeSummary(trends) {
     return trends.reduce(
       (summary, item) => {
-        if (item.ph < 5.5) summary.phLow += 1;
-        if (item.ph > 6.5) summary.phHigh += 1;
-        if (item.ppm < 800) summary.ppmLow += 1;
-        if (item.ppm > 1000) summary.ppmHigh += 1;
+        if (Number.isFinite(item.ph)) {
+          if (item.ph < 5.5) summary.phLow += 1;
+          if (item.ph > 6.5) summary.phHigh += 1;
+        }
+        if (Number.isFinite(item.ppm)) {
+          if (item.ppm < 800) summary.ppmLow += 1;
+          if (item.ppm > 1000) summary.ppmHigh += 1;
+        }
         return summary;
       },
       { phLow: 0, phHigh: 0, ppmLow: 0, ppmHigh: 0 },
@@ -327,6 +322,7 @@
   }
 
   function getTrendStatus(type, value) {
+    if (!Number.isFinite(value)) return "Tidak ada data";
     if (type === "pH") {
       if (value < 5.5) return "Rendah";
       if (value > 6.5) return "Tinggi";
@@ -357,13 +353,15 @@
           date: item.date,
           time: phActual?.time || item.time,
           type: "pH",
-          value: `${item.ph} pH`,
+          value: Number.isFinite(item.ph) ? `${item.ph} pH` : "Tidak ada data",
           status: phStatus,
           note:
             phActual?.note ||
-            (phStatus === "Normal"
-              ? "Nilai pH berada pada rentang aman."
-              : "Nilai pH perlu dikoreksi agar kembali ke rentang aman."),
+            (!Number.isFinite(item.ph)
+              ? "Belum ada pengukuran pH pada tanggal ini."
+              : phStatus === "Normal"
+                ? "Nilai pH berada pada rentang aman."
+                : "Nilai pH perlu dikoreksi agar kembali ke rentang aman."),
           source: phActual ? "Aktual + tren" : "Tren bulanan",
         },
         {
@@ -371,13 +369,15 @@
           date: item.date,
           time: ppmActual?.time || item.time,
           type: "PPM",
-          value: `${item.ppm} PPM`,
+          value: Number.isFinite(item.ppm) ? `${item.ppm} PPM` : "Tidak ada data",
           status: ppmStatus,
           note:
             ppmActual?.note ||
-            (ppmStatus === "Normal"
-              ? "Konsentrasi nutrisi berada pada target."
-              : "Konsentrasi nutrisi perlu disesuaikan."),
+            (!Number.isFinite(item.ppm)
+              ? "Belum ada pengukuran PPM pada tanggal ini."
+              : ppmStatus === "Normal"
+                ? "Konsentrasi nutrisi berada pada target."
+                : "Konsentrasi nutrisi perlu disesuaikan."),
           source: ppmActual ? "Aktual + tren" : "Tren bulanan",
         },
         {
@@ -413,17 +413,17 @@
     doc.text(note, x + 5, y + 21);
   }
 
-  function addReportFooters(doc, monthName, margin) {
+  function addReportFooters(doc, monthName, margin, reportYear) {
     const pageCount = doc.internal.getNumberOfPages();
     const pageHeight = doc.internal.pageSize.getHeight();
-    for (let page = 1; page <= pageCount; page += 1) {
+    for (let page = 1; page <= pageCount; page++) {
       doc.setPage(page);
       doc.setDrawColor(224, 235, 229);
       doc.line(margin, pageHeight - 12, doc.internal.pageSize.getWidth() - margin, pageHeight - 12);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(110, 124, 112);
-      doc.text(`Hydrotech | Laporan ${monthName} 2026`, margin, pageHeight - 7);
+      doc.text(`Hydrotech | Laporan ${monthName} ${reportYear}`, margin, pageHeight - 7);
       doc.text(`Halaman ${page} dari ${pageCount}`, doc.internal.pageSize.getWidth() - margin, pageHeight - 7, {
         align: "right",
       });
@@ -431,7 +431,7 @@
   }
 
   /* CHART IMAGE: membuat gambar grafik sementara untuk dimasukkan ke PDF. */
-  async function createMonthlyChartImage(trends, monthName) {
+  async function createMonthlyChartImage(trends, monthName, reportYear) {
     if (typeof Chart === "undefined") return null;
 
     const canvas = document.createElement("canvas");
@@ -498,7 +498,7 @@
         plugins: {
           title: {
             display: true,
-            text: `Grafik Tren Harian pH dan PPM - ${monthName} 2026`,
+            text: `Grafik Tren Harian pH dan PPM - ${monthName} ${reportYear}`,
             color: "#203428",
             font: { size: 22, weight: "bold" },
             padding: { bottom: 18 },
@@ -548,12 +548,13 @@
     }
 
     const monthName = monthNames[monthIndex];
+    const reportYear = new Date().getFullYear();
     const rows = getRowsByMonth(monthIndex);
-    const trends = getMonthlyChartData(monthIndex);
+    const trends = await fetchMonthlyTrend(monthIndex);
     const averagePh = getAverage(trends, "ph", 1);
     const averagePpm = getAverage(trends, "ppm", 0);
-    const phRange = getAxisRange(trends, "ph", 0, 0.1);
-    const ppmRange = getAxisRange(trends, "ppm", 0, 1);
+    const phRange = getAxisRange(trends, "ph", 0, 0.1, { min: 5, max: 7 });
+    const ppmRange = getAxisRange(trends, "ppm", 0, 1, { min: 750, max: 1050 });
     const typeCounts = countBy(rows, "type");
     const statusCounts = countBy(rows, "status");
     const recommendations = getMonthlyRecommendation(rows, trends);
@@ -561,7 +562,7 @@
     const dominantStatus = getMostFrequent(statusCounts);
     const dominantType = getMostFrequent(typeCounts);
     const detailedMonthlyRows = getDetailedMonthlyRows(rows, trends);
-    const chartImage = await createMonthlyChartImage(trends, monthName);
+    const chartImage = await createMonthlyChartImage(trends, monthName, reportYear);
     const doc = new jsPdf({ orientation: "landscape", unit: "mm", format: "a4" });
     if (typeof doc.autoTable !== "function") {
       alert("Plugin tabel PDF belum berhasil dimuat. Pastikan koneksi internet aktif lalu coba lagi.");
@@ -573,7 +574,7 @@
     const usableWidth = pageWidth - margin * 2;
 
     doc.setProperties({
-      title: `Laporan History Hydrotech - ${monthName} 2026`,
+      title: `Laporan History Hydrotech - ${monthName} ${reportYear}`,
       subject: "Laporan monitoring pH, PPM, dan Dithane",
       author: "Hydrotech Dashboard Admin",
     });
@@ -586,7 +587,7 @@
     doc.text("Laporan History Monitoring Hydrotech", margin, 13);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.text(`Periode: ${monthName} 2026 | Dibuat: ${getGeneratedAtText()} WIB`, margin, 21);
+    doc.text(`Periode: ${monthName} ${reportYear} | Dibuat: ${getGeneratedAtText()} WIB`, margin, 21);
 
     doc.setTextColor(35, 52, 40);
     doc.setFont("helvetica", "bold");
@@ -596,7 +597,7 @@
     doc.setFontSize(9);
     let y = addWrappedText(
       doc,
-      `Laporan ini merangkum kondisi sistem hidroponik selama bulan ${monthName} 2026. Data diambil dari tabel history dan dilengkapi analisis tren harian pH serta PPM agar pemilik dapat menilai stabilitas nutrisi, kondisi keasaman larutan, dan aktivitas Dithane secara lebih utuh.`,
+      `Laporan ini merangkum kondisi sistem hidroponik selama bulan ${monthName} ${reportYear}. Data diambil dari tabel history dan dilengkapi analisis tren harian pH serta PPM agar pemilik dapat menilai stabilitas nutrisi, kondisi keasaman larutan, dan aktivitas Dithane secara lebih utuh.`,
       margin,
       47,
       usableWidth,
@@ -641,7 +642,7 @@
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.setTextColor(35, 52, 40);
-    doc.text(`Analisis Kondisi Bulanan - ${monthName} 2026`, margin, 18);
+    doc.text(`Analisis Kondisi Bulanan - ${monthName} ${reportYear}`, margin, 18);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     y = addWrappedText(
@@ -717,7 +718,7 @@
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.setTextColor(35, 52, 40);
-    doc.text(`Grafik Tren Harian - ${monthName} 2026`, margin, 18);
+    doc.text(`Grafik Tren Harian - ${monthName} ${reportYear}`, margin, 18);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     doc.text("Grafik ini memperlihatkan perubahan pH dan PPM harian untuk membantu pemilik membaca pola kenaikan atau penurunan parameter.", margin, 25);
@@ -737,7 +738,7 @@
       body: [
         ["Arah pH", `Rata-rata ${averagePh} pH dengan rentang ${phRange.min.toFixed(1)} - ${phRange.max.toFixed(1)}.`],
         ["Arah PPM", `Rata-rata ${averagePpm} PPM dengan rentang ${ppmRange.min} - ${ppmRange.max} PPM.`],
-        ["Periode pengamatan", `${trends.length} hari data tren dalam bulan ${monthName} 2026.`],
+        ["Periode pengamatan", `${trends.length} hari data tren dalam bulan ${monthName} ${reportYear}.`],
         ["Kegunaan grafik", "Membantu pemilik melihat pola sebelum mengambil keputusan koreksi nutrisi, pH, atau jadwal kontrol."],
       ],
       margin: { left: margin, right: margin },
@@ -747,7 +748,7 @@
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.setTextColor(35, 52, 40);
-    doc.text(`Data History Bulanan - ${monthName} 2026`, margin, 18);
+    doc.text(`Data History Bulanan - ${monthName} ${reportYear}`, margin, 18);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     doc.text("Tabel ini berisi detail harian satu bulan penuh: pH, PPM, dan Dithane. Data aktual dari halaman history digabung dengan tren bulanan dan jadwal sistem.", margin, 25);
@@ -786,7 +787,7 @@
     doc.addPage();
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
-    doc.text(`Lampiran Tren Harian pH dan PPM - ${monthName} 2026`, margin, 18);
+    doc.text(`Lampiran Tren Harian pH dan PPM - ${monthName} ${reportYear}`, margin, 18);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     doc.text(
@@ -821,7 +822,7 @@
         doc.setFontSize(8);
         doc.setTextColor(110, 124, 112);
         doc.text(
-          `Hydrotech | Laporan ${monthName} 2026 | Halaman ${pageCount}`,
+          `Hydrotech | Laporan ${monthName} ${reportYear} | Halaman ${pageCount}`,
           margin,
           doc.internal.pageSize.getHeight() - 8,
         );
@@ -868,7 +869,7 @@
     doc.setFontSize(8.5);
     y = addWrappedText(
       doc,
-      `Pada bulan ${monthName} 2026, sistem mencatat ${rows.length} data history aktual dengan status dominan ${dominantStatus}. Tren harian menunjukkan rata-rata pH ${averagePh} dan rata-rata PPM ${averagePpm}. Prioritas utama pemilik adalah menjaga pH tetap pada 5.5 - 6.5, menjaga PPM di kisaran 800 - 1000, dan memastikan jadwal Dithane tetap konsisten.`,
+      `Pada bulan ${monthName} ${reportYear}, sistem mencatat ${rows.length} data history aktual dengan status dominan ${dominantStatus}. Tren harian menunjukkan rata-rata pH ${averagePh} dan rata-rata PPM ${averagePpm}. Prioritas utama pemilik adalah menjaga pH tetap pada 5.5 - 6.5, menjaga PPM di kisaran 800 - 1000, dan memastikan jadwal Dithane tetap konsisten.`,
       margin,
       y + 7,
       usableWidth,
@@ -886,19 +887,10 @@
     doc.setFont("helvetica", "normal");
     doc.text("1. Cek sensor pH dan PPM.  2. Bandingkan kondisi tanaman.  3. Simpan PDF sebagai arsip bulanan.  4. Tindak lanjuti status Rendah/Tinggi.", margin + 5, y + 23);
 
-    addReportFooters(doc, monthName, margin);
-    doc.save(`laporan-history-hydrotech-${monthName.toLowerCase()}-2026.pdf`);
+    addReportFooters(doc, monthName, margin, reportYear);
+    doc.save(`laporan-history-hydrotech-${monthName.toLowerCase()}-${reportYear}.pdf`);
   }
-  /* CHART CONFIG: data dasar untuk grafik history pH dan PPM di halaman. */
-  const chartTimes = [
-    "07:00",
-    "07:15",
-    "07:00",
-    "07:30",
-    "07:10",
-    "07:00",
-    "08:00",
-  ];
+  /* CHART CONFIG: sumber data grafik history pH dan PPM dari API (data asli). */
   const chartRangeLabels = {
     7: "1 minggu",
     14: "2 minggu",
@@ -907,39 +899,45 @@
   let historyChart;
   let selectedChartRange = "month";
 
-  /* CHART DATA: membuat data tren harian pH dan PPM untuk bulan terpilih. */
-  function getMonthlyChartData(monthIndex) {
-    const year = 2026;
-    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+  /* CHART DATA: mengambil rata-rata harian pH/PPM asli untuk bulan terpilih. */
+  const trendCache = new Map();
 
-    return Array.from({ length: daysInMonth }, function (_, index) {
-      const dateNumber = index + 1;
-      const date = new Date(year, monthIndex, dateNumber);
-      const monthOffset = monthIndex * 0.08;
-      const wave = Math.sin((dateNumber + monthIndex) * 0.74);
-      const ph = Number((6.05 + wave * 0.32 + monthOffset / 5).toFixed(1));
-      const ppm = Math.round(
-        905 + wave * 48 + monthIndex * 4 + (index % 5) * 6,
+  async function fetchMonthlyTrend(monthIndex) {
+    if (trendCache.has(monthIndex)) return trendCache.get(monthIndex);
+    try {
+      const year = new Date().getFullYear();
+      const response = await fetch(
+        `../api/history/trend.php?month=${monthIndex + 1}&year=${year}`,
       );
-
-      return {
-        day: dayNames[date.getDay()],
-        date: `${dateNumber} ${monthNames[monthIndex]} ${year}`,
-        time: chartTimes[index % chartTimes.length],
-        ph,
-        ppm,
-      };
-    });
+      const result = await response.json();
+      const trend =
+        result.success && Array.isArray(result.data?.trend)
+          ? result.data.trend
+          : [];
+      trendCache.set(monthIndex, trend);
+      return trend;
+    } catch (error) {
+      console.error("Gagal membaca tren history:", error);
+      return [];
+    }
   }
 
   /* CHART HELPERS: menghitung rata-rata, rentang sumbu, dan periode yang ditampilkan. */
   function getAverage(items, key, digits) {
-    const total = items.reduce((sum, item) => sum + item[key], 0);
-    return (total / items.length).toFixed(digits);
+    const values = items
+      .map((item) => item[key])
+      .filter((value) => Number.isFinite(value));
+    if (!values.length) return "-";
+    const total = values.reduce((sum, value) => sum + value, 0);
+    return (total / values.length).toFixed(digits);
   }
 
-  function getAxisRange(items, key, padding, roundTo) {
-    const values = items.map((item) => item[key]);
+  function getAxisRange(items, key, padding, roundTo, fallback) {
+    const values = items
+      .map((item) => item[key])
+      .filter((value) => Number.isFinite(value));
+    if (!values.length) return fallback || { min: 0, max: 1 };
+
     const min = Math.min(...values);
     const max = Math.max(...values);
 
@@ -972,22 +970,29 @@
   }
 
   /* CHART RENDER: menggambar ulang grafik, rata-rata, dan teks periode sesuai filter. */
-  function renderHistoryChart() {
+  async function renderHistoryChart() {
     const canvas = document.getElementById("historyLineChart");
     const monthFilter = document.querySelector("[data-history-chart-month]");
-    const selectedMonth = Number(monthFilter?.value || 4);
-    const data = getChartRangeData(getMonthlyChartData(selectedMonth));
-    const phRange = getAxisRange(data, "ph", 0.18, 0.1);
-    const ppmRange = getAxisRange(data, "ppm", 28, 25);
+    const selectedMonth = monthFilter
+      ? Number(monthFilter.value)
+      : getCurrentMonthIndex();
+    const data = getChartRangeData(await fetchMonthlyTrend(selectedMonth));
+    const phRange = getAxisRange(data, "ph", 0.18, 0.1, { min: 5, max: 7 });
+    const ppmRange = getAxisRange(data, "ppm", 28, 25, { min: 750, max: 1050 });
     const periodText = document.querySelector("[data-history-chart-period]");
     const averagePh = document.querySelector("[data-chart-average-ph]");
     const averagePpm = document.querySelector("[data-chart-average-ppm]");
     if (periodText) {
       periodText.textContent = getChartPeriodText(data, selectedMonth);
     }
-    if (averagePh) averagePh.textContent = getAverage(data, "ph", 1);
-    if (averagePpm)
-      averagePpm.textContent = `${getAverage(data, "ppm", 0)} PPM`;
+    if (averagePh) {
+      averagePh.textContent = data.length ? getAverage(data, "ph", 1) : "-";
+    }
+    if (averagePpm) {
+      averagePpm.textContent = data.length
+        ? `${getAverage(data, "ppm", 0)} PPM`
+        : "-";
+    }
     if (!canvas || typeof Chart === "undefined") return;
     const context = canvas.getContext("2d");
 

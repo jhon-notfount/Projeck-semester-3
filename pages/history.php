@@ -4,8 +4,19 @@ requireAuth();
 require_once '../config/database.php';
 
 $pdo = getDBConnection();
-$stmt = $pdo->query("SELECT `id_riwayat` AS `id`, `nama_hari` AS `day_name`, `tanggal_catatan` AS `log_date`, `jam_catatan` AS `log_time`, `jenis` AS `type`, `status`, `keterangan` AS `note`, `dihapus` AS `is_deleted`, `dibuat_pada` AS `created_at` FROM history_logs WHERE dihapus=0 ORDER BY tanggal_catatan DESC, jam_catatan DESC");
+
+/* LOG UTAMA: halaman history membaca tabel monitoring_logs (satu sumber log). */
+$stmt = $pdo->query("SELECT `monitoring_id` AS `id`, `type`, `day_name`, `log_time`, `value`, `status`, `note`, `is_deleted`, DATE(`created_at`) AS `log_date`, `created_at` FROM monitoring_logs WHERE is_deleted=0 ORDER BY created_at DESC, monitoring_id DESC LIMIT 500");
 $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+/* TANGGAL INDO: format "23 Oktober 2026" agar filter bulan di JavaScript bekerja. */
+$bulanIndo = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+function formatTanggalIndo(string $date): string {
+    global $bulanIndo;
+    $d = date_create($date);
+    if (!$d) return $date;
+    return date_format($d, 'j') . ' ' . $bulanIndo[(int)date_format($d, 'n') - 1] . ' ' . date_format($d, 'Y');
+}
 ?>
 <!doctype html>
 <html lang="id">
@@ -14,6 +25,7 @@ $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>History</title>
+    <?php echo csrfMetaTag(); ?>
     <link rel="stylesheet" href="../css/history.css" />
   </head>
   <body>
@@ -131,7 +143,7 @@ $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <tr data-row-id="<?= htmlspecialchars($log['id']) ?>">
                       <td><?= $no++ ?></td>
                       <td><?= htmlspecialchars($log['day_name'] ?? '') ?></td>
-                      <td><?= htmlspecialchars($log['log_date'] ?? '') ?></td>
+                      <td><?= htmlspecialchars(formatTanggalIndo($log['log_date'] ?? '')) ?></td>
                       <td><?= htmlspecialchars($log['log_time'] ?? '') ?></td>
                       <td>
                         <?php if (strtolower($log['type'] ?? '') === 'ph'): ?>
@@ -223,18 +235,10 @@ $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                       <select
                         data-history-chart-month
                         aria-label="Filter bulan grafik">
-                        <option value="0">Januari</option>
-                        <option value="1">Februari</option>
-                        <option value="2">Maret</option>
-                        <option value="3">April</option>
-                        <option value="4" selected>Mei</option>
-                        <option value="5">Juni</option>
-                        <option value="6">Juli</option>
-                        <option value="7">Agustus</option>
-                        <option value="8">September</option>
-                        <option value="9">Oktober</option>
-                        <option value="10">November</option>
-                        <option value="11">Desember</option>
+                        <?php $chartMonth = (int) date('n') - 1; ?>
+                        <?php foreach (['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] as $monthIndex => $monthLabel): ?>
+                        <option value="<?= $monthIndex ?>"<?= $monthIndex === $chartMonth ? ' selected' : '' ?>><?= $monthLabel ?></option>
+                        <?php endforeach; ?>
                       </select>
                     </label>
                   </div>
@@ -281,6 +285,6 @@ $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
-    <script src="../js/history.js"></script>
+    <script src="../js/history.js?v=3"></script>
   </body>
 </html>

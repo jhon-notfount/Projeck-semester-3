@@ -7,8 +7,20 @@
  */
 
 if (session_status() === PHP_SESSION_NONE) {
+    // Hardening cookie sesi: HttpOnly (tak terbaca JS), SameSite=Lax (mitigasi CSRF),
+    // Secure otomatis saat lewat HTTPS, strict mode menolak ID sesi yang tidak dikenal.
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['SERVER_PORT'] ?? '') == 443);
+    ini_set('session.use_strict_mode', '1');
+    session_set_cookie_params([
+        'httponly' => true,
+        'samesite' => 'Lax',
+        'secure'   => $isHttps,
+    ]);
     session_start();
 }
+
+require_once __DIR__ . '/csrf.php';
 
 /**
  * Require authentication - redirect to login (pages) or return 401 (API)
@@ -83,7 +95,6 @@ function getCurrentUser() {
         'id'       => $_SESSION['user_id'],
         'username' => $_SESSION['username'] ?? '',
         'email'    => $_SESSION['email'] ?? '',
-        'role'     => $_SESSION['role'] ?? 'admin',
     ];
 }
 

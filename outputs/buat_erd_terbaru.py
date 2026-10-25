@@ -8,7 +8,7 @@ base=base.replace('len(tables)==8 and sum(len(f) for f in tables.values())==57 a
                   'len(tables)==9 and sum(len(f) for f in tables.values())==60 and len(relations)==9')
 exec(compile(base,str(OUT/'rapikan_erd_hydrotech.py'),'exec'))
 
-titles.update({'ph_readings':'Pembacaan pH','ppm_readings':'Pembacaan PPM','dithane_schedules':'Jadwal Dithane'})
+titles.update({'users':'Users','profile':'Profile','settings':'Settings','ph_readings':'pH Readings','ppm_readings':'PPM Readings','dithane_schedules':'Dithane Schedule','monitoring_logs':'Monitoring Logs','history_logs':'History Logs','notifications':'Notifications'})
 TW=900; TH=116; ROW=44
 positions={'profile':(140,260),'users':(1500,260),'dithane_schedules':(2860,260),
            'monitoring_logs':(140,1210),'settings':(1500,1050),'history_logs':(2860,1050),
@@ -19,24 +19,24 @@ palette={'profile':('#ded4ef','#f7f3fc'),'users':('#c9e1f1','#f2f8fc'),
          'monitoring_logs':('#f0dfb2','#fffaf0'),'history_logs':('#f0dfb2','#fffaf0'),
          'notifications':('#eed0dd','#fff5f9'),'ph_readings':('#bde4e7','#f1fbfc'),
          'ppm_readings':('#bde4e7','#f1fbfc')}
-enum_refs={('users','peran'):'A',('settings','jenis'):'B',('monitoring_logs','jenis'):'B',('history_logs','jenis'):'B',('notifications','tingkat_pesan'):'C',('profile','bagian'):'D'}
+enum_refs={('users','role'):'A',('settings','type'):'B',('monitoring_logs','type'):'B',('history_logs','type'):'B',('notifications','tone'):'C',('profile','section'):'D'}
 
 canvas(3900,3210)
 text(140,74,'HYDROTECH',48,True,anchor='start',color='#155e63')
-text(140,131,'ERD DATABASE — STRUKTUR TERBARU',38,True,anchor='start')
-text(140,185,'9 tabel  •  60 kolom  •  9 foreign key  |  PPM: INT  |  Notasi Crow’s Foot',27,anchor='start',color='#526670')
-text(3410,180,'29 September 2026',25,anchor='start',color='#526670')
+text(140,131,'DATABASE ERD - CURRENT STRUCTURE',38,True,anchor='start')
+text(140,185,'9 tables | 60 columns | 9 foreign keys | PPM: INT | Crow foot notation',27,anchor='start',color='#526670')
+text(3410,180,'30 September 2026',25,anchor='start',color='#526670')
 
 paths=[
-('R1','users','profile',[(1500,450),(1040,450)],(1270,398),'Pengubah terakhir'),
-('R2','users','settings',[(1950,684),(1950,1050)],(1950,859),'Pengubah terakhir'),
-('R3','users','dithane_schedules',[(2400,450),(2860,450)],(2630,398),'Pengubah jadwal'),
-('R4','settings','monitoring_logs',[(1500,1190),(1270,1190),(1270,1400),(1040,1400)],(1260,1130),'Kategori monitoring'),
-('R5','settings','history_logs',[(2400,1230),(2860,1230)],(2630,1178),'Kategori riwayat'),
-('R6','ph_readings','monitoring_logs',[(590,2110),(590,1810)],(590,1960),'Sumber pH'),
-('R7','ppm_readings','monitoring_logs',[(1500,2240),(1210,2240),(1210,1650),(1040,1650)],(1220,1900),'Sumber PPM'),
-('R8','ph_readings','notifications',[(590,2358),(590,2740),(3310,2740),(3310,2622)],(1950,2740),'Sumber pH untuk notifikasi'),
-('R9','ppm_readings','notifications',[(2400,2240),(2860,2240)],(2630,2188),'Sumber PPM'),
+('R1','users','profile',[(1500,450),(1040,450)],(1270,398),'Last editor'),
+('R2','users','settings',[(1950,684),(1950,1050)],(1950,859),'Last editor'),
+('R3','users','dithane_schedules',[(2400,450),(2860,450)],(2630,398),'Schedule editor'),
+('R4','settings','monitoring_logs',[(1500,1190),(1270,1190),(1270,1400),(1040,1400)],(1260,1130),'Monitoring category'),
+('R5','settings','history_logs',[(2400,1230),(2860,1230)],(2630,1178),'History category'),
+('R6','ph_readings','monitoring_logs',[(590,2110),(590,1810)],(590,1960),'pH source'),
+('R7','ppm_readings','monitoring_logs',[(1500,2240),(1210,2240),(1210,1650),(1040,1650)],(1220,1900),'PPM source'),
+('R8','ph_readings','notifications',[(590,2358),(590,2740),(3310,2740),(3310,2622)],(1950,2740),'pH notification source'),
+('R9','ppm_readings','notifications',[(2400,2240),(2860,2240)],(2630,2188),'PPM source'),
 ]
 # Validate all endpoint locations and every schema relationship before rendering.
 assert {(p,c) for _,p,c,*_ in paths}=={(p,c) for p,_,c,_,_ in relations}
@@ -67,73 +67,73 @@ for table,(x,y) in positions.items():
     rect(x,y,TW,76,head)
     text(x+TW/2,y+26,titles[table],29,True)
     text(x+TW/2,y+56,table,23)
-    for dx,label in [(16,'KUNCI'),(125,'KOLOM'),(464,'TIPE DATA'),(800,'NULL')]:
+    for dx,label in [(16,'KEY'),(125,'COLUMN'),(464,'DATA TYPE'),(800,'NULL')]:
         text(x+dx,y+97,label,21,True,anchor='start')
     line([(x,y+TH),(x+TW,y+TH)],1)
     for i,f in enumerate(tables[table]):
         cy=y+TH+ROW*i+ROW/2
         keys=', '.join(k for k,flag in [('PK',f['pk']),('UQ',f['uq']),('FK',f['fk'])] if flag)
         typ=f['type'] if not f['type'].startswith('ENUM') else 'ENUM ['+enum_refs[(table,f['name'])]+']'
-        for dx,value,size,bold in [(16,keys,21,True),(125,f['name'],25,False),(464,typ,24,False),(800,'Ya' if f['nullable'] else 'Tidak',22,False)]:
+        for dx,value,size,bold in [(16,keys,21,True),(125,f['name'],25,False),(464,typ,24,False),(800,'Yes' if f['nullable'] else 'No',22,False)]:
             text(x+dx,cy,value,size,bold,anchor='start')
     for dx in [108,445,780]: line([(x+dx,y+76),(x+dx,y+h)],1,'#bbc9cf')
 
 # Legend placed in unused space, keeping the main relationship routes clear.
 rect(140,740,900,325,'#f6f9fa','#cfdbdf',1)
-text(175,782,'CARA MEMBACA',27,True,anchor='start',color='#155e63')
-for i,value in enumerate(['PK = kunci utama; FK = kunci referensi; UQ = unik.',
-    'NULL: Ya berarti kolom boleh kosong.',
-    'Dua garis = tepat satu; lingkaran + garis = 0 atau 1.',
-    'Lingkaran + kaki gagak = 0 sampai banyak (N).',
-    'Garis putus-putus = relasi non-identifying.',
-    'R1–R9 merujuk pada daftar relasi di halaman kedua.']):
+text(175,782,'LEGEND',27,True,anchor='start',color='#155e63')
+for i,value in enumerate(['PK = primary key; FK = foreign key; UQ = unique.',
+    'NULL: Yes means the column may be empty.',
+    'Two bars = exactly one; circle + bar = zero or one.',
+    'Circle + crow foot = zero to many (N).',
+    'Dashed line = non-identifying relationship.',
+    'R1-R9 refer to the relationships on page two.']):
     text(175,828+i*37,value,23,anchor='start')
 
 rect(2860,1660,900,295,'#f6f9fa','#cfdbdf',1)
-text(2895,1700,'ATURAN PENTING',27,True,anchor='start',color='#155e63')
-for i,value in enumerate(['Jadwal: id_jadwal_dithane = 1; hanya satu baris.',
-    'pH: 0–14; PPM: bilangan bulat tidak negatif.',
-    'Pada monitoring dan notifikasi, kedua ID',
-    'pembacaan tidak boleh terisi bersamaan.',
-    'Keduanya boleh kosong untuk catatan umum.']):
+text(2895,1700,'IMPORTANT RULES',27,True,anchor='start',color='#155e63')
+for i,value in enumerate(['Schedule: schedule_id = 1; at most one row.',
+    'pH: 0-14; PPM: non-negative integers.',
+    'In monitoring and notifications, the two reading',
+    'IDs cannot both be set in the same row.',
+    'Both may be NULL for general records.']):
     text(2895,1749+i*39,value,24,anchor='start')
 
 line([(140,2865),(3760,2865)],2,'#b7c6cc')
-text(140,2920,'PILIHAN ENUM',27,True,anchor='start',color='#155e63')
+text(140,2920,'ENUM VALUES',27,True,anchor='start',color='#155e63')
 text(140,2970,'A: admin / user     B: ppm / ph / dithane     C: warning / success / info     D: owner / team',26,anchor='start')
-text(140,3030,'Kategori Dithane tetap ada pada settings untuk relasi log; parameter jadwal disimpan di dithane_schedules.',25,anchor='start')
-text(140,3080,'Relasi jadwal menunjukkan batas aktual 0..1 karena hanya satu baris diizinkan di seluruh tabel.',25,anchor='start')
-text(140,3140,'Sumber: database/schema.sql. Nama kolom dan tipe data mengikuti implementasi terbaru.',24,anchor='start',color='#526670')
-diagram=save('ERD_Hydrotech_Terbaru_9_Tabel')
+text(140,3030,'The Dithane category remains in settings for log references; schedule parameters are stored in dithane_schedules.',25,anchor='start')
+text(140,3080,'The schedule relationship uses 0..1 because the entire schedule table allows at most one row.',25,anchor='start')
+text(140,3140,'Source: database/schema.sql. Column names and types match the current implementation.',24,anchor='start',color='#526670')
+diagram=save('ERD_Hydrotech_English')
 
 # A separate reference sheet makes the exact column mapping easy to present.
 canvas(3900,3210)
-text(140,90,'HYDROTECH — PENJELASAN RELASI ERD',43,True,anchor='start',color='#155e63')
-text(140,153,'Pendamping diagram · seluruh foreign key dan aturan kardinalitas',28,anchor='start')
+text(140,90,'HYDROTECH - ERD RELATIONSHIPS',43,True,anchor='start',color='#155e63')
+text(140,153,'Diagram reference - all foreign keys and cardinality rules',28,anchor='start')
 y=240
 for rid,parent,child,*_ in paths:
     rel=next(r for r in relations if r[0]==parent and r[2]==child)
     _,pk,_,fk,optional=rel
     rect(140,y,3620,190,'#f3f8f9','#d2dfe3',1)
     text(180,y+46,f'{rid}   {child}.{fk}  →  {parent}.{pk}',34,True,anchor='start')
-    cardinality='Satu induk dapat dirujuk 0..N baris anak.' if child!='dithane_schedules' else 'Maksimal satu jadwal di seluruh sistem; satu pengguna dapat dirujuk 0..1 jadwal.'
+    cardinality='One parent may be referenced by zero to many child rows.' if child!='dithane_schedules' else 'At most one schedule in the entire system; a user may be referenced by zero or one schedule.'
     text(180,y+99,cardinality,28,anchor='start')
-    text(180,y+145,('Satu baris anak boleh tanpa induk (FK NULL), atau merujuk tepat satu induk.' if optional else 'Setiap baris anak wajib merujuk tepat satu induk (FK NOT NULL).'),27,anchor='start')
+    text(180,y+145,('A child may have no parent (NULL foreign key), or reference exactly one parent.' if optional else 'Each child must reference exactly one parent (NOT NULL foreign key).'),27,anchor='start')
     y+=220
-text(140,2300,'ATURAN REFERENSI DAN PENGHAPUSAN',31,True,anchor='start',color='#155e63')
+text(140,2300,'REFERENCE AND DELETION RULES',31,True,anchor='start',color='#155e63')
 notes=[
-'R1, R2, R3: pengguna dihapus → diubah_oleh_id menjadi NULL (ON DELETE SET NULL).',
-'R4–R9: data induk yang masih dirujuk tidak dapat dihapus (ON DELETE RESTRICT).',
-'settings.jenis adalah UNIQUE, sehingga sah menjadi tujuan foreign key walaupun bukan primary key.',
-'monitoring_logs: id_pembacaan_ph hanya untuk jenis ph; id_pembacaan_ppm hanya untuk jenis ppm.',
-'Monitoring dan notifikasi tidak boleh merujuk pH dan PPM sekaligus dalam satu baris.',
-'history_logs tidak mempunyai FK langsung ke pembacaan maupun jadwal Dithane.',
-'diubah_oleh_id hanya menunjukkan pengubah terakhir; bukan daftar seluruh perubahan.',
-'Garis ERD menjelaskan hubungan penyimpanan data, bukan bukti bahwa perangkat ESP32 sudah terhubung.'
+'R1, R2, R3: deleting a user sets updated_by to NULL (ON DELETE SET NULL).',
+'R4-R9: referenced parent rows cannot be deleted (ON DELETE RESTRICT).',
+'settings.type is UNIQUE and can be referenced by a foreign key even though it is not the primary key.',
+'monitoring_logs: ph_reading_id is only valid for type ph; ppm_reading_id is only valid for type ppm.',
+'Monitoring and notification rows cannot reference both pH and PPM readings at once.',
+'history_logs has no direct foreign key to readings or the Dithane schedule.',
+'updated_by identifies only the last editor; it is not a complete audit trail.',
+'ERD edges describe stored relationships; they do not establish a physical ESP32 connection.'
 ]
 for i,value in enumerate(notes):text(140,2370+i*70,value,28,anchor='start')
-text(140,3045,'Disusun berdasarkan skema proyek pada 29 September 2026.',26,anchor='start',color='#526670')
-reference=save('ERD_Hydrotech_Terbaru_Relasi')
-diagram.save(OUT/'ERD_Hydrotech_Terbaru_Lengkap.pdf','PDF',resolution=170,save_all=True,append_images=[reference])
-(OUT/'ERD_Hydrotech_Terbaru_Metadata.json').write_text(json.dumps({'tables':len(tables),'columns':sum(map(len,tables.values())),'foreign_keys':len(relations),'relationships':relations},indent=2),encoding='utf-8')
+text(140,3045,'Based on the project schema checked on 30 September 2026.',26,anchor='start',color='#526670')
+reference=save('ERD_Hydrotech_English_Relationships')
+diagram.save(OUT/'ERD_Hydrotech_English_Complete.pdf','PDF',resolution=170,save_all=True,append_images=[reference])
+(OUT/'ERD_Hydrotech_English_Metadata.json').write_text(json.dumps({'tables':len(tables),'columns':sum(map(len,tables.values())),'foreign_keys':len(relations),'relationships':relations},indent=2),encoding='utf-8')
 print('Selesai: PNG, SVG, dan PDF 2 halaman; 9 tabel / 60 kolom / 9 relasi.')
