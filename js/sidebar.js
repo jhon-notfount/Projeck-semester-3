@@ -125,9 +125,9 @@
     clock.dataset.sidebarClock = "";
     clock.setAttribute("aria-label", "Tanggal dan waktu WIB");
     clock.innerHTML = `
-      <div class="sidebar-clock-icon" aria-hidden="true">
-        <span></span>
-      </div>
+      <button class="sidebar-clock-icon" type="button" data-sidebar-calendar-toggle aria-haspopup="dialog" aria-expanded="false" aria-label="Buka kalender" title="Buka kalender">
+        <span aria-hidden="true"></span>
+      </button>
       <div>
         <span data-sidebar-date>Memuat tanggal...</span>
         <strong data-sidebar-time>--:--:-- WIB</strong>
@@ -161,6 +161,315 @@
 
     renderClock();
     window.setInterval(renderClock, 1000);
+
+    setupSidebarCalendar(sidebar, clock, clock.querySelector("[data-sidebar-calendar-toggle]"));
+  }
+
+  /* SIDEBAR CALENDAR: date picker mini yang muncul dekat kotak jam, hanya di dalam area sidebar. */
+  function setupSidebarCalendar(sidebar, clock, toggleButton) {
+    if (!toggleButton || sidebar.querySelector("[data-sidebar-calendar]")) return;
+
+    const MONTH_NAMES = [
+      "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+      "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+    ];
+    const WEEKDAY_SHORT = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
+
+    // Tanggal hari ini memakai zona Asia/Jakarta agar konsisten dengan jam WIB.
+    const todayParts = new Intl.DateTimeFormat("en-CA", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      timeZone: "Asia/Jakarta",
+    }).formatToParts(new Date()).reduce(function (acc, part) {
+      acc[part.type] = part.value;
+      return acc;
+    }, {});
+    const today = {
+      year: Number(todayParts.year),
+      month: Number(todayParts.month) - 1,
+      day: Number(todayParts.day),
+    };
+
+    const popup = document.createElement("div");
+    popup.className = "sidebar-calendar";
+    popup.dataset.sidebarCalendar = "";
+    popup.setAttribute("role", "dialog");
+    popup.setAttribute("aria-label", "Kalender");
+    popup.setAttribute("aria-hidden", "true");
+    popup.innerHTML = `
+      <div class="sidebar-calendar-head">
+        <button class="sidebar-calendar-nav" type="button" data-calendar-prev aria-label="Bulan sebelumnya">&#8249;</button>
+        <div class="sidebar-calendar-title">
+          <select data-calendar-month aria-label="Pilih bulan"></select>
+          <select data-calendar-year aria-label="Pilih tahun"></select>
+        </div>
+        <button class="sidebar-calendar-nav" type="button" data-calendar-next aria-label="Bulan berikutnya">&#8250;</button>
+      </div>
+      <div class="sidebar-calendar-weekdays" aria-hidden="true">
+        ${WEEKDAY_SHORT.map(function (day) { return `<span>${day}</span>`; }).join("")}
+      </div>
+      <div class="sidebar-calendar-grid" data-calendar-grid></div>
+      <div class="sidebar-calendar-foot" data-calendar-foot>Belum ada tanggal dipilih</div>
+    `;
+    sidebar.appendChild(popup);
+
+    const monthSelect = popup.querySelector("[data-calendar-month]");
+    const yearSelect = popup.querySelector("[data-calendar-year]");
+    const grid = popup.querySelector("[data-calendar-grid]");
+    const foot = popup.querySelector("[data-calendar-foot]");
+
+    let view = { year: today.year, month: today.month };
+    let selected = null;
+    let isOpen = false;
+
+    MONTH_NAMES.forEach(function (name, index) {
+      const option = document.createElement("option");
+      option.value = String(index);
+      option.textContent = name;
+      monthSelect.appendChild(option);
+    });
+
+    function ensureYearOptions(year) {
+      const first = year - 12;
+      const last = year + 12;
+      const currentFirst = Number(yearSelect.options[0]?.value);
+      const currentLast = Number(yearSelect.options[yearSelect.options.length - 1]?.value);
+      if (yearSelect.options.length === last - first + 1 && currentFirst === first && currentLast === last) return;
+      const previousValue = yearSelect.value;
+      yearSelect.innerHTML = "";
+      for (let y = first; y <= last; y += 1) {
+        const option = document.createElement("option");
+        option.value = String(y);
+        option.textContent = String(y);
+        yearSelect.appendChild(option);
+      }
+      yearSelect.value = previousValue === String(year) ? String(year) : yearSelect.value;
+      if (!yearSelect.value) yearSelect.value = String(year);
+    }
+
+    function isSameDate(a, b) {
+      return a && b && a.year === b.year && a.month === b.month && a.day === b.day;
+    }
+
+    function renderCalendar() {
+      monthSelect.value = String(view.month);
+      ensureYearOptions(view.year);
+      yearSelect.value = String(view.year);
+
+      grid.innerHTML = "";
+      const firstWeekday = (new Date(view.year, view.month, 1).getDay() + 6) % 7; // Senin = 0
+      const daysInMonth = new Date(view.year, view.month + 1, 0).getDate();
+      const daysInPrevMonth = new Date(view.year, view.month, 0).getDate();
+      const totalCells = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
+
+      for (let cell = 0; cell < totalCells; cell += 1) {
+        const dayButton = document.createElement("button");
+        dayButton.className = "sidebar-calendar-day";
+        dayButton.type = "button";
+
+        if (cell < firstWeekday) {
+          const day = daysInPrevMonth - firstWeekday + 1 + cell;
+          dayButton.textContent = String(day);
+          dayButton.classList.add("muted");
+          dayButton.disabled = true;
+          dayButton.setAttribute("aria-label", `Tanggal lain di bulan sebelumnya`);
+        } else if (cell >= firstWeekday + daysInMonth) {
+          dayButton.textContent = String(cell - firstWeekday - daysInMonth + 1);
+          dayButton.classList.add("muted");
+          dayButton.disabled = true;
+          dayButton.setAttribute("aria-label", `Tanggal lain di bulan berikutnya`);
+        } else {
+          const day = cell - firstWeekday + 1;
+          dayButton.textContent = String(day);
+          const date = { year: view.year, month: view.month, day: day };
+          if (isSameDate(date, today)) dayButton.classList.add("today");
+          if (isSameDate(date, selected)) {
+            dayButton.classList.add("selected");
+            dayButton.setAttribute("aria-pressed", "true");
+          }
+          dayButton.addEventListener("click", function (event) {
+            // Grid akan di-render ulang (tombol ini tergantikan), jadi hentikan
+            // propagasi agar listener klik-dokumen tidak mengira klik di luar popup.
+            event.stopPropagation();
+            selected = date;
+            renderCalendar();
+            updateFoot();
+          });
+        }
+
+        grid.appendChild(dayButton);
+      }
+    }
+
+    function updateFoot() {
+      if (!selected) {
+        foot.textContent = "Belum ada tanggal dipilih";
+        return;
+      }
+      foot.textContent = `Tanggal dipilih: ${WEEKDAY_SHORT[(new Date(selected.year, selected.month, selected.day).getDay() + 6) % 7]}, ${selected.day} ${MONTH_NAMES[selected.month]} ${selected.year}`;
+    }
+
+    function positionCalendar() {
+      const clockTop = clock.offsetTop; // offsetParent = .sidebar (fixed)
+      const clockHeight = clock.offsetHeight;
+      const margin = 10;
+      const spaceBelow = sidebar.clientHeight - (clockTop + clockHeight);
+      const popupHeight = popup.offsetHeight;
+      let top;
+      if (popupHeight + margin <= spaceBelow) {
+        top = clockTop + clockHeight + margin; // cukup ruang: tampil di bawah kotak jam
+      } else if (popupHeight + margin <= clockTop) {
+        top = clockTop - popupHeight - margin; // tidak cukup: tampil di atas kotak jam
+      } else {
+        top = Math.max(margin, sidebar.clientHeight - popupHeight - margin); // layar pendek: diapit di dalam sidebar
+      }
+      popup.style.top = `${top}px`;
+    }
+
+    function openCalendar() {
+      if (isOpen) return;
+      const focusDate = selected || today;
+      view = { year: focusDate.year, month: focusDate.month };
+      renderCalendar();
+      positionCalendar();
+      popup.classList.add("show");
+      popup.setAttribute("aria-hidden", "false");
+      toggleButton.setAttribute("aria-expanded", "true");
+      isOpen = true;
+      monthSelect.focus({ preventScroll: true });
+    }
+
+    function closeCalendar() {
+      if (!isOpen) return;
+      popup.classList.remove("show");
+      popup.setAttribute("aria-hidden", "true");
+      toggleButton.setAttribute("aria-expanded", "false");
+      isOpen = false;
+    }
+
+    toggleButton.addEventListener("click", function () {
+      if (isOpen) closeCalendar();
+      else openCalendar();
+    });
+
+    popup.querySelector("[data-calendar-prev]").addEventListener("click", function () {
+      view.month -= 1;
+      if (view.month < 0) {
+        view.month = 11;
+        view.year -= 1;
+      }
+      renderCalendar();
+      positionCalendar();
+    });
+
+    popup.querySelector("[data-calendar-next]").addEventListener("click", function () {
+      view.month += 1;
+      if (view.month > 11) {
+        view.month = 0;
+        view.year += 1;
+      }
+      renderCalendar();
+      positionCalendar();
+    });
+
+    monthSelect.addEventListener("change", function () {
+      view.month = Number(monthSelect.value);
+      renderCalendar();
+      positionCalendar();
+    });
+
+    yearSelect.addEventListener("change", function () {
+      view.year = Number(yearSelect.value);
+      renderCalendar();
+      positionCalendar();
+    });
+
+    // Tutup saat klik di luar kalender dan tombol ikon kalender.
+    document.addEventListener("click", function (event) {
+      if (!isOpen) return;
+      if (popup.contains(event.target) || toggleButton.contains(event.target)) return;
+      closeCalendar();
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && isOpen) {
+        closeCalendar();
+        toggleButton.focus();
+      }
+    });
+
+    window.addEventListener("resize", function () {
+      if (isOpen) positionCalendar();
+    });
+  }
+
+  /* DEVICE STATUS INDICATOR: komponen header bersama yang menampilkan status
+     koneksi ESP32 (heartbeat dari backend). Ditanam otomatis di semua halaman
+     yang punya topbar admin, pada urutan: status -> lonceng -> profil. */
+  function setupDeviceStatusIndicator() {
+    const adminArea = document.querySelector(".topbar .admin");
+    if (!adminArea || document.querySelector("[data-device-status]")) return;
+
+    // Endpoint berbasis heartbeat perangkat (data sensor terakhir di database).
+    const STATUS_URL = new URL("../api/device/status.php", window.location.href);
+    STATUS_URL.searchParams.set("t", Date.now()); // anti-cache
+    const POLL_INTERVAL = 30000; // 30 detik, sejalan dengan refresh dashboard.
+    const STATUS_TEXT = {
+      online: "Perangkat Online",
+      offline: "Perangkat Offline",
+      never_connected: "Belum Terhubung",
+      checking: "Memeriksa...",
+    };
+
+    const chip = document.createElement("div");
+    chip.className = "device-status is-checking";
+    chip.dataset.deviceStatus = "";
+    chip.setAttribute("role", "status");
+    chip.setAttribute("aria-live", "polite");
+    chip.setAttribute("aria-label", "Status perangkat ESP32");
+    chip.title = "Status koneksi perangkat ESP32";
+    chip.innerHTML = `
+      <span class="device-status-dot" aria-hidden="true"></span>
+      <span class="device-status-label" data-device-status-label>${STATUS_TEXT.checking}</span>
+    `;
+
+    // Urutan header: indikator status paling kiri, lalu lonceng, lalu profil.
+    adminArea.insertBefore(chip, adminArea.firstChild);
+
+    const label = chip.querySelector("[data-device-status-label]");
+
+    function applyStatus(status) {
+      chip.classList.remove("is-checking", "is-online", "is-offline", "is-never");
+      const state = STATUS_TEXT[status] ? status : "checking";
+      chip.classList.add(`is-${state}`);
+      if (label) label.textContent = STATUS_TEXT[state];
+    }
+
+    async function refreshDeviceStatus() {
+      try {
+        STATUS_URL.searchParams.set("t", Date.now());
+        const response = await fetch(STATUS_URL, { cache: "no-store" });
+        const result = await response.json();
+        applyStatus(result.success && result.data ? result.data.status : "checking");
+      } catch (error) {
+        // Gagal menghubungi server: pertahankan status memeriksa (kuning).
+        applyStatus("checking");
+      }
+    }
+
+    refreshDeviceStatus();
+    window.setInterval(refreshDeviceStatus, POLL_INTERVAL);
+  }
+
+  /* Indikator ditanam setelah dokumen selesai di-parse karena topbar berada
+     setelah tag <script> sidebar di setiap halaman. */
+  function initDeviceStatusWhenReady() {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", setupDeviceStatusIndicator, { once: true });
+    } else {
+      setupDeviceStatusIndicator();
+    }
   }
 
   function initializeSidebar(root, html) {
@@ -175,6 +484,7 @@
     setActiveNavigation(sidebar);
     setupDropdown(sidebar);
     setupSidebarClock(sidebar);
+    initDeviceStatusWhenReady();
 
     window.toggleDropdown = toggleDropdown;
     window.closeDropdown = closeDropdown;

@@ -28,6 +28,7 @@ function getProfileVal($rows, $label, array $aliases = []) {
     <title>Profile</title>
     <?php echo csrfMetaTag(); ?>
     <link rel="stylesheet" href="../css/profile.css" />
+    <link rel="stylesheet" href="../css/account-modal.css" />
     <style>
       .edit-btn {
         background-color: #0d6efd;
@@ -121,6 +122,19 @@ function getProfileVal($rows, $label, array $aliases = []) {
                   <span>Informasi Pengelola</span>
                   <h3>Data Pemilik</h3>
                 </div>
+                <!-- ACCOUNT SETTINGS: pengelolaan username/password akun login. -->
+                <button
+                  type="button"
+                  class="account-settings-btn"
+                  data-account-settings
+                  data-username="<?php echo htmlspecialchars($_SESSION['username'] ?? ''); ?>"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  Pengaturan Akun
+                </button>
               </div>
               <div class="info-line">
                 <span class="li">N</span>
@@ -220,6 +234,16 @@ function getProfileVal($rows, $label, array $aliases = []) {
     <!-- PAGE SCRIPTS: library dialog dan fitur global dashboard. -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../js/confirm-modal.js"></script>
+    <script src="../js/account-settings.js"></script>
+    <script>
+      /* ACCOUNT SETTINGS TRIGGER: membuka pop-up pengaturan akun dua tab.
+         Username berasal dari sesi login (di-render server), bukan input. */
+      document.querySelector("[data-account-settings]").addEventListener("click", function () {
+        window.HydrotechAccount.openSettingsModal({
+          username: this.dataset.username,
+        });
+      });
+    </script>
     <script>
       let isEditMode = false;
       async function toggleEditMode() {

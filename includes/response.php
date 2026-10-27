@@ -34,12 +34,13 @@ function successResponse($data = null, $message = 'Success') {
 
 /**
  * Send error response
- * 
+ *
  * @param string $message Error message
  * @param int $statusCode HTTP status code
+ * @param array $extra Optional extra payload (mis. penanda field bermasalah)
  */
-function errorResponse($message = 'Error', $statusCode = 400) {
-    jsonResponse(['success' => false, 'message' => $message], $statusCode);
+function errorResponse($message = 'Error', $statusCode = 400, $extra = []) {
+    jsonResponse(array_merge(['success' => false, 'message' => $message], $extra), $statusCode);
 }
 
 /**

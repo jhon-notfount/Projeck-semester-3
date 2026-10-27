@@ -20,6 +20,11 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+/* DATABASE: dimuat di scope file (bukan di dalam fungsi) agar variabel
+   koneksi $DB_* terdaftar sebagai global. Halaman yang memanggil
+   requireAuth() sebelum config/database.php tetap aman karena require_once
+   bersifat idempoten. */
+require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/csrf.php';
 
 /**
@@ -37,6 +42,38 @@ function requireAuth() {
         $loginUrl = getLoginUrl();
         header("Location: $loginUrl");
         exit;
+    }
+
+    /* SESSION INVALIDATION: setelah password diganti, semua sesi yang lahir
+       sebelum perubahan ditolak (menanggapi kebutuhan keamanan akun). Sesi
+       yang melakukan perubahan menyimpan pwd_epoch terbaru sehingga tetap
+       sah. Pemeriksaan berupa lookup primary key yang murah; fail-open bila
+       database bermasalah agar tidak merusak alur lain. */
+    try {
+        $pdoAuth = getDBConnection();
+        $stmtPwd = $pdoAuth->prepare("SELECT password_changed_at FROM users WHERE user_id = ?");
+        $stmtPwd->execute([$_SESSION['user_id']]);
+        $pwdChangedAt = $stmtPwd->fetchColumn();
+        if ($pwdChangedAt !== false && $pwdChangedAt !== null) {
+            $changedEpoch = strtotime((string)$pwdChangedAt); // default TZ = Asia/Jakarta (database.php)
+            $sessionEpoch = isset($_SESSION['pwd_epoch']) ? (int)$_SESSION['pwd_epoch'] : 0;
+            if ($changedEpoch === false || $changedEpoch > $sessionEpoch + 2) {
+                // Perubahan tercatat lebih baru daripada sesi ini -> sesi ditolak.
+                session_unset();
+                session_destroy();
+                if (isApiRequest()) {
+                    http_response_code(401);
+                    header('Content-Type: application/json; charset=utf-8');
+                    echo json_encode(['success' => false, 'message' => 'Sesi berakhir karena password diubah. Silakan login kembali.']);
+                    exit;
+                }
+                header("Location: " . getLoginUrl());
+                exit;
+            }
+            $_SESSION['pwd_epoch'] = max($sessionEpoch, $changedEpoch);
+        }
+    } catch (Throwable $e) {
+        error_log('Session invalidation check skipped: ' . $e->getMessage());
     }
 }
 

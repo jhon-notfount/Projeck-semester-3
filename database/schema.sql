@@ -16,7 +16,26 @@ CREATE TABLE IF NOT EXISTS `users` (
     `password` VARCHAR(255) NOT NULL,
     `email` VARCHAR(100) DEFAULT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `password_changed_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Waktu ganti password terakhir; sesi lebih tua otomatis logout'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Riwayat perubahan akun (username/password dari halaman login maupun profile).
+-- Relasi 1:N: satu users memiliki banyak account_change_logs melalui user_id.
+-- Tidak pernah menyimpan password (lama/baru) dalam bentuk apa pun.
+CREATE TABLE IF NOT EXISTS `account_change_logs` (
+    `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NULL COMMENT 'Merujuk users.user_id; NULL bila username tidak dikenal',
+    `action_type` VARCHAR(30) NOT NULL COMMENT 'username_change / password_change',
+    `source` VARCHAR(20) NOT NULL COMMENT 'login / profile',
+    `old_username` VARCHAR(100) NULL,
+    `new_username` VARCHAR(100) NULL,
+    `status` VARCHAR(20) NOT NULL COMMENT 'success / failed',
+    `ip_address` VARCHAR(45) NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_account_logs_user` (`user_id`),
+    INDEX `idx_account_logs_created` (`created_at`),
+    CONSTRAINT `fk_account_logs_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Konfigurasi rentang PPM/pH (jadwal Dithane ada di tabel dithane_schedules).

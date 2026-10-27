@@ -7,8 +7,8 @@
  */
 
 $DB_HOST = getenv('HYDROTECH_DB_HOST') !== false ? getenv('HYDROTECH_DB_HOST') : 'localhost';
-$DB_USER = getenv('HYDROTECH_DB_USER') !== false ? getenv('HYDROTECH_DB_USER') : 'root';
-$DB_PASS = getenv('HYDROTECH_DB_PASS') !== false ? getenv('HYDROTECH_DB_PASS') : '';
+$DB_USER = getenv('HYDROTECH_DB_USER') !== false ? getenv('HYDROTECH_DB_USER') : 'Jhon';
+$DB_PASS = getenv('HYDROTECH_DB_PASS') !== false ? getenv('HYDROTECH_DB_PASS') : '#Jhon45';
 $DB_NAME = getenv('HYDROTECH_DB_NAME') !== false ? getenv('HYDROTECH_DB_NAME') : 'hydrotech';
 $DB_CHARSET = 'utf8mb4';
 
@@ -31,14 +31,27 @@ function getDBConnection() {
     if ($pdo === null) {
         global $DB_HOST, $DB_USER, $DB_PASS, $DB_NAME, $DB_CHARSET, $DB_TIMEZONE_OFFSET;
 
-        $dsn = "mysql:host={$DB_HOST};dbname={$DB_NAME};charset={$DB_CHARSET}";
-
         try {
-            $pdo = new PDO($dsn, $DB_USER, $DB_PASS, [
-                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES   => false,
-            ]);
+            // CHARSET: utamakan utf8mb4; bila server MySQL lama tidak mengenalinya
+            // (SQLSTATE HY000 2019 Unknown character set), ulangi koneksi tanpa
+            // charset di DSN lalu pakai SET NAMES utf8 agar tetap kompatibel.
+            try {
+                $pdo = new PDO("mysql:host={$DB_HOST};dbname={$DB_NAME};charset={$DB_CHARSET}", $DB_USER, $DB_PASS, [
+                    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES   => false,
+                ]);
+            } catch (PDOException $charsetError) {
+                if (stripos($charsetError->getMessage(), 'Unknown character set') === false) {
+                    throw $charsetError;
+                }
+                $pdo = new PDO("mysql:host={$DB_HOST};dbname={$DB_NAME}", $DB_USER, $DB_PASS, [
+                    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES   => false,
+                ]);
+                $pdo->exec('SET NAMES utf8');
+            }
             // Kunci zona waktu sesi MySQL agar string TIMESTAMP selalu WIB,
             // konsisten dengan date_default_timezone_set di atas.
             $pdo->exec("SET time_zone = '{$DB_TIMEZONE_OFFSET}'");

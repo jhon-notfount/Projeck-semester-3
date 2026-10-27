@@ -161,6 +161,74 @@ select {
 .bell.read:after {
   display: none;
 }
+/* DEVICE STATUS INDICATOR: indikator ON/OFF perangkat ESP32 di topbar admin.
+   Komponen bersama semua halaman; urutan header: status -> lonceng -> profil. */
+.device-status {
+  height: 36px;
+  border: 1px solid #e2eee7;
+  border-radius: 13px;
+  background: #f7fbf9;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  box-shadow: 0 8px 18px rgba(24, 56, 36, 0.06);
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.device-status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #aab7af;
+  flex: 0 0 auto;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+.device-status-label {
+  color: #275d29;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+.device-status.is-online .device-status-dot {
+  background: #07a64f;
+  box-shadow: 0 0 0 4px rgba(7, 166, 79, 0.12);
+}
+.device-status.is-online .device-status-label {
+  color: #058f47;
+}
+.device-status.is-offline .device-status-dot {
+  background: #e53935;
+  box-shadow: 0 0 0 4px rgba(229, 57, 53, 0.12);
+}
+.device-status.is-offline .device-status-label {
+  color: #b92f2f;
+}
+.device-status.is-never .device-status-dot {
+  background: #aab7af;
+  box-shadow: 0 0 0 4px rgba(170, 183, 175, 0.16);
+}
+.device-status.is-never .device-status-label {
+  color: #6d7a72;
+}
+.device-status.is-checking .device-status-dot {
+  background: #f59e0b;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.14);
+  animation: deviceStatusPulse 1.2s ease-in-out infinite;
+}
+.device-status.is-checking .device-status-label {
+  color: #9a6a0b;
+}
+@keyframes deviceStatusPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
 .notification-panel {
   position: fixed;
   top: 72px;
@@ -949,4 +1017,22 @@ body:not(.login-page) {
   );
   border-color: rgba(215, 233, 222, 0.92);
   box-shadow: 0 10px 22px rgba(24, 56, 36, 0.08);
+}
+
+/* RESPONSIVE: pada layar sempit indikator menjadi versi ringkas hanya titik
+   status (detail tetap tersedia lewat title tooltip), sejalan dengan
+   penyesuaian bell dan kartu profil pada mode mobile. */
+@media (max-width: 760px) {
+  .device-status {
+    height: 34px;
+    width: 34px;
+    justify-content: center;
+    padding: 0;
+    border-radius: 12px;
+    gap: 0;
+  }
+
+  .device-status-label {
+    display: none;
+  }
 }

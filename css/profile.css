@@ -159,6 +159,43 @@
   font-size: 20px;
   letter-spacing: 0;
 }
+/* ACCOUNT SETTINGS BUTTON: tombol pengaturan akun di header card Data Pemilik. */
+.account-settings-btn {
+  margin-left: auto;
+  min-height: 38px;
+  border: 1px solid rgba(7, 166, 79, 0.28);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #eaf9ef, #f4fff7);
+  color: #058f47;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 13px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  flex: 0 0 auto;
+  box-shadow: 0 8px 16px rgba(7, 166, 79, 0.12);
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+.account-settings-btn svg {
+  width: 14px;
+  height: 14px;
+}
+.account-settings-btn:hover {
+  background: linear-gradient(135deg, var(--green), #20c768);
+  color: white;
+  box-shadow: 0 12px 22px rgba(0, 166, 79, 0.28);
+  transform: translateY(-1px);
+}
+.account-settings-btn:active {
+  transform: scale(0.97);
+}
 /* PROFILE INFO ROWS: baris detail data di dalam kartu profile. */
 .info-line {
   display: flex;
@@ -420,6 +457,13 @@
     min-height: 48px;
     gap: 11px;
     padding-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .account-settings-btn {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    margin-left: 0;
   }
   .round-user,
   .round-code {

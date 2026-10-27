@@ -14,6 +14,7 @@ if (isset($_SESSION['user_id'])) {
     <title>Hydrotech Login</title>
     <?php echo csrfMetaTag(); ?>
     <link rel="stylesheet" href="../css/login.css" />
+    <link rel="stylesheet" href="../css/account-modal.css" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
@@ -178,6 +179,12 @@ if (isset($_SESSION['user_id'])) {
           </button>
         </label>
 
+        <!-- RESET PASSWORD: buka pop-up verifikasi username + password lama. -->
+        <button type="button" class="reset-link" id="resetPasswordLink">
+          <i class="fa-solid fa-key" aria-hidden="true"></i>
+          Reset Password
+        </button>
+
         <div class="login-hint">
           <span><i class="fa-solid fa-shield-halved"></i></span>
           Akses khusus admin Hydrotech
@@ -191,5 +198,13 @@ if (isset($_SESSION['user_id'])) {
     <!-- PAGE SCRIPTS: library dialog dan fitur global dashboard. -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../js/confirm-modal.js"></script>
+    <script src="../js/account-settings.js"></script>
+    <script>
+      /* RESET PASSWORD TRIGGER: membuka pop-up perubahan password dari halaman login. */
+      document.getElementById("resetPasswordLink").addEventListener("click", function () {
+        const currentUsername = document.getElementById("username").value.trim();
+        window.HydrotechAccount.openResetModal({ username: currentUsername });
+      });
+    </script>
   </body>
 </html>

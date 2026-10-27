@@ -34,6 +34,8 @@ try {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['email'] = $user['email'];
+        /* Sesi yang lahir setelah ganti password terakhir dianggap sah. */
+        $_SESSION['pwd_epoch'] = time();
 
         unset($user['password']);
         successResponse($user, 'Login successful');
