@@ -182,7 +182,7 @@ if (isset($_SESSION['user_id'])) {
         <!-- RESET PASSWORD: buka pop-up verifikasi username + password lama. -->
         <button type="button" class="reset-link" id="resetPasswordLink">
           <i class="fa-solid fa-key" aria-hidden="true"></i>
-          Reset Password
+          ubah Password
         </button>
 
         <div class="login-hint">

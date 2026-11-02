@@ -114,9 +114,17 @@ function activityIcon(string $type): string {
               </p>
             </div>
             <div class="hero-metrics">
-              <div>
-                <small>Status Sistem</small>
-                <b>Aktif</b>
+              <div
+                class="api-key-metric"
+                id="apiKeyTrigger"
+                role="button"
+                tabindex="0"
+                aria-haspopup="dialog"
+                style="cursor: pointer"
+                title="Klik untuk melihat API Base URL & API Key"
+              >
+                <small>API Key</small>
+                <b>Klik untuk melihat</b>
               </div>
               <div>
                 <small>Update Terakhir</small>
@@ -267,5 +275,125 @@ function activityIcon(string $type): string {
     <script src="../js/dashboard-activity.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="../js/dashboard-live.js?v=2"></script>
+    <!-- API KEY POPUP: kartu "API Key" di hero membuka dialog berisi
+         API Base URL & API Key yang aktif (dihitung server, bukan
+         localhost), keduanya bisa disalin. Menggunakan SweetAlert2 yang
+         sudah termuat di halaman ini; tanpa CSS tambahan. -->
+    <script>
+      (function () {
+        const trigger = document.getElementById("apiKeyTrigger");
+        if (!trigger || typeof Swal === "undefined") return;
+
+        const CRED_URL = new URL(
+          "../api/device/credentials.php",
+          window.location.href
+        );
+
+        function escapeHtml(text) {
+          return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        }
+
+        function buildBody(data) {
+          const note = data.note
+            ? `<div style="margin:0 0 12px;padding:9px 11px;border-left:3px solid #e2a03f;background:#fdf6e6;border-radius:6px;font-size:13px;line-height:1.5;font-family:system-ui;color:#5a4a2a">${escapeHtml(data.note)}</div>`
+            : "";
+          const row = (label, id, value) => `
+            <div style="margin:0 0 12px">
+              <div style="font-family:system-ui;color:#666;font-size:12px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px">${label}</div>
+              <div style="display:flex;align-items:stretch;gap:8px">
+                <code id="${id}" style="flex:1;overflow:auto;padding:9px 11px;background:#0d1526;color:#cfe3ff;border-radius:6px;font-size:13px;line-height:1.4;max-width:100% ;word-break:break-all">${escapeHtml(value)}</code>
+                <button type="button" data-cred-copy="#${id}" style="padding:8px 14px;border:0;border-radius:6px;background:#2e7d32;color:#fff;cursor:pointer;font-size:13px;white-space:nowrap">SALIN</button>
+              </div>
+            </div>`;
+          return (
+            note +
+            row("API BASE URL", "credUrl", data.api_base_url) +
+            row("API KEY", "credKey", data.api_key) +
+            `<p style="margin:0;font-family:system-ui;color:#999;font-size:12px">Nilai ini sensitif — jangan dibagikan di luar tim.</p>`
+          );
+        }
+
+        /* Tombol SALIN: satu delegasi global menangani semua baris.   */
+        document.addEventListener("click", function (event) {
+          const btn = event.target.closest("[data-cred-copy]");
+          if (!btn) return;
+          const target = document.querySelector(btn.getAttribute("data-cred-copy"));
+          if (!target) return;
+          const flash = function (ok) {
+            btn.textContent = ok ? "Tersalin ✓" : "Gagal";
+            setTimeout(function () {
+              btn.textContent = "SALIN";
+            }, 1500);
+          };
+          if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard
+              .writeText(target.textContent)
+              .then(
+                function () { flash(true); },
+                function () { flash(false); }
+              );
+          } else {
+            /* HTTP LAN: clipboard API sering diblok oleh browser —
+               gunakan tokoh fallback textarea + execCommand.           */
+            const ta = document.createElement("textarea");
+            ta.value = target.textContent;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+              document.execCommand("copy");
+              flash(true);
+            } catch (error) {
+              flash(false);
+            }
+            document.body.removeChild(ta);
+          }
+        });
+
+        function openApiKeyPopup() {
+          Swal.fire({
+            title: "API Perangkat ESP32",
+            html: `<p style="font-family:system-ui;color:#666;font-size:14px;margin:0">Memuat konfigurasi ...</p>`,
+            buttonsStyling: false,
+            showConfirmButton: false,
+            showCloseButton: true,
+            width: 580,
+            didOpen: function () {
+              fetch(CRED_URL, { cache: "no-store" })
+                .then(function (response) { return response.json(); })
+                .then(function (result) {
+                  if (!result.success || !result.data) {
+                    throw new Error(result.message || "Respon tidak dikenal.");
+                  }
+                  const container = Swal.getHtmlContainer();
+                  if (container) container.innerHTML = buildBody(result.data);
+                })
+                .catch(function (error) {
+                  Swal.close();
+                  Swal.fire({
+                    icon: "error",
+                    title: "Gagal memuat",
+                    text: String(error && error.message ? error.message : error),
+                    confirmButtonColor: "#2e7d32",
+                  });
+                });
+            },
+          });
+        }
+
+        trigger.addEventListener("click", openApiKeyPopup);
+        trigger.addEventListener("keydown", function (event) {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openApiKeyPopup();
+          }
+        });
+      })();
+    </script>
   </body>
 </html>
