@@ -43,9 +43,26 @@ try {
     }
 
     $sql = file_get_contents($schemaFile);
-    // Remove SQL comments and split by semicolons
+    // Remove SQL comments, then split on top-level semicolons (keadaan aman
+    // terhadap ';' di dalam string COMMENT).
     $sql = preg_replace('/--.*$/m', '', $sql);
-    $statements = array_filter(array_map('trim', explode(';', $sql)));
+    $statements = [];
+    $buffer = '';
+    $inString = false;
+    $length = strlen($sql);
+    for ($i = 0; $i < $length; $i++) {
+        $char = $sql[$i];
+        if ($char === "'" && ($i === 0 || $sql[$i - 1] !== '\\')) {
+            $inString = !$inString;
+        }
+        if ($char === ';' && !$inString) {
+            if (trim($buffer) !== '') $statements[] = trim($buffer);
+            $buffer = '';
+            continue;
+        }
+        $buffer .= $char;
+    }
+    if (trim($buffer) !== '') $statements[] = trim($buffer);
     foreach ($statements as $stmt) {
         if (!empty($stmt)) {
             $pdo->exec($stmt);
@@ -61,6 +78,10 @@ try {
          ON DUPLICATE KEY UPDATE password = VALUES(password), email = VALUES(email)"
     );
     $stmt->execute(['hydrotech', $passwordHash, 'admin@hydrotech.com']);
+    $adminId = (int)$pdo->lastInsertId();
+    if (!$adminId) {
+        $adminId = (int)$pdo->query("SELECT user_id FROM users WHERE username = 'hydrotech'")->fetchColumn();
+    }
     echo "[OK] Admin user created (username: hydrotech, password: Admin123).\n";
 
     // ── 5. Seed Settings (jadwal Dithane disimpan di tabel dithane_schedules) ──
@@ -69,11 +90,11 @@ try {
         ['ph',  json_encode(['min' => '5,5', 'max' => '6,5'])],
     ];
     $stmt = $pdo->prepare(
-        "INSERT INTO settings (type, config_json) VALUES (?, ?)
+        "INSERT INTO settings (type, config_json, updated_by) VALUES (?, ?, ?)
          ON DUPLICATE KEY UPDATE config_json = VALUES(config_json)"
     );
     foreach ($settingsData as $s) {
-        $stmt->execute($s);
+        $stmt->execute([$s[0], $s[1], $adminId]);
     }
     echo "[OK] Settings seeded (PPM, pH defaults).\n";
 
@@ -89,15 +110,15 @@ try {
         ['team',  'Alamat',       'Sumbersari Jember',                       4],
     ];
     $stmt = $pdo->prepare(
-        "INSERT INTO profile (section, label, value, sort_order) VALUES (?, ?, ?, ?)"
+        "INSERT INTO profile (user_id, section, label, value, sort_order) VALUES (?, ?, ?, ?, ?)"
     );
     foreach ($profileData as $row) {
-        $stmt->execute($row);
+        $stmt->execute([$adminId, $row[0], $row[1], $row[2], $row[3]]);
     }
     echo "[OK] Profile data seeded (8 rows: 4 owner + 4 team).\n";
 
     // ── 7. Default jadwal Dithane ──
-    $pdo->exec("INSERT INTO dithane_schedules (schedule_id,interval_hours,duration_seconds,start_time) VALUES (1,48,10,'08:00:00')");
+    $pdo->exec("INSERT INTO dithane_schedules (schedule_id,interval_hours,duration_seconds,start_time,updated_by) VALUES (1,48,10,'08:00:00',$adminId)");
     echo "[OK] Jadwal Dithane default dibuat (interval 48 jam, 10 detik, mulai 08:00).\n";
 
     // ── Done ──

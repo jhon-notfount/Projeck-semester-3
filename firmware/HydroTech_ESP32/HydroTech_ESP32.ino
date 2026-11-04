@@ -27,10 +27,10 @@
  *     mengirim timestamp. NTP hanya untuk jadwal Dithane & counter harian.
  *   - Heartbeat perangkat = sensor_readings tersimpan; batas online
  *     300 s (api/device/status.php) => UPLOAD_INTERVAL_MS < 300000 ms.
- *   - TIDAK ADA endpoint pompa di backend saat ini. Seluruh pompa
- *     dikendalikan LOKAL dengan parameter aman; pelaporan eksekusi
- *     memakai patch OPSIONAL (firmware/patches/). Endpoint 404 =>
- *     otomatis menonaktifkan pelaporan (tidak mengganggu sistem).
+ *   - Endpoint laporan pompa: api/device/report.php (POST {pump, state,
+ *     duration_s, device_seen}, X-API-Key). Seluruh pompa dikendalikan
+ *     LOKAL dengan parameter aman. Endpoint 404 => otomatis menonaktifkan
+ *     pelaporan (tidak mengganggu sistem).
  *   - LOGIKA POMPA (3 kategori: rendah/normal/tinggi):
  *       PPM  : < min â†’ dosis terus (bertahap) HINGGA masuk rentang;
  *              normal â†’ pompa mati; > maks â†’ pompa mati + peringatan.
@@ -1125,12 +1125,17 @@ bool getRemoteConfig() {
 }
 
 /* =====================================================================
- *  9. LAPORAN EKSEKUSI POMPA (patch OPSIONAL; auto-off bila 404/err)
+ *  9. LAPORAN EKSEKUSI POMPA (endpoint api/device/report.php)
  *
- *  state "started"   : ditulis saat relay menyala -> notifikasi web
- *  state "completed" : ditulis hanya setelah durasi aktual penuh ->
- *                       log monitoring_logs dengan bukti durasi
- *  Kedua kirim DIDE-DUP SERVER (patch) â€” HTTP tidak di-retry.
+ *  state "started"   : dikirim saat relay menyala -> SERVER membuat SATU
+ *                       catatan monitoring_logs (Data Aktivitas Sistem,
+ *                       status "Menyala") + notifikasi web
+ *  state "completed" : dikirim setelah durasi aktual penuh ->
+ *                       notifikasi web saja, TANPA catatan kedua
+ *  Satu catatan aktivitas = satu kali pompa MULAI menyala. Tidak ada
+ *  catatan berkala selama pompa tetap menyala, dan tidak ada catatan
+ *  dari pembacaan sensor / pengecekan jadwal. Laporan ulang < 60 detik
+ *  dide-dup SERVER — HTTP tidak di-retry.
  * ===================================================================== */
 
 void reportPump(const char* pump, const char* state, long durationS) {

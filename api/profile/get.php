@@ -9,7 +9,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') { errorResponse('Method not allowed', 
 try {
     $pdo = getDBConnection();
     
-    $stmt = $pdo->query("SELECT `profile_id` AS `id`, `section`, `label`, `value`, `sort_order` FROM profile ORDER BY section, sort_order");
+    $stmt = $pdo->prepare("SELECT `profile_id` AS `id`, `section`, `label`, `value`, `sort_order` FROM profile WHERE user_id = ? ORDER BY section, sort_order");
+    $stmt->execute([$_SESSION['user_id']]);
     $profiles = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     $result = [

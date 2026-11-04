@@ -1,13 +1,21 @@
--- Hydrotech: 7 tabel sesuai kebutuhan sistem, tanpa foreign key paksaan.
+-- Hydrotech: 8 tabel sesuai kebutuhan sistem (relasi utama dengan foreign key).
 -- Satu tabel sensor_readings (pH + PPM per pengukuran), kategori log memakai
 -- ENUM, monitoring_logs sebagai satu-satunya log (dashboard, pengaturan, dan
--- history membaca tabel yang sama), tanpa relasi yang dipaksa.
+-- history membaca tabel yang sama).
 --
 -- Catatan relasi:
--- - Tidak ada FK antar tabel: integritas dijaga transaksi aplikasi dan CHECK
---   constraint, tidak ada query yang JOIN antar tabel.
--- - monitoring_logs.reading_id merujuk pengukuran secara logis (tanpa FK);
---   data sensor boleh diarsip/dihapus tanpa merusak log.
+-- - Relasi aktif: users -> profile (1 user punya profil sendiri; 1 baris
+--   profil = 1 label-nilai), users -> settings.updated_by,
+--   users -> dithane_schedules.updated_by, users -> notifications.user_id,
+--   sensor_readings -> monitoring_logs.reading_id,
+--   dithane_schedules -> monitoring_logs.schedule_id (penyemprotan terjadwal),
+--   monitoring_logs -> notifications.monitoring_id (sumber notifikasi),
+--   users -> account_change_logs (riwayat akun, ON DELETE CASCADE).
+-- - users -> notifications memakai user_id NULL = notifikasi sistem yang
+--   ditampilkan ke semua user; penghapusan user menormalkan referensi.
+-- - monitoring_logs.reading_id/schedule_id NULL untuk kejadian manual/umum.
+-- - Akses BACA history memakai autentikasi endpoint (auth + SELECT), bukan
+--   foreign key users -> monitoring_logs.
 
 -- Akun login admin (satu pengguna).
 CREATE TABLE IF NOT EXISTS `users` (
@@ -17,7 +25,7 @@ CREATE TABLE IF NOT EXISTS `users` (
     `email` VARCHAR(100) DEFAULT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    `password_changed_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Waktu ganti password terakhir; sesi lebih tua otomatis logout'
+    `password_changed_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Waktu ganti password terakhir - sesi lebih tua otomatis logout'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Riwayat perubahan akun (username/password dari halaman login maupun profile).
@@ -42,7 +50,11 @@ CREATE TABLE IF NOT EXISTS `account_change_logs` (
 CREATE TABLE IF NOT EXISTS `settings` (
     `type` ENUM('ppm','ph') NOT NULL PRIMARY KEY,
     `config_json` JSON NOT NULL,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `updated_by` INT NULL,
+    INDEX `idx_settings_updated_by` (`updated_by`),
+    CONSTRAINT `fk_settings_user` FOREIGN KEY (`updated_by`)
+        REFERENCES `users` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Hasil pengukuran asli dari perangkat ESP; satu baris per pengukuran,
@@ -65,17 +77,17 @@ CREATE TABLE IF NOT EXISTS `dithane_schedules` (
     `interval_hours` INT NOT NULL,
     `duration_seconds` INT NOT NULL,
     `start_time` TIME NOT NULL,
+    `updated_by` INT NULL,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_dithane_updated_by` (`updated_by`),
+    CONSTRAINT `fk_dithane_user` FOREIGN KEY (`updated_by`)
+        REFERENCES `users` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT `chk_dithane_single_schedule` CHECK (`schedule_id` = 1),
     CONSTRAINT `chk_dithane_interval` CHECK (`interval_hours` > 0),
     CONSTRAINT `chk_dithane_duration` CHECK (`duration_seconds` > 0),
     CONSTRAINT `chk_dithane_start` CHECK (`start_time` BETWEEN '00:00:00' AND '23:59:59')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Log aktivitas sistem: satu-satunya sumber log (dipakai dashboard,
--- halaman pengaturan, dan halaman history). reading_id adalah penunjung
--- longgar ke sensor_readings (tanpa FK) untuk ketertelusuran; penghapusan
--- data sensor tidak memengaruhi log.
 CREATE TABLE IF NOT EXISTS `monitoring_logs` (
     `monitoring_id` INT AUTO_INCREMENT PRIMARY KEY,
     `type` ENUM('ppm','ph','dithane') NOT NULL,
@@ -85,16 +97,24 @@ CREATE TABLE IF NOT EXISTS `monitoring_logs` (
     `status` VARCHAR(30) NOT NULL,
     `note` TEXT,
     `reading_id` INT NULL,
+    `schedule_id` INT NULL,
     `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX `idx_type` (`type`),
     INDEX `idx_is_deleted` (`is_deleted`),
     INDEX `idx_type_deleted` (`type`, `is_deleted`),
     INDEX `idx_created_at` (`created_at`),
-    INDEX `idx_monitoring_reading` (`reading_id`)
+    INDEX `idx_monitoring_reading` (`reading_id`),
+    INDEX `idx_monitoring_schedule` (`schedule_id`),
+    CONSTRAINT `fk_monitoring_reading` FOREIGN KEY (`reading_id`)
+        REFERENCES `sensor_readings` (`reading_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT `fk_monitoring_schedule` FOREIGN KEY (`schedule_id`)
+        REFERENCES `dithane_schedules` (`schedule_id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Peringatan ambang batas hasil pengukuran.
+-- Peringatan ambang batas hasil pengukuran; monitoring_id menautkan
+-- notifikasi ke kejadian log sumbernya (NULL = notifikasi umum/sistem),
+-- user_id NULL = ditampilkan ke semua user.
 CREATE TABLE IF NOT EXISTS `notifications` (
     `notification_id` INT AUTO_INCREMENT PRIMARY KEY,
     `label` VARCHAR(100) NOT NULL,
@@ -102,16 +122,31 @@ CREATE TABLE IF NOT EXISTS `notifications` (
     `tone` ENUM('warning','success','info') NOT NULL DEFAULT 'info',
     `href` VARCHAR(255) DEFAULT NULL,
     `is_read` TINYINT(1) NOT NULL DEFAULT 0,
+    `monitoring_id` INT NULL,
+    `user_id` INT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX `idx_is_read` (`is_read`),
-    INDEX `idx_created_at` (`created_at`)
+    INDEX `idx_created_at` (`created_at`),
+    INDEX `idx_notifications_monitoring` (`monitoring_id`),
+    INDEX `idx_notifications_user` (`user_id`),
+    CONSTRAINT `fk_notifications_monitoring` FOREIGN KEY (`monitoring_id`)
+        REFERENCES `monitoring_logs` (`monitoring_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT `fk_notifications_user` FOREIGN KEY (`user_id`)
+        REFERENCES `users` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Identitas proyek (baris label/nilai per section: owner, team).
+-- Profil per akun (baris label-nilai milik satu user; unique per user per
+-- section per label agar tidak ada isian dobel). ON DELETE CASCADE mengikuti
+-- polar account_change_logs: akun hilang, profilnya ikut terhapus.
 CREATE TABLE IF NOT EXISTS `profile` (
     `profile_id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
     `section` ENUM('owner','team') NOT NULL,
     `label` VARCHAR(100) NOT NULL,
     `value` TEXT NOT NULL,
-    `sort_order` INT NOT NULL DEFAULT 0
+    `sort_order` INT NOT NULL DEFAULT 0,
+    INDEX `idx_profile_user` (`user_id`),
+    UNIQUE KEY `uq_profile_section_label` (`user_id`, `section`, `label`),
+    CONSTRAINT `fk_profile_user` FOREIGN KEY (`user_id`)
+        REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -23,15 +23,17 @@ try {
     }
     
     $pdo->beginTransaction();
-    
-    $stmtDelete = $pdo->prepare("DELETE FROM profile WHERE section = ?");
-    $stmtDelete->execute([$section]);
-    
-    $stmtInsert = $pdo->prepare("INSERT INTO profile (section, label, value, sort_order) VALUES (?, ?, ?, ?)");
+
+    /* Isi profil hanya milik akun sesi: user_id selalu dari login,
+       bukan dari input; penghapusan pun terbatas pada baris miliknya.    */
+    $stmtDelete = $pdo->prepare("DELETE FROM profile WHERE section = ? AND user_id = ?");
+    $stmtDelete->execute([$section, $_SESSION['user_id']]);
+
+    $stmtInsert = $pdo->prepare("INSERT INTO profile (user_id, section, label, value, sort_order) VALUES (?, ?, ?, ?, ?)");
     foreach ($data as $index => $item) {
         $label = $item['label'] ?? '';
         $value = $item['value'] ?? '';
-        $stmtInsert->execute([$section, $label, $value, $index]);
+        $stmtInsert->execute([$_SESSION['user_id'], $section, $label, $value, $index]);
     }
     
     $pdo->commit();

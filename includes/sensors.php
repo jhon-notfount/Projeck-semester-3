@@ -52,9 +52,56 @@ function measurementLock(PDO $pdo): string {
     return $name;
 }
 function measurementUnlock(PDO $pdo, string $name): void {
-    $q = $pdo->prepare('SELECT RELEASE_LOCK(?)'); $q->execute([$name]);
+    $q = $pdo->prepare('SELECT RELEASE_LOCK(?)');
+    $q->execute([$name]);
 }
-function sensorWarning(PDO $pdo, array $reading, array $limits, bool $includeNormal = false, bool $dedup = false): ?array {
+
+/* =====================================================================
+ *  ATURAN PENCATATAN AKTIVITAS SISTEM (tabel Data Aktivitas Sistem)
+ *  ------------------------------------------------------------------
+ *  pH/PPM:
+ *   - abnormal (Rendah/Tinggi): catat saat kondisi abnormal PERTAMA
+ *     kali terdeteksi, lalu hanya saat kondisinya berubah
+ *     (Rendah<->Tinggi, abnormal<->normal). Kondisi abnormal yang sama
+ *     yang berlangsung TIDAK menghasilkan catatan berulang.
+ *   - normal: catat langsung saat berubah dari abnormal menjadi normal,
+ *     lalu catat berkala SETIAP 20 MENIT sejak catatan terakhir tipe
+ *     tersebut. Timer 20 menit pH dan PPM berjalan INDEPENDEN.
+ *  Dithane: dicatat di api/device/report.php, satu catatan SETIAP kali
+ *   pompa mulai menyala (tidak ada catatan berkala saat pompa tetap
+ *   menyala; tidak ada catatan saat hanya membaca sensor/jadwal).
+ * ===================================================================== */
+
+/** Keterangan aktivitas: nilai terbaca beserta batas rentang pengaturan. */
+function activityNote(string $type, string $status, string $value, float $min, float $max): string {
+    $label = $type === 'ph' ? 'pH' : 'PPM';
+    if ($status === 'Rendah') return "$label $value di bawah rentang $min - $max";
+    if ($status === 'Tinggi') return "$label $value di atas rentang $min - $max";
+    return "$label $value dalam rentang $min - $max";
+}
+
+/** Putuskan apakah pembacaan (dengan status sudah dihitung) perlu dicatat.
+ *  State dibaca dari catatan TERBARU tipe tersebut di monitoring_logs
+ *  (kebal restart), dievaluasi dalam transaksi + lock yang sama dengan
+ *  penyimpanan pengukuran agar antrean paralel tidak menggandakan data.  */
+function shouldRecordActivity(PDO $pdo, string $type, string $status): bool {
+    $state = $pdo->prepare(
+        "SELECT status, TIMESTAMPDIFF(SECOND, created_at, CURRENT_TIMESTAMP) AS age
+           FROM monitoring_logs
+          WHERE type = ? AND is_deleted = 0
+          ORDER BY monitoring_id DESC
+          LIMIT 1"
+    );
+    $state->execute([$type]);
+    $last = $state->fetch(PDO::FETCH_ASSOC) ?: null;
+    if ($last === null) return true;                       // deteksi pertama: catat
+    $abnormal = ($status === 'Rendah' || $status === 'Tinggi');
+    if ($abnormal) return $last['status'] !== $status;     // abnormal sama: jangan catat ulang
+    if ($last['status'] !== 'Normal') return true;         // perubahan (abnormal -> normal): catat
+    $age = $last['age'];                                   // normal rutin: berkala 20 menit
+    return $age === null || (int)$age >= 1200;
+}
+function sensorWarning(PDO $pdo, array $reading, array $limits, bool $includeNormal = false, bool $dedup = false, ?int $monitoringId = null, ?int $userId = null): ?array {
     $type = $reading['type'];
     if (!in_array($type, ['ph','ppm'], true)) throw new InvalidArgumentException('Jenis pembacaan tidak valid.');
     [$min, $max] = $limits[$type];
@@ -70,13 +117,15 @@ function sensorWarning(PDO $pdo, array $reading, array $limits, bool $includeNor
         $q->execute([$label, $message]);
         if ((int)$q->fetchColumn() > 0) return null;
     }
-    $stmt = $pdo->prepare("INSERT INTO notifications (label, message, tone, href) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$label, $message, $tone, "pengaturan-$type.php"]);
+    $stmt = $pdo->prepare("INSERT INTO notifications (label, message, tone, href, monitoring_id, user_id) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$label, $message, $tone, "pengaturan-$type.php", $monitoringId, $userId]);
     return ['label'=>$label, 'message'=>$message, 'tone'=>$tone];
 }
 
-/** Simpan satu pengukuran (ph_value dan/atau ppm_value) sebagai satu baris. */
-function saveSensorMeasurements(PDO $pdo, array $input): array {
+/** Simpan satu pengukuran (ph_value dan/atau ppm_value) sebagai satu baris.
+ *  $operatorId berasal dari sesi operator bila penyimpanan manual melalui
+ *  halaman web; ingest perangkat memakai NULL (notifikasi broadcast). */
+function saveSensorMeasurements(PDO $pdo, array $input, ?int $operatorId = null): array {
     foreach (['sensor_id','ph_sensor_id','ppm_sensor_id','value'] as $old) {
         if (array_key_exists($old, $input)) throw new InvalidArgumentException('Gunakan ph_value dan/atau ppm_value tanpa ID perangkat.');
     }
@@ -107,9 +156,17 @@ function saveSensorMeasurements(PDO $pdo, array $input): array {
                 $type . '_value'=>$value, 'value'=>$value, 'recorded_at'=>$timestamp];
             [$min, $max] = $limits[$type];
             $status = $value < $min ? 'Rendah' : ($value > $max ? 'Tinggi' : 'Normal');
-            $log = $pdo->prepare("INSERT INTO monitoring_logs (type, day_name, log_time, value, status, note, reading_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $log->execute([$type, $days[(int)$clock->format('w')], $clock->format('H.i'), (string)$value, $status, 'Hasil pengukuran ' . $type, $readingId]);
-            sensorWarning($pdo, $reading, $limits);
+            if (shouldRecordActivity($pdo, $type, $status)) {
+                /* Timestamp kejadian sebenarnya: sekarang pembacaan masuk,
+                   waktu server WAJIB sudah konsisten (session ini +07:00). */
+                $note = activityNote($type, $status, (string)$value, $min, $max);
+                $log = $pdo->prepare("INSERT INTO monitoring_logs (type, day_name, log_time, value, status, note, reading_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                $log->execute([$type, $days[(int)$clock->format('w')], $clock->format('H.i'), (string)$value, $status, $note, $readingId]);
+                $monitoringId = (int)$pdo->lastInsertId();
+            } else {
+                $monitoringId = null;
+            }
+            sensorWarning($pdo, $reading, $limits, false, false, $monitoringId, $operatorId);
             $result[] = $reading;
         }
         $pdo->commit();

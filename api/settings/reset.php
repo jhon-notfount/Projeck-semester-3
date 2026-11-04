@@ -28,11 +28,11 @@ try {
     if ($type === 'dithane') {
         $data = json_decode($defaultConfig, true);
         if (!is_array($data)) throw new InvalidArgumentException('Konfigurasi jadwal harus berupa objek.');
-        writeDithane($pdo, $data);
+        writeDithane($pdo, $data, $_SESSION['user_id']);
         successResponse(null, 'Jadwal Dithane tersimpan');
     }
-    $stmt = $pdo->prepare("UPDATE settings SET config_json = ?, updated_at = CURRENT_TIMESTAMP WHERE type = ?");
-    $stmt->execute([$defaultConfig, $type]);
+    $stmt = $pdo->prepare("UPDATE settings SET config_json = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE type = ?");
+    $stmt->execute([$defaultConfig, $_SESSION['user_id'], $type]);
     
     successResponse(null, 'Setting reset to default successfully');
 } catch (InvalidArgumentException $e) {

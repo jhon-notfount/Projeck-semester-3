@@ -19,22 +19,19 @@
 
 ## PATCH A — `api/device/report.php` (laporan eksekusi Dithane)
 
-Salin `firmware/patches/api/device/report.php` ke
-`api/device/report.php`. **File baru; tidak menimpa apa pun.**
+> **Status: SUDAH DITERAPKAN ke backend.** Endpoint resmi kini ada di
+> `api/device/report.php` (logika di `includes/device_report.php`). Cadangan
+> di folder ini tidak lagi perlu dipasang — jangan dipakai bersamaan dengan
+> endpoint resmi agar tidak mecataat ganda.
 
-* `POST {pump:"dithane", state:"started|completed", duration_s, device_seen}`
-* Autentikasi: `X-API-Key` (memakai `requireEspKey()` dari `config/esp.php`).
-* `started` → satu notifikasi web: label *"Penyemprotan Dithane dimulai"*.
-* `completed` → satu notifikasi web **+** satu baris `monitoring_logs`
-  (bukti eksekusi aktual; `dithane_schedules` tetap murni rencana).
-  Respons juga mengembalikan `last_completed_at` (WIB server).
-* Anti-duplikasi: cek identik `label+message` per `device_seen` /
-  menit-server; retry HTTP tidak menggandakan. Firmware TIDAK
-  me-retry POST laporan.
-* Waktu notifikasi memakai jam SERVER (Asia/Jakarta), konsisten dengan
-  `sensor_readings.recorded_at`; waktu perangkat hanya data dedup.
-* Keterbatasan diinformasikan: ESP32 melaporkan sinyal relay; endpoint
-  tidak memverifikasi aliran cairan secara fisik.
+Aturan pencatatan aktivitas Dithane yang berlaku (Data Aktivitas Sistem):
+
+* Laporan `started` → SATU catatan `monitoring_logs` per pompa MULAI menyala
+  (status "Menyala") + satu notifikasi web.
+* Laporan `completed` → hanya notifikasi web (tanpa catatan kedua).
+* Tidak ada catatan berkala selama pompa tetap menyala; tidak ada catatan
+  dari pembacaan sensor atau pengecekan jadwal.
+* Dedup: laporan ulang < 60 detik diabaikan server; firmware tidak me-retry.
 
 ## PATCH B — Parameter pompa + anchor waktu via website (blok `device`)
 

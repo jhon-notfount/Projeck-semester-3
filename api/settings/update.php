@@ -27,7 +27,7 @@ try {
     if ($type === 'dithane') {
         $data = json_decode($configJson, true);
         if (!is_array($data)) throw new InvalidArgumentException('Konfigurasi jadwal harus berupa objek.');
-        writeDithane($pdo, $data);
+        writeDithane($pdo, $data, $_SESSION['user_id']);
         successResponse(null, 'Jadwal Dithane tersimpan');
     }
 
@@ -38,8 +38,8 @@ try {
     if (!is_array($data)) throw new InvalidArgumentException('Konfigurasi harus berupa objek JSON dengan kunci min dan max.');
     validateSettingConfig($type, $data);
 
-    $stmt = $pdo->prepare("UPDATE settings SET config_json = ?, updated_at = CURRENT_TIMESTAMP WHERE type = ?");
-    $stmt->execute([$configJson, $type]);
+    $stmt = $pdo->prepare("UPDATE settings SET config_json = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE type = ?");
+    $stmt->execute([$configJson, $_SESSION['user_id'], $type]);
     
     successResponse(null, 'Setting updated successfully');
 } catch (InvalidArgumentException $e) {

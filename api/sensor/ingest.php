@@ -36,7 +36,21 @@ try {
             $config[$type] = json_decode($settings[$type] ?? 'null', true);
         }
         $schedule = readDithane($pdo);
-        if ($schedule) $config['dithane'] = $schedule['config'];
+        if ($schedule) {
+            $config['dithane'] = $schedule['config'];
+            /* Anchor interval "sejak penyemprotan SELESAI terakhir": catatan
+               aktivitas terakhir (pompa mulai menyala) + durasi terjadwal.
+               Dipakai firmware agar interval tetap akurat pasca-restart/NVS
+               hilang. Waktu catatan memakai waktu server (WIB).           */
+            $lastDone = $pdo->query(
+                "SELECT DATE_ADD(l.created_at, INTERVAL COALESCE(d.duration_seconds, 0) SECOND)
+                   FROM monitoring_logs l
+                   LEFT JOIN dithane_schedules d ON d.schedule_id = 1
+                  WHERE l.type = 'dithane' AND l.is_deleted = 0
+                  ORDER BY l.monitoring_id DESC LIMIT 1"
+            )->fetchColumn();
+            if ($lastDone) $config['dithane']['last_completed_at'] = substr((string)$lastDone, 0, 19);
+        }
         successResponse(['config' => $config], 'Konfigurasi perangkat');
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $input = espReadInput();

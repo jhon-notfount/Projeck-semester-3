@@ -14,7 +14,8 @@ try {
         catch (JsonException $e) { throw new InvalidArgumentException('JSON tidak valid.'); }
         if (!is_array($input) || array_is_list($input)) throw new InvalidArgumentException('Kirim objek JSON.');
     }
-    $readings = saveSensorMeasurements(getDBConnection(), $input);
+    $operatorId = $_SESSION['user_id'] ?? null;
+    $readings = saveSensorMeasurements(getDBConnection(), $input, is_int($operatorId) ? $operatorId : null);
     successResponse(['readings' => $readings, 'reading_ids' => array_column($readings, 'id')], 'Data sensor tersimpan');
 } catch (InvalidArgumentException $e) {
     errorResponse($e->getMessage(), 400);

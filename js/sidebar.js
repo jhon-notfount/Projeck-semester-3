@@ -18,13 +18,13 @@
     <div class="nav-dropdown">
       <button class="nav-item" type="button" data-sidebar-dropdown-toggle>
         <span class="ico ico-features" aria-hidden="true"></span>
-        <span data-feature-label>Fitur</span>
+        <span data-feature-label>Setting</span>
         <span class="chev">v</span>
       </button>
       <div class="dropdown-menu" id="dropdownMenu">
-        <a href="pengaturan-ppm.php" class="dropdown-item" data-sidebar-page="pengaturan-ppm.php">Pengaturan PPM</a>
-        <a href="pengaturan-ph.php" class="dropdown-item" data-sidebar-page="pengaturan-ph.php">Pengaturan pH</a>
-        <a href="pengaturan-dithane.php" class="dropdown-item" data-sidebar-page="pengaturan-dithane.php">Pengaturan Dithane</a>
+        <a href="pengaturan-ppm.php" class="dropdown-item" data-sidebar-page="pengaturan-ppm.php">Setting PPM</a>
+        <a href="pengaturan-ph.php" class="dropdown-item" data-sidebar-page="pengaturan-ph.php">Setting pH</a>
+        <a href="pengaturan-dithane.php" class="dropdown-item" data-sidebar-page="pengaturan-dithane.php">Setting Dithane</a>
       </div>
     </div>
     <a class="nav-item" href="history.php" data-sidebar-page="history.php">
@@ -40,9 +40,9 @@
 </aside>`;
 
   const featureLabels = {
-    "pengaturan-ppm.php": "Pengaturan PPM",
-    "pengaturan-ph.php": "Pengaturan pH",
-    "pengaturan-dithane.php": "Pengaturan Dithane",
+    "pengaturan-ppm.php": "Setting PPM",
+    "pengaturan-ph.php": "Setting pH",
+    "pengaturan-dithane.php": "Setting Dithane",
   };
 
   function getCurrentPage() {
@@ -84,7 +84,7 @@
     });
 
     if (featureLabel) {
-      featureLabel.textContent = featureLabels[currentPage] || "Fitur";
+      featureLabel.textContent = featureLabels[currentPage] || "Setting";
     }
 
     if (featureButton) {

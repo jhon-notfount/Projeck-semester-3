@@ -118,6 +118,8 @@ function formatTanggalIndo(string $date): string {
                     <option value="normal">Normal</option>
                     <option value="rendah">Rendah</option>
                     <option value="tinggi">Tinggi</option>
+                    <option value="menyala">Menyala</option>
+                    <option value="selesai">Selesai</option>
                   </select>
                 </span>
                 <button type="button" data-history-reset>Reset</button>
