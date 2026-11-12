@@ -14,9 +14,13 @@ function normalizeDithane(array $config): array {
     return ['interval_hours'=>(int)$config['interval'], 'duration_seconds'=>(int)$config['duration'], 'start_time'=>str_replace('.', ':', $start) . ':00'];
 }
 function readDithane(PDO $pdo): ?array {
-    $row = $pdo->query('SELECT `schedule_id` AS `id`, `interval_hours`, `duration_seconds`, `start_time`, `updated_at` FROM dithane_schedules WHERE schedule_id=1')->fetch(PDO::FETCH_ASSOC);
+    /* LEFT JOIN users: updated_by bisa NULL; nama pengubah disertakan bila ada. */
+    $row = $pdo->query('SELECT `ds`.`schedule_id` AS `id`, `ds`.`interval_hours`, `ds`.`duration_seconds`, `ds`.`start_time`, `ds`.`updated_at`, `ds`.`updated_by`, `u`.`username` AS `updated_by_name`
+                        FROM dithane_schedules `ds`
+                        LEFT JOIN users `u` ON `u`.`user_id` = `ds`.`updated_by`
+                        WHERE `ds`.`schedule_id` = 1')->fetch(PDO::FETCH_ASSOC);
     if (!$row) return null;
-    return ['type'=>'dithane', 'config'=>['interval'=>(string)$row['interval_hours'], 'duration'=>(string)$row['duration_seconds'], 'start'=>str_replace(':', '.', substr($row['start_time'],0,5))], 'updated_at'=>$row['updated_at']];
+    return ['type'=>'dithane', 'config'=>['interval'=>(string)$row['interval_hours'], 'duration'=>(string)$row['duration_seconds'], 'start'=>str_replace(':', '.', substr($row['start_time'],0,5))], 'updated_at'=>$row['updated_at'], 'updated_by'=>$row['updated_by'], 'updated_by_name'=>$row['updated_by_name']];
 }
 function writeDithane(PDO $pdo, array $config, ?int $updatedBy = null): void {
     $data = normalizeDithane($config);

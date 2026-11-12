@@ -15,34 +15,42 @@ try {
     $month = $_GET['month'] ?? '';
     $status = $_GET['status'] ?? '';
     
-    $query = "SELECT `monitoring_id` AS `id`, `type`, `day_name`, `log_time`, `value`, `status`, `note`, `is_deleted`, DATE(`created_at`) AS `log_date`, `created_at` FROM monitoring_logs WHERE is_deleted = 0";
+    /* LEFT JOIN: baris log tetap tampil walau tanpa pembacaan sensor
+       (manual/Dithane) atau tanpa jadwal pemicu; nilai pasangan NULL.   */
+    $query = "SELECT `l`.`monitoring_id` AS `id`, `l`.`type`, `l`.`day_name`, `l`.`log_time`, `l`.`value`, `l`.`status`, `l`.`note`, `l`.`is_deleted`, DATE(`l`.`created_at`) AS `log_date`, `l`.`created_at`, `l`.`reading_id`, `l`.`schedule_id`,
+                     `r`.`ph_value`, `r`.`ppm_value`, `r`.`recorded_at` AS `reading_recorded_at`,
+                     `d`.`interval_hours`, `d`.`duration_seconds`, `d`.`start_time`
+              FROM monitoring_logs `l`
+              LEFT JOIN sensor_readings `r` ON `r`.`reading_id` = `l`.`reading_id`
+              LEFT JOIN dithane_schedules `d` ON `d`.`schedule_id` = `l`.`schedule_id`
+              WHERE `l`.`is_deleted` = 0";
     $params = [];
     
     if (!empty($search)) {
-        $query .= " AND (day_name LIKE ? OR note LIKE ? OR type LIKE ?)";
+        $query .= " AND (`l`.`day_name` LIKE ? OR `l`.`note` LIKE ? OR `l`.`type` LIKE ?)";
         $searchTerm = "%$search%";
         $params[] = $searchTerm;
         $params[] = $searchTerm;
         $params[] = $searchTerm;
     }
     if (!empty($type)) {
-        $query .= " AND type = ?";
+        $query .= " AND `l`.`type` = ?";
         $params[] = $type;
     }
     if (!empty($day)) {
-        $query .= " AND day_name = ?";
+        $query .= " AND `l`.`day_name` = ?";
         $params[] = $day;
     }
     if (!empty($month)) {
-        $query .= " AND MONTH(created_at) = ?";
+        $query .= " AND MONTH(`l`.`created_at`) = ?";
         $params[] = $month;
     }
     if (!empty($status)) {
-        $query .= " AND status = ?";
+        $query .= " AND `l`.`status` = ?";
         $params[] = $status;
     }
-    
-    $query .= " ORDER BY created_at DESC, monitoring_id DESC LIMIT 500";
+
+    $query .= " ORDER BY `l`.`created_at` DESC, `l`.`monitoring_id` DESC LIMIT 500";
     
     $stmt = $pdo->prepare($query);
     $stmt->execute($params);

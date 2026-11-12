@@ -34,7 +34,10 @@ try {
         }
     }
     
-    $stmtUnread = $pdo->query("SELECT COUNT(*) FROM notifications WHERE is_read = 0");
+    /* Hitungan belum dibaca konsisten dengan panel notifikasi: milik user
+       ATAU broadcast sistem (user_id NULL).                                */
+    $stmtUnread = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE is_read = 0 AND (user_id IS NULL OR user_id = ?)");
+    $stmtUnread->execute([$_SESSION['user_id']]);
     $unreadNotifications = (int)$stmtUnread->fetchColumn();
     
     $result = [
