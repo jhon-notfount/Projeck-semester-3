@@ -87,3 +87,30 @@ function sensorWarningDithane(PDO $pdo, string $label, string $message, string $
     $n = $pdo->prepare("INSERT INTO notifications (label, message, tone, href, monitoring_id, user_id) VALUES (?, ?, ?, 'history.php', ?, NULL)");
     $n->execute([$label, $message, $tone, $monitoringId]);
 }
+
+/**
+ * Pencatatan penyalaan MANUAL pompa AB-Mix (nutrisi/PPM) dan pompa pH.
+ *
+ * Sengaja TIDAK menulis monitoring_logs: baris type 'ppm'/'ph' pada tabel
+ * tersebut dipakai shouldRecordActivity() untuk mendeteksi perubahan kategori
+ * sensor — pencampuran log pompa akan merusak logika dedup notifikasi sensor.
+ * Penyalaan manual cukup tercatat sebagai notifikasi web (dedup otomatis),
+ * sementara status pompa nyata mengalir lewat tabel pump_states.
+ */
+function recordManualPumpActivity(PDO $pdo, string $pump, string $state, int $durationS): array {
+    $labels = ['ab' => 'nutrisi AB-Mix (PPM)', 'ph' => 'pengatur pH'];
+    if (!isset($labels[$pump])) {
+        throw new InvalidArgumentException('Pompa tidak didukung.');
+    }
+    if (!in_array($state, ['started', 'completed'], true)) {
+        throw new InvalidArgumentException('State tidak didukung (started/completed).');
+    }
+    if ($state === 'started') {
+        sensorWarningDithane($pdo, 'Pompa ' . $labels[$pump] . ' menyala (manual)',
+            "Pompa {$labels[$pump]} dinyalakan manual dari dashboard ({$durationS} detik).", 'info');
+    } else {
+        sensorWarningDithane($pdo, 'Pompa ' . $labels[$pump] . ' selesai (manual)',
+            "Override manual pompa {$labels[$pump]} selesai ({$durationS} detik); otomatisasi kembali berjalan.", 'success');
+    }
+    return ['state' => $state, 'logged' => false, 'notified' => true];
+}

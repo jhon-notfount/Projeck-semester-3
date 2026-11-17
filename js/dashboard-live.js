@@ -1,8 +1,10 @@
 (async function () {
   /* DASHBOARD ELEMENTS: elemen rentang setting, grafik, dan teks update live. */
   const chartCanvas = document.getElementById("dashboardNutrientChart");
-  const ppmStat = document.querySelector(".stat-ppm .stat-num");
-  const phStat = document.querySelector(".stat-ph .stat-num");
+  const ppmStat = document.querySelector(".stat-ppm .stat-range-sm");
+  const phStat = document.querySelector(".stat-ph .stat-range-sm");
+  const ppmLive = document.querySelector("[data-live-ppm]");
+  const phLive = document.querySelector("[data-live-ph]");
   const ppmBar = document.querySelector(".stat-ppm .bar span");
   const phBar = document.querySelector(".stat-ph .bar span");
   const phSummary = document.querySelector(".chart-summary div:first-child b");
@@ -49,7 +51,7 @@
 
   /* LIVE DATA: membaca pengukuran asli dari database (diisi perangkat ESP). */
   const MAX_POINTS = 10;
-  const POLL_INTERVAL = 5000;
+  const POLL_INTERVAL = 2000;
 
   if (!chartCanvas || typeof Chart === "undefined") return;
 
@@ -363,6 +365,11 @@
         ppmSummary.textContent = "-";
       }
     }
+
+    /* KARTU REALTIME: nilai PPM/pH aktual di kartu; "Menunggu data..."
+       bila sensor belum mengirim apa pun (tanpa data dummy).            */
+    if (ppmLive) ppmLive.textContent = latestPpm ? Math.round(latestPpm.value) : "Menunggu data...";
+    if (phLive) phLive.textContent = latestPh ? latestPh.value.toFixed(2) : "Menunggu data...";
 
     chartCanvas.classList.add("live-refresh");
     window.setTimeout(() => chartCanvas.classList.remove("live-refresh"), 900);

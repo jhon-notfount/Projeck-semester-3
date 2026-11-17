@@ -1,3 +1,6 @@
 
 /database/backups/
 config/esp_key.txt
+
+# Kredensial MQTT lokal
+config/mqtt_auth.local.php

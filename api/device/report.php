@@ -49,7 +49,11 @@ try {
     $seen     = preg_replace('/[^0-9\-\s:]/', '',
                 substr(is_string($input['device_seen'] ?? null) ? trim($input['device_seen']) : '', 0, 32));
 
-    $result = recordDithaneActivity(getDBConnection(), $pump, $state, $duration, $seen);
+    $result = match ($pump) {
+        'dithane' => recordDithaneActivity(getDBConnection(), $pump, $state, $duration, $seen),
+        'ab', 'ph' => recordManualPumpActivity(getDBConnection(), $pump, $state, $duration),
+        default => throw new InvalidArgumentException('Pompa tidak didukung.'),
+    };
     successResponse($result, 'Laporan perangkat diproses');
 } catch (InvalidArgumentException $e) {
     errorResponse($e->getMessage(), 400);

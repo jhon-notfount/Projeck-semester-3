@@ -40,7 +40,30 @@ try {
 
     $stmt = $pdo->prepare("UPDATE settings SET config_json = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE type = ?");
     $stmt->execute([$configJson, $_SESSION['user_id'], $type]);
-    
+
+    /* MQTT: dorong konfigurasi baru ke ESP32 (hydrotech/cmd/esp32/*, QoS 1,
+       TANPA retained agar perangkat yang baru hidup tidak memakai nilai lama).
+       Kegagalan broker TIDAK menggagalkan penyimpanan: firmware tetap
+       menyinkronkan config lewat HTTP GET secara berkala (fallback).      */
+    try {
+        require_once __DIR__ . '/../../vendor/hydrotech/MqttClient.php';
+        require_once __DIR__ . '/../../includes/mqtt.php';
+        $msgId = $type . '-' . date('Ymd-His') . '-' . substr(bin2hex(random_bytes(3)), 0, 6);
+        $payload = array_merge(
+            ['msg_id' => $msgId],
+            json_decode($configJson, true) ?: []
+        );
+        $client = mqttWorkerClient();
+        if ($client->connect(3)) {
+            $client->publish("hydrotech/cmd/esp32/{$type}", json_encode($payload), 1, false);
+            $wait = microtime(true) + 1;
+            while (microtime(true) < $wait) $client->loop(100);
+            $client->disconnect();
+        }
+    } catch (Throwable $mqttError) {
+        error_log('MQTT push config: ' . $mqttError->getMessage());
+    }
+
     successResponse(null, 'Setting updated successfully');
 } catch (InvalidArgumentException $e) {
     errorResponse($e->getMessage(), 400);

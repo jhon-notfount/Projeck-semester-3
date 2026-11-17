@@ -3,34 +3,30 @@
  *  HydroTech_ESP32.ino  â€”  Firmware monitoring & kontrol hidroponik
  * ===================================================================
  *
- *  KONTRAK BACKEND EURISA â€” diterjemahkan dari audit kode HydroTech
- *  yang berada BERSAMA folder ini (jangan diubah tanpa audit ulang):
+ *  TRANSPORT: MQTT SAJA (Eclipse Mosquitto). HTTP REST sudah dihapus.
+ *  Kontrak lengkap topik & payload JSON: docs/MQTT.md (baca dulu
+ *  sebelum menyunting). Ringkasan:
  *
- *  POST /api/sensor/ingest.php    header: X-API-Key
- *      body JSON : {"ph_value": 6.52, "ppm_value": 850}
- *                   (keduanya opsional, minimal satu; PPM WAJIB integer;
- *                    pH 0..14; nilai citra rentang ELSE server menolak)
- *      resp      : {"success":true,"message":"...","data":{
- *                   "readings":[...],"reading_ids":[...]}}
- *
- *  GET  /api/sensor/ingest.php    header: X-API-Key
- *      resp      : {"success":true,"data":{"config":{
- *                   "ph":{"min":..,"max":..},
- *                   "ppm":{"min":..,"max":..},
- *                   "dithane":{"interval":"24","duration":"30",
- *                              "start":"07.00"}}}}
- *      catatan   : interval/duration/start berupa STRING; start memakai
- *                  pemisah '.' (contoh 07.00) hasil readDithane().
+ *  publish   hydrotech/sensor/{ph,ppm}  QoS 0 tiap 2 dtk
+ *            {"value":6.52,"valid":true,"ts":1700000000}
+ *  publish   hydrotech/pump/status      QoS 1 retained (saat berubah)
+ *  publish   hydrotech/device/status    QoS 1 retained 30 dtk + LWT
+ *            + ack perintah + pump_activity + config_request
+ *  subscribe hydrotech/cmd/esp32/{ph,ppm,dithane,pump}  QoS 1
+ *            (perintah WAJIB msg_id unik; TIDAK pernah retained)
  *
  *  ATURAN WAJIB DITAATI PENYUNTING FIRMWARE:
- *   - Timestamp ditetapkan SERVER (Asia/Jakarta) â€” firmware TIDAK
- *     mengirim timestamp. NTP hanya untuk jadwal Dithane & counter harian.
- *   - Heartbeat perangkat = sensor_readings tersimpan; batas online
- *     300 s (api/device/status.php) => UPLOAD_INTERVAL_MS < 300000 ms.
- *   - Endpoint laporan pompa: api/device/report.php (POST {pump, state,
- *     duration_s, device_seen}, X-API-Key). Seluruh pompa dikendalikan
- *     LOKAL dengan parameter aman. Endpoint 404 => otomatis menonaktifkan
- *     pelaporan (tidak mengganggu sistem).
+ *   - Timestamp ditetapkan SERVER (worker PHP) — firmware hanya melampirkan
+ *     `ts` epoch NTP sebagai pemaring payload (bukan keputusan waktu DB).
+ *   - Transport data = MQTT SAJA (Mosquitto). HTTP sudah dihapus.
+ *   - Heartbeat perangkat = sensor_readings tersimpan (via MQTT -> worker);
+ *     batas online 300 s (api/device/status.php) — stream 2 dtk jauh di bawah.
+ *   - Laporan pompa: MQTT device/status {"type":"pump_activity"}; worker PHP
+ *     mencatat monitoring_logs + notifikasi (aturan sama dengan endpoint lama).
+ *   - Konfigurasi (ambang/jadwal): MQTT config_request -> worker mendorong
+ *     cmd/esp32/*. Seluruh pompa dikendalikan LOKAL dengan parameter aman.
+ *   - Otomatisasi TETAP BERJALAN LOKAL meski MQTT/broker/Wi-Fi terputus
+ *     (mode aman hanya dipicu sensor invalid beruntun).
  *   - LOGIKA POMPA (3 kategori: rendah/normal/tinggi):
  *       PPM  : < min â†’ dosis terus (bertahap) HINGGA masuk rentang;
  *              normal â†’ pompa mati; > maks â†’ pompa mati + peringatan.
@@ -44,7 +40,7 @@
  *              > GRACE tanpa eksekusi susulan.
  *   - Pompa dosing dihentikan langsung bila sensor invalid/aman/spray.
  *
- *  Library: WiFi/HTTPClient/Preferences/esp_task_wdt (bawaan),
+ *  Library: WiFi/Preferences/esp_task_wdt (bawaan), PubSubClient (MQTT),
  *           ArduinoJson (>=6.19), LiquidCrystal_I2C.
  *  Board  : ESP32 Dev Module, core arduino-esp32 >= 2.0.x
  *           (analogReadMilliVolts dibutuhkan).
@@ -54,41 +50,51 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WiFiClient.h>
-#include <HTTPClient.h>
 #include <WebServer.h>          // halaman setup (mode AP)
 #include <DNSServer.h>          // captive portal redirect
 #include <Wire.h>
 #include <Preferences.h>
 #include <ArduinoJson.h>
+#include <PubSubClient.h>       // MQTT (Library Manager: "PubSubClient by Nick O'Leary")
+#include <LiquidCrystal_I2C.h>  // LCD 20x4 (Library Manager: "LiquidCrystal I2C" - Frank de Brabander)
+#include <ESPmDNS.h>            // resolusi broker tanpa IP tetap (coba-coba.local)
 #include "esp_task_wdt.h"
 #include "time.h"
-#include "WiFiClientSecure.h"
 
 /* =====================================================================
  *  1. KONFIGURASI â€” ubah hanya blok ini untuk tiap instalasi
  * ===================================================================== */
 
 /* --- Wi-Fi + API (JANGAN commit kredensial nyata) ------------------- */
+/* API_BASE_URL/API_KEY hanya dipakai portal setup (identitas perangkat);
+   transport data adalah MQTT di bawah - HTTP sudah tidak dipakai.       */
 const char* WIFI_SSID      = "ISI-SSID";
 const char* WIFI_PASS      = "ISI-PASSWORD";
 const char* API_BASE_URL   = "http://192.168.1.10:8000/api/sensor/ingest.php";
-const char* API_REPORT_URL = "";                 // kosongkan bila patch report belum dipasang
 const char* API_KEY        = "ISI-ESP-API-KEY";  // sama dengan config/esp_key.txt / env
-#define API_USE_TLS  0                           // 1 bila API_BASE_URL https://
-/* HTTPS produksi: isi TLS_CA_CERT dengan root-CA PEM (baris diganti \n).
-   Tanpa CA dan tanpa TLS_DEV_MODE, handshake ditolak â€” verifikasi
-   sertifikat wajib untuk produksi.                                   */
-const char* TLS_CA_CERT  = "";
-bool        TLS_DEV_MODE = false;                // HANYA untuk pengembangan
+
+/* --- MQTT (satu-satunya transport; Mosquitto di server Fedora) ------- */
+/* Kredensial: user 'esp32' (lihat config/mqtt_auth.local.php di server).
+   JANGAN commit password nyata - sama aturannya dengan API key.          */
+/* Host broker: NAMA mDNS (hostname laptop Fedora, lihat `hostname`).
+   ESP32 menanyakan IP-nya lewat mDNS tiap kali akan connect, sehingga
+   IP laptop berubah (DHCP) pun tetap menemukan broker. Tulis IP literal
+   saja bila mDNS bermasalah (contoh "192.168.1.22").                     */
+const char* MQTT_HOST       = "coba-coba.local";  // hostname laptop Fedora
+const uint16_t MQTT_PORT    = 1883;
+const char* MQTT_USER       = "esp32";
+const char* MQTT_PASS       = "ISI-MQTT-PASS-ESP32";
+const char* MQTT_CLIENT_ID  = "hydrotech-esp32";
+/* QoS: sensor stream QoS 0 (realtime 2 dtk, kehilangan 1 titik wajar);
+   perintah + ack + status pompa/perangkat QoS 1 (tepat sekali);
+   retained HANYA untuk status (pump/device) - JANGAN untuk perintah.     */
+const uint32_t MQTT_PUBLISH_MS      = 2000;       // wajib: sensor tiap 2 detik
+const uint32_t MQTT_RETRY_MS        = 5000;
+const uint32_t MQTT_STATUS_MS       = 30000;      // heartbeat device/status
 
 /* --- Interval ------------------------------------------------------- */
-const uint32_t SENSOR_INTERVAL_MS = 5000;        // sampling + filter sensor
-const uint32_t UPLOAD_INTERVAL_MS = 120000;      // < 300 s (batas heartbeat)
-const uint32_t CONFIG_INTERVAL_MS = 900000;      // sinkron konfigurasi (15 mnt)
-const uint32_t WIFI_RETRY_MS      = 10000;       // jeda antar percobaan Wi-Fi
-const uint32_t HTTP_TIMEOUT_MS    = 8000;
+const uint32_t SENSOR_INTERVAL_MS = 2000;        // sampling + stream MQTT 2 dtk
 const uint32_t MAX_CONFIG_AGE_MS  = 7200000;     // batas umur konfigurasi (2 jam)
-const uint8_t  UPLOAD_FAIL_LIMIT  = 5;           // x gagal POST -> mode aman
 
 /* --- Pin ------------------------------------------------------------ */
 const uint8_t ADC_PH_PIN  = 34;    // AO sensor pH  (ADC1 â€” aman dengan Wi-Fi)
@@ -190,8 +196,6 @@ DithState dithState = DITH_IDLE;
 uint32_t  dithT0 = 0, dithDur = 0;
 time_t    dithSlot = 0;
 bool      dithReported = false;
-bool      reportAvail = true;        // patch laporan tersedia?
-uint8_t   reportFails = 0;
 
 /* --- Konfigurasi remote ------------------------------------------------ */
 struct RemoteConfig {
@@ -221,7 +225,6 @@ bool  phValid = false, ppmValid = false;
 enum WifiState : uint8_t { WIFI_DOWN, WIFI_CONNECTING, WIFI_OK };
 WifiState wifiState = WIFI_DOWN;
 uint32_t  wifiLastTry = 0, wifiConnectStart = 0;
-uint16_t  uploadFails = 0;
 bool      safeMode = false;
 
 /* --- Lain ---------------------------------------------------------------- */
@@ -336,24 +339,6 @@ void validateSensors() {
 }
 
 /* =====================================================================
- *  6. TLS helper
- * ===================================================================== */
-
-void applyTls(WiFiClientSecure* c) {
-  if (TLS_CA_CERT[0] != '\0') {
-    c->setCACert(TLS_CA_CERT);                    // produksi: verifikasi cert
-    Serial.println("[TLS] verifikasi sertifikat aktif");
-  } else if (TLS_DEV_MODE) {
-    c->setInsecure();                             // HANYA pengembangan
-    Serial.println("[TLS] setInsecure (DEV) â€” JANGAN untuk produksi");
-  } else {
-    /* CA kosong: gagalkan handshake agar tidak ada koneksi "diam-diam" */
-    Serial.println("[TLS] CA belum diset â€” koneksi HTTPS ditolak (set TLS_CA_CERT atau TLS_DEV_MODE)");
-    while (true) { delay(10000); }                // jangan jalankan pompa dengan kredensial tak terverifikasi
-  }
-}
-
-/* =====================================================================
  *  6c. Wi-Fi SETUP (AP + Captive Portal + halaman mobile)
  *  Modul TERPISAH dari logika monitoring/pompa. Diaktifkan saat kredensial
  *  belum valid (belakang mula) atau lewat Serial ('setup'). Menyediakan:
@@ -371,6 +356,8 @@ void updateLED();
 void updateLCD();
 void handleSerial();
 void stopAllPumps();
+void setDoseIdle(DoseCtl& d);
+bool sprayActive();
 
 struct DeviceCreds {
   String ssid, wpass, url, key;
@@ -399,30 +386,22 @@ uint32_t connStartMs = 0, connSuccessMs = 0;
 const uint32_t CONNECT_TIMEOUT_MS = 30000;
 
 bool credsValid() {
-  bool urlOk = cred.url.startsWith("http://") || cred.url.startsWith("https://");
-  return cred.ssid.length() > 0 && cred.key.length() >= 8 &&
-         cred.key.length() <= 120 && urlOk;
+  /* Transport MQTT: kredensial broker diisi saat kompile (MQTT_PASS);
+     portal setup hanya menyiapkan Wi-Fi.                               */
+  return cred.ssid.length() > 0;
 }
 
-String maskKey(const String& k) {
-  if (k.length() <= 8) return "****";
-  return k.substring(0, 4) + "..." + k.substring(k.length() - 4);
-}
+/* Tidak dipakai lagi (transport MQTT); portal tidak menampilkan kredensial. */
 
 void loadCreds() {
   cred.ssid  = nvs.getString("c_ssid",  WIFI_SSID);
   cred.wpass = nvs.getString("c_wpass", WIFI_PASS);
-  cred.url   = nvs.getString("c_url",   API_BASE_URL);
-  cred.key   = nvs.getString("c_key",   API_KEY);
-  Serial.printf("[PROV] kred: ssid='%s' url=%s key=%s\n",
-                cred.ssid.c_str(), cred.url.c_str(), maskKey(cred.key).c_str());
+  Serial.printf("[PROV] kred: ssid='%s'\n", cred.ssid.c_str());
 }
 
 void saveCreds() {
   nvs.putString("c_ssid",  cred.ssid);
   nvs.putString("c_wpass", cred.wpass);
-  nvs.putString("c_url",   cred.url);
-  nvs.putString("c_key",   cred.key);
 }
 
 /* escape JSON minimalis (SSID bisa berisi kutip/backslash/emoji)        */
@@ -513,17 +492,6 @@ input:disabled{opacity:.45}
     </div>
     <label class="chk"><input id="nopass" type="checkbox"> Tanpa Password (jaringan terbuka)</label>
 
-    <div class="sechead"><h2>Server HydroTech</h2></div>
-    <div class="field"><label>API Base URL</label>
-      <input id="url" maxlength="140" placeholder="http://192.168.1.10:8000/api/sensor/ingest.php">
-    </div>
-    <div class="field"><label>API Key</label>
-      <div class="pw">
-        <input id="key" type="password" maxlength="120" autocomplete="off">
-        <button id="eyeKey" class="ghost" type="button">Tampilkan</button>
-      </div>
-    </div>
-
     <div id="msg" class="msg"></div>
     <button id="goBtn" class="primary">Hubungkan</button>
     <div id="stage" class="stage"></div>
@@ -590,23 +558,13 @@ function applyNopass() {
   showMsg("", null);
 }
 $("nopass").addEventListener("change", applyNopass);
-$("eyeKey").addEventListener("click", () => {
-  const k = $("key");
-  const show = k.type === "password";
-  k.type = show ? "text" : "password";
-  $("eyeKey").textContent = show ? "Sembunyikan" : "Tampilkan";
-});
 
 function validate() {
-  const ssid = $("ssid").value.trim(), pass = $("pass").value,
-        url  = $("url").value.trim(), key = $("key").value.trim();
+  const ssid = $("ssid").value.trim(), pass = $("pass").value;
   if (!ssid) return "Pilih jaringan WiFi dari daftar atau isi SSID.";
   const open = $("nopass").checked;
   if (!open && pass.length < 8) return "Password WiFi minimal 8 karakter (atau centang Tanpa Password).";
   if (!open && !pass) return "Password wajib diisi, atau centang Tanpa Password.";
-  if (!(url.startsWith("http://") || url.startsWith("https://")) || url.length < 18)
-    return "API Base URL tidak valid (contoh: http://192.168.1.10:8000/api/sensor/ingest.php).";
-  if (key.length < 8) return "API Key minimal 8 karakter.";
   return null;
 }
 $("goBtn").addEventListener("click", async () => {
@@ -619,8 +577,6 @@ $("goBtn").addEventListener("click", async () => {
       ssid: $("ssid").value.trim(),
       pass: $("pass").value,
       nopass: $("nopass").checked ? "1" : "0",
-      url: $("url").value.trim(),
-      key: $("key").value.trim(),
     });
     const r = await (await fetch("/api/connect", { method: "POST", body })).json();
     if (!r.ok) throw new Error(r.error || "Server menolak data konfigurasi.");
@@ -729,8 +685,9 @@ void handleConnect() {
   String ssid  = setupSrv->arg("ssid");
   String pass  = setupSrv->arg("pass");
   String nopass= setupSrv->arg("nopass");
-  String url   = setupSrv->arg("url");
-  String key   = setupSrv->arg("key");
+  String url   = setupSrv->arg("url");           // tidak dipakai lagi (MQTT saja) - diabaikan
+  String key   = setupSrv->arg("key");           // idem
+  (void)url; (void)key;
   bool openNet = (nopass == "1");
 
   if (ssid.length() == 0 || ssid.length() > 32) {
@@ -739,21 +696,11 @@ void handleConnect() {
   if (!openNet && pass.length() < 8) {
     setupSrv->send(200, "application/json", "{\"ok\":false,\"error\":\"Password minimum 8 karakter (atau centang Tanpa Password).\"}"); return;
   }
-  String cleanUrl = url; cleanUrl.trim();
-  if (!(cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) || cleanUrl.length() < 18) {
-    setupSrv->send(200, "application/json", "{\"ok\":false,\"error\":\"API Base URL tidak valid.\"}"); return;
-  }
-  key.trim();
-  if (key.length() < 8 || key.length() > 120) {
-    setupSrv->send(200, "application/json", "{\"ok\":false,\"error\":\"API Key harus 8..120 karakter.\"}"); return;
-  }
 
-  /* Simpan permanen (NVS) SEBELUM koneksi - Legacy komfirnosti: sudah
-     ada power jenis ini meski listrik padam saat koneksi berlangsung.  */
+  /* Simpan permanen (NVS) SEBELUM koneksi: aman meski listrik padam
+     saat koneksi berlangsung.                                        */
   cred.ssid = ssid;
   cred.wpass = openNet ? String("") : pass;
-  cred.url = cleanUrl;
-  cred.key = key;
   saveCreds();
 
   /* Mulai koneksi STA; AP tetap jalan supaya halaman bisa konfirmasi.   */
@@ -767,8 +714,7 @@ void handleConnect() {
   connIp = "";
   connStartMs = millis();
   wifiState = WIFI_CONNECTING;
-  Serial.printf("[SETUP] koneksi: ssid='%s' open=%d url=%s key=%s\n",
-                ssid.c_str(), (int)openNet, cleanUrl.c_str(), maskKey(key).c_str());
+  Serial.printf("[SETUP] koneksi: ssid='%s' open=%d\n", ssid.c_str(), (int)openNet);
   setupSrv->send(200, "application/json",
                  "{\"ok\":true,\"ssid\":\"" + jsonEsc(ssid) + "\"}");
 }
@@ -975,7 +921,7 @@ void maintainWiFi() {
 }
 
 /* =====================================================================
- *  8. API: POST sensor (implisit heartbeat) & GET konfigurasi
+ *  8. WAKTU SERVER (utilitas)
  * ===================================================================== */
 
 /* Parse "Y-m-d H:i:s" waktu server (WIB, database +07:00) menjadi
@@ -991,187 +937,424 @@ time_t parseServerLocalEpoch(const char* s) {
   return mktime(&t);   // TZ aktif = WIB-7 â†’ hasil epoch akurat WIB
 }
 
-bool postSensors() {
-  if (wifiState != WIFI_OK) return false;
-  if (!phValid && !ppmValid) {
-    Serial.println("[HTTP] sensor tidak valid â€” data tidak dikirim "
-                   "(heartbeat melemah: status dashboard akan offline; perbaiki sensor)");
-    return false;
-  }
-  char body[96];
-  if (phValid && ppmValid)
-    snprintf(body, sizeof(body), "{\"ph_value\":%.2f,\"ppm_value\":%ld}",
-             phValue, (long)roundf(ppmValue));
-  else if (phValid)
-    snprintf(body, sizeof(body), "{\"ph_value\":%.2f}", phValue);
-  else
-    snprintf(body, sizeof(body), "{\"ppm_value\":%ld}", (long)roundf(ppmValue));
-
-  HTTPClient http;
-#if API_USE_TLS
-  WiFiClientSecure client; applyTls(&client);
-#else
-  WiFiClient client;
-#endif
-  bool ok = false;
-  if (!http.begin(client, cred.url)) { Serial.println("[HTTP] begin gagal"); return false; }
-  http.setTimeout(HTTP_TIMEOUT_MS);
-  http.addHeader("X-API-Key", cred.key);
-  http.addHeader("Content-Type", "application/json");
-  int code = http.POST(String(body));
-  if (code > 0) {
-    String resp = http.getString();
-    HY_DOC();
-    DeserializationError err = deserializeJson(doc, resp);
-    if (err) {
-      Serial.printf("[HTTP] respons POST bukan JSON valid (HTTP %d)\n", code);
-    } else if (doc["success"].as<bool>() && doc["data"]["readings"].size() > 0) {
-      ok = true;
-      Serial.print("[HTTP] tersimpan, reading_ids=[");
-      int i = 0;
-      for (JsonVariant v : doc["data"]["reading_ids"].as<JsonArray>()) {
-        if (i++) Serial.print(',');
-        Serial.print((long long)v.as<long long>());
-      }
-      Serial.println("]");
-    } else {
-      Serial.printf("[HTTP] server menolak POST (HTTP %d)\n", code);
-    }
-  } else {
-    Serial.printf("[HTTP] POST gagal code=%d â€” TIDAK diulang supaya "
-                  "tidak menggandakan log di server\n", code);
-  }
-  http.end();
-  return ok;
-}
-
-bool getRemoteConfig() {
-  if (wifiState != WIFI_OK) return false;
-  HTTPClient http;
-#if API_USE_TLS
-  WiFiClientSecure client; applyTls(&client);
-#else
-  WiFiClient client;
-#endif
-  bool ok = false;
-  if (!http.begin(client, cred.url)) return false;
-  http.setTimeout(HTTP_TIMEOUT_MS);
-  http.addHeader("X-API-Key", cred.key);
-  int code = http.GET();
-  if (code > 0) {
-    String resp = http.getString();
-    HY_DOC();
-    DeserializationError err = deserializeJson(doc, resp);
-    if (!err && doc["success"].as<bool>() && doc["data"]["config"].is<JsonObject>()) {
-      JsonObject c = doc["data"]["config"];
-      if (c["ph"].is<JsonObject>()) {
-        float mn = c["ph"]["min"] | 0.f, mx = c["ph"]["max"] | 0.f;
-        if (mn >= 0 && mx <= 14 && mn <= mx) {
-          cfg.phMin = mn; cfg.phMax = mx;
-          cfg.valid = true; cfg.fetchedMs = millis();
-        } else Serial.println("[CFG] ambang pH invalid â€” diabaikan");
-      }
-      if (c["ppm"].is<JsonObject>()) {
-        float mn = c["ppm"]["min"] | 0.f, mx = c["ppm"]["max"] | 0.f;
-        if (mn >= 0 && mn <= mx) { cfg.ppmMin = mn; cfg.ppmMax = mx; }
-      }
-      if (c["dithane"].is<JsonObject>()) {
-        char st[12]; strncpy(st, c["dithane"]["start"] | "", sizeof(st) - 1); st[sizeof(st) - 1] = '\0';
-        for (char* p = st; *p; ++p) if (*p == ':') *p = '.';  // alat kompatibilitas HH:MM
-        long ivL = (long)atol(c["dithane"]["interval"] | "");
-        long duL = (long)atol(c["dithane"]["duration"] | "");
-        int  dH = 0, dM = 0;
-        if (sscanf(st, "%d.%d", &dH, &dM) == 2 && strchr(st, '.') &&
-            dH >= 0 && dH < 24 && dM >= 0 && dM < 60 && ivL > 0 && duL > 0) {
-          cfg.dithIntervalH = ivL;
-          cfg.dithDurationS = (duL > (long)MAX_SPRAY_SECONDS) ? (long)MAX_SPRAY_SECONDS : duL;
-          cfg.dithStartHM = dH * 60 + (long)dM;
-          cfg.dithValid = true; cfg.fetchedMs = millis();
-          Serial.printf("[CFG] dithane: interval=%ldh dur=%lds mulai=%02d:%02d WIB\n",
-                        ivL, cfg.dithDurationS, dH, dM);
-          /* Ketahanan pasca-restart: waktu selesai terakhir dari database
-             (PATCH A/B: kolom virtual last_completed_at). Bila lebih baru
-             dari NVS lokal â†’ diadopsi.                                  */
-          time_t serverDone = parseServerLocalEpoch(
-              c["dithane"]["last_completed_at"] | "");
-          if (serverDone > 0 && serverDone > dithLastDone()) {
-            dithMarkDone(serverDone);
-            Serial.println("[CFG] anchor Dithane diadopsi dari server "
-                           "(last_completed_at lebih baru)");
-          }
-        } else Serial.println("[CFG] konfig dithane tidak valid â€” diabaikan");
-      }
-      if (c["device"].is<JsonObject>()) {                 // patch opsional
-        JsonObject d = c["device"];
-        cfg.hasDeviceCfg    = true;
-        cfg.respArmed       = (d["armed"].as<int>() != 0) ? 1 : 0;
-        cfg.respCircMode    = (d["circulation"].as<int>() != 0) ? CIRC_PERIODIC : CIRC_DISABLED;
-        cfg.respDoseABms    = d["dose_ab_ms"] | 0;
-        cfg.respDosePHms    = d["dose_ph_ms"] | 0;
-        cfg.respMixWaitS    = d["mix_wait_sec"] | 0;
-        cfg.respCooldownS   = d["cooldown_sec"] | 0;
-        cfg.respMaxEvents   = d["max_events_day"] | 0;
-        cfg.respCircOnS     = d["circ_on_sec"] | 0;
-        cfg.respCircPeriodS = d["circ_period_sec"] | 0;
-        Serial.println("[CFG] blok device (patch) terbaca");
-      }
-      ok = true;
-    } else Serial.printf("[HTTP] GET config tidak dikenal (HTTP %d)\n", code);
-  } else {
-    Serial.printf("[HTTP] GET config gagal code=%d\n", code);
-  }
-  http.end();
-  return ok;
-}
-
 /* =====================================================================
- *  9. LAPORAN EKSEKUSI POMPA (endpoint api/device/report.php)
+ *  9. LAPORAN EKSEKUSI POMPA (via MQTT, pengganti api/device/report.php)
  *
- *  state "started"   : dikirim saat relay menyala -> SERVER membuat SATU
- *                       catatan monitoring_logs (Data Aktivitas Sistem,
- *                       status "Menyala") + notifikasi web
+ *  state "started"   : dikirim saat relay menyala -> SERVER (worker PHP)
+ *                       membuat SATU catatan monitoring_logs (Data
+ *                       Aktivitas Sistem, status "Menyala") + notifikasi
  *  state "completed" : dikirim setelah durasi aktual penuh ->
  *                       notifikasi web saja, TANPA catatan kedua
  *  Satu catatan aktivitas = satu kali pompa MULAI menyala. Tidak ada
  *  catatan berkala selama pompa tetap menyala, dan tidak ada catatan
- *  dari pembacaan sensor / pengecekan jadwal. Laporan ulang < 60 detik
- *  dide-dup SERVER — HTTP tidak di-retry.
+ *  dari pembacaan sensor / pengecekan jadwal. Dedup < 60 detik tetap
+ *  di server (worker PHP). QoS 1; bila broker terputus, laporan tunggal
+ *  ini dihilangkan (perilaku lama: HTTP tanpa retry agar tidak duplikat).
  * ===================================================================== */
 
+WiFiClient   mqttNet;
+PubSubClient mqtt(mqttNet);
+uint32_t lastMqttSensorMs = 0, lastMqttStatusMs = 0, lastMqttTryMs = 0;
+uint32_t lastPumpPubMs = 0, lastCfgReqMs = 0;
+time_t   mqttTs();
+void     requestConfigMqtt();
+
 void reportPump(const char* pump, const char* state, long durationS) {
-  if (API_REPORT_URL[0] == '\0') return;           // patch tidak dikonfigurasi
-  if (!reportAvail || wifiState != WIFI_OK) return;
-  HTTPClient http;
-#if API_USE_TLS
-  WiFiClientSecure client; applyTls(&client);
-#else
-  WiFiClient client;
-#endif
+  if (!mqtt.connected() || wifiState != WIFI_OK) return;
   struct tm t = localTm();
   char body[160];
   snprintf(body, sizeof(body),
-           "{\"pump\":\"%s\",\"state\":\"%s\",\"duration_s\":%ld,"
-           "\"device_seen\":\"%04d-%02d-%02d %02d:%02d:%02d\"}",
+           "{\"type\":\"pump_activity\",\"pump\":\"%s\",\"state\":\"%s\",\"duration_s\":%ld,"
+           "\"device_seen\":\"%04d-%02d-%02d %02d:%02d:%02d\",\"ts\":%lld}",
            pump, state, durationS,
-           t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);
-  if (!http.begin(client, API_REPORT_URL)) return;
-  http.setTimeout(HTTP_TIMEOUT_MS);
-  http.addHeader("X-API-Key", cred.key);
-  http.addHeader("Content-Type", "application/json");
-  int code = http.POST(String(body));
-  if (code == 404) {
-    reportAvail = false;                           // patch belum terpasang
-    Serial.println("[REPORT] endpoint laporan 404 â€” pelaporan dimatikan (endpoint belum dipatch)");
-  } else if (code > 0) {
-    HY_DOC();
-    bool okf = (!deserializeJson(doc, http.getString())) && doc["success"].as<bool>();
-    Serial.printf("[REPORT] laporan %s (HTTP %d)\n", okf ? "diterima" : "ditolak server", code);
-  } else {
-    reportFails++;
-    if (reportFails >= 3) reportAvail = false;
-    Serial.printf("[REPORT] POST gagal code=%d â€” tanpa retry agar tidak duplikat\n", code);
+           t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec,
+           (long long)mqttTs());
+  mqtt.publish("hydrotech/device/status", body, false);   // QoS 1, tanpa retained
+  Serial.printf("[REPORT] laporan pompa %s/%s terkirim via MQTT\n", pump, state);
+}
+
+/* =====================================================================
+ * 9b. KONTROL MANUAL DARI DASHBOARD (via MQTT hydrotech/cmd/esp32/pump)
+ *
+ * Prioritas: failsafe sensor > interlock Dithane > MANUAL (berdurasi)
+ *            > otomatisasi lokal.
+ *  - Override manual selalu berbatas waktu (duration_s) dengan timer
+ *    LOKAL di ESP32: bila server/broker putus di tengah jalan,
+ *    pompa tetap kembali ke otomatisasi tepat waktu.
+ *  - Manual ON pompa dosing ditolak bila mode aman, semprotan aktif,
+ *    atau sensor pompa tersebut invalid (keselamatan kimia).
+ *  - Manual OFF selalu diizinkan (arah paling aman).
+ *  - Manual spray Dithane TIDAK menggeser anchor jadwal (dithMarkDone
+ *    tidak dipanggil) sehingga jadwal otomatis tidak berubah.
+ *  - Semua perintah membawa msg_id; dieksekusi SEKALI lalu di-ack,
+ *    sehingga perintah duplikat tidak dijalankan ulang.
+ * ===================================================================== */
+
+struct ManualCtl {
+  bool     active = false;
+  bool     on = false;
+  uint32_t until = 0;
+};
+ManualCtl manCtl[PUMP_COUNT];
+bool      manDithSpraying = false;
+uint32_t  manDithT0 = 0, manDithDur = 0;
+
+bool manualActive(PumpId p) { return manCtl[p].active; }
+
+uint32_t manualRemainingS(PumpId p) {
+  return (millis() < manCtl[p].until) ? (manCtl[p].until - millis()) / 1000UL + 1 : 0;
+}
+
+void manualEnd(PumpId p, bool notify) {
+  bool wasOn = manCtl[p].on;
+  manCtl[p].active = false;
+  manCtl[p].on = false;
+  if (notify && wasOn) {                      // laporan selesai override ON
+    const char* name = (p == PUMP_AB) ? "ab" : (p == PUMP_PHDOWN ? "ph" : "dithane");
+    reportPump(name, "completed", 0);
   }
-  http.end();
+}
+
+void cancelAutoDosing(PumpId p) {
+  if (p == PUMP_AB && doseAB.state != DOSE_IDLE) { relayWrite(PUMP_AB, false); setDoseIdle(doseAB); }
+  if (p == PUMP_PHDOWN && dosePH.state != DOSE_IDLE) { relayWrite(PUMP_PHDOWN, false); setDoseIdle(dosePH); }
+}
+
+bool applyManual(const String& pump, bool on, long durationS) {
+  PumpId p;
+  if      (pump == "ab")      p = PUMP_AB;
+  else if (pump == "ph")      p = PUMP_PHDOWN;
+  else if (pump == "dithane") p = PUMP_DITHANE;
+  else return false;
+  if (durationS < 1 || durationS > 3600) return false;
+
+  if (!on) {                                    // OFF selalu aman diizinkan
+    if (p == PUMP_DITHANE && manDithSpraying) {
+      manDithSpraying = false;
+      relayWrite(PUMP_DITHANE, false);
+      Serial.println("[CMD]: spray manual Dithane DIBATAL");
+    }
+    cancelAutoDosing(p);
+    manualEnd(p, false);
+    manCtl[p].active = true; manCtl[p].on = false;
+    manCtl[p].until = millis() + (uint32_t)durationS * 1000UL;
+    Serial.printf("[CMD]: %s OFF manual %ld s\n", PUMP_NAME[p], durationS);
+    return true;
+  }
+
+  /* --- Manual ON --- */
+  if (p == PUMP_DITHANE) {                      // spray manual: interlock penuh
+    if (safeMode) { Serial.println("[CMD]: ditolak (mode aman)"); return true; }
+    stopAllPumps();
+    dosingOwner = PUMP_COUNT;
+    circState = CIRC_OFF; circT0 = millis();
+    cancelAutoDosing(PUMP_AB); cancelAutoDosing(PUMP_PHDOWN);
+    manDithSpraying = true;
+    manDithT0 = millis();
+    manDithDur = (uint32_t)durationS;
+    Serial.printf("[CMD]: spray manual Dithane MULAI %ld s\n", durationS);
+    reportPump("dithane", "started", 0);
+    return true;
+  }
+  if (safeMode || sprayActive()) { Serial.println("[CMD]: ditolak (mode aman/interlock)"); return true; }
+  bool sensorOk = (p == PUMP_AB) ? ppmValid : phValid;
+  if (!sensorOk) { Serial.printf("[CMD]: ditolak (sensor %s invalid)\n", PUMP_NAME[p]); return true; }
+  cancelAutoDosing(p);                          // hentikan dosis otomatis berjalan
+  manualEnd(p, false);
+  manCtl[p].active = true; manCtl[p].on = true;
+  manCtl[p].until = millis() + (uint32_t)durationS * 1000UL;
+  Serial.printf("[CMD]: %s ON manual %ld s\n", PUMP_NAME[p], durationS);
+  { const char* name = (p == PUMP_AB) ? "ab" : "ph";
+    reportPump(name, "started", durationS); }
+  return true;
+}
+
+/* Terapkan & awasi override manual; dipanggil tiap loop SEBELUM kontrol
+   otomatis (pompa manual dilewati kontrol otomatisnya).                */
+void applyManualOverrides() {
+  for (uint8_t i = 0; i < PUMP_COUNT; i++) {
+    PumpId p = static_cast<PumpId>(i);
+    if (!manCtl[i].active) continue;
+    if (millis() >= manCtl[i].until) {        // durasi habis -> auto kembali
+      if (manCtl[i].on) Serial.printf("[MAN] %s override habis — otomatisasi lanjut\n", PUMP_NAME[p]);
+      relayWrite(p, false);
+      manualEnd(p, true);
+      continue;
+    }
+    if (manCtl[i].on) {
+      /* Failsafe: dosing manual langsung dihentikan bila kondisi berbahaya. */
+      if (p == PUMP_AB || p == PUMP_PHDOWN) {
+        bool sensorOk = (p == PUMP_AB) ? ppmValid : phValid;
+        if (safeMode || sprayActive() || !sensorOk) {
+          Serial.printf("[MAN] %s override DIBATAL (keselamatan)\n", PUMP_NAME[p]);
+          relayWrite(p, false);
+          manualEnd(p, true);
+          continue;
+        }
+      }
+      relayWrite(p, true);
+    } else {
+      relayWrite(p, false);                   // paksa OFF selama override
+    }
+  }
+  if (manDithSpraying) {                      // spray manual berjalan
+    relayWrite(PUMP_DITHANE, true);
+    if (millis() - manDithT0 >= manDithDur * 1000UL) {
+      relayWrite(PUMP_DITHANE, false);
+      manDithSpraying = false;
+      Serial.printf("[MAN] spray manual Dithane SELESAI (%lu s)\n", (unsigned long)manDithDur);
+      reportPump("dithane", "completed", (long)manDithDur);
+    }
+  }
+}
+
+/* =====================================================================
+ * 9c. MQTT — transport utama (Eclipse Mosquitto, jaringan lokal)
+ *
+ * Topik (lihat docs/MQTT.md):
+ *   publish : hydrotech/sensor/{ph,ppm}   QoS 0, tiap 2 dtk, JSON + ts
+ *   publish : hydrotech/pump/status       QoS 1, saat berubah, retained
+ *   publish : hydrotech/device/status     QoS 1, 30 dtk + LWT, retained
+ *   publish : hydrotech/device/status     ack perintah {"type":"ack"}
+ *   subscribe: hydrotech/cmd/esp32/{ph,ppm,dithane,pump}  QoS 1
+ *
+ * Keandalan:
+ *  - Reconnect otomatis tiap MQTT_RETRY_MS.
+ *  - Pencegahan eksekusi perintah duplikat: cache msg_id (FNV-1a) 32 kali
+ *    terakhir; perintah juga TIDAK pernah retained dari sisi server.
+ *  - Validasi payload sebelum diterapkan (ambang pH 0..14, PPM >= 0,
+ *    jadwal Dithane konsisten); ditolak -> ack dengan ok:false.
+ *  - Konfigurasi awal/berkala: perangkat meminta lewat config_request,
+ *    worker PHP menjawab dengan dorongan cmd/ph|ppm|dithane.
+ * ===================================================================== */
+bool     lastPubOn[PUMP_COUNT] = { false, false, false, false };
+bool     lastPubManual[PUMP_COUNT] = { false, false, false, false };
+
+/* Cache msg_id: FNV-1a 32-bit, cincin 32 entri (dedup perintah MQTT).   */
+uint32_t msgIdSeen[32];
+uint8_t  msgIdSeenPos = 0;
+bool     msgIdSeenInit = false;
+
+bool msgIdIsNew(const char* id) {
+  if (!id || !id[0]) return true;
+  uint32_t h = 2166136261u;
+  for (const char* c = id; *c; ++c) { h ^= (uint8_t)*c; h *= 16777619u; }
+  if (!msgIdSeenInit) {                       // inisialisasi pertama: isi = 0
+    for (uint8_t i = 0; i < 32; i++) msgIdSeen[i] = 0;
+    msgIdSeenInit = true;
+  }
+  for (uint8_t i = 0; i < 32; i++) if (msgIdSeen[i] == h && h != 0) return false;
+  msgIdSeen[msgIdSeenPos] = h;
+  msgIdSeenPos = (msgIdSeenPos + 1) % 32;
+  return true;
+}
+
+time_t mqttTs() { return systemTimeValid() ? time(nullptr) : 0; }
+
+void mqttPublishDeviceStatus(bool online) {
+  char payload[160];
+  if (online) {
+    snprintf(payload, sizeof(payload),
+             "{\"type\":\"status\",\"online\":true,\"ip\":\"%s\",\"rssi\":%d,\"ts\":%lld}",
+             WiFi.localIP().toString().c_str(), WiFi.RSSI(), (long long)mqttTs());
+  } else {
+    snprintf(payload, sizeof(payload), "{\"type\":\"status\",\"online\":false,\"ts\":%lld}", (long long)mqttTs());
+  }
+  mqtt.publish("hydrotech/device/status", payload, true);   // retained: status boleh
+  Serial.printf("[MQTT] device/status -> %s\n", payload);
+}
+
+/* Ack perintah: dipublikasikan QoS 1 TANPA retained.                    */
+void mqttAck(const char* msgId, const char* cmdTopic, bool ok, const char* note) {
+  char payload[224];
+  snprintf(payload, sizeof(payload),
+           "{\"type\":\"ack\",\"msg_id\":\"%s\",\"topic\":\"%s\",\"ok\":%s,\"note\":\"%s\",\"ts\":%lld}",
+           msgId ? msgId : "", cmdTopic, ok ? "true" : "false", note, (long long)mqttTs());
+  mqtt.publish("hydrotech/device/status", payload, false);
+  Serial.printf("[MQTT] ack %s ok=%d (%s)\n", msgId ? msgId : "-", ok, note);
+}
+
+/* Terapkan konfigurasi ambang/jadwal dari cmd topic; true bila valid.   */
+bool applyConfigCmd(const String& type, JsonDocument& doc) {
+  if (type == "ph" || type == "ppm") {
+    float mn = doc["min"] | NAN, mx = doc["max"] | NAN;
+    float lo = 0.f, hi = (type == "ph") ? 14.f : 5000.f;
+    if (isnan(mn) || isnan(mx) || mn < lo || mx > hi || mn > mx) return false;
+    if (type == "ph") { cfg.phMin = mn; cfg.phMax = mx; }
+    else              { cfg.ppmMin = mn; cfg.ppmMax = mx; }
+    cfg.valid = true; cfg.fetchedMs = millis();
+    Serial.printf("[MQTT] ambang %s: %.2f..%.2f\n", type.c_str(), mn, mx);
+    return true;
+  }
+  if (type == "dithane") {
+    long ivL = (long)atol(doc["interval"] | "");
+    long duL = (long)atol(doc["duration"] | "");
+    char st[12]; strncpy(st, doc["start"] | "", sizeof(st) - 1); st[sizeof(st) - 1] = '\0';
+    for (char* p = st; *p; ++p) if (*p == ':') *p = '.';     // kompatibel HH:MM
+    int dH = 0, dM = 0;
+    if (sscanf(st, "%d.%d", &dH, &dM) == 2 && strchr(st, '.') &&
+        dH >= 0 && dH < 24 && dM >= 0 && dM < 60 && ivL > 0 && duL > 0) {
+      cfg.dithIntervalH = ivL;
+      cfg.dithDurationS = (duL > (long)MAX_SPRAY_SECONDS) ? (long)MAX_SPRAY_SECONDS : duL;
+      cfg.dithStartHM = dH * 60 + (long)dM;
+      cfg.dithValid = true; cfg.fetchedMs = millis();
+      time_t serverDone = parseServerLocalEpoch(doc["last_completed_at"] | "");
+      if (serverDone > 0 && serverDone > dithLastDone()) dithMarkDone(serverDone);
+      Serial.printf("[MQTT] jadwal dithane: tiap %ldh, %ld s, mulai %02d:%02d\n",
+                    ivL, cfg.dithDurationS, dH, dM);
+      return true;
+    }
+    return false;
+  }
+  return false;
+}
+
+void mqttCallback(char* topic, byte* payload, unsigned int length) {
+  String t = String(topic);
+  if (!t.startsWith("hydrotech/cmd/esp32/")) return;
+  String type = t.substring(strlen("hydrotech/cmd/esp32/"));
+
+  /* Payload JSON ke buffer null-terminated.                              */
+  char buf[384];
+  unsigned int n = (length < sizeof(buf) - 1) ? length : sizeof(buf) - 1;
+  memcpy(buf, payload, n); buf[n] = '\0';
+
+  HY_DOC();
+  DeserializationError err = deserializeJson(doc, buf);
+  if (err) { Serial.printf("[MQTT] payload cmd bukan JSON: %s\n", buf); return; }
+
+  /* Perintah WAJIB membawa msg_id; duplikat tidak dieksekusi dua kali.   */
+  const char* msgId = doc["msg_id"] | "";
+  if (!msgIdIsNew(msgId)) {
+    Serial.printf("[MQTT] msg_id duplikat diabaikan: %s\n", msgId);
+    return;
+  }
+
+  if (type == "pump") {                          // kontrol manual ON/OFF
+    String pump = doc["pump"] | "";
+    String action = doc["action"] | "";
+    long durationS = doc["duration_s"] | 0L;
+    long issuedBy = 0;
+    bool ok = (action == "on" || action == "off") && durationS >= 1 && durationS <= 3600
+              && applyManual(pump, action == "on", durationS);
+    mqttAck(msgId, topic, ok, ok ? "diproses (eksekusi/ditolak aturan keselamatan)" : "payload tidak valid");
+    (void)issuedBy;
+    return;
+  }
+
+  /* Perintah konfigurasi (ph/ppm/dithane).                               */
+  bool ok = applyConfigCmd(type, doc);
+  mqttAck(msgId, topic, ok, ok ? "konfigurasi diterapkan" : "konfigurasi tidak valid");
+}
+
+void publishPumpStatusMqtt(bool force) {
+  uint32_t now = millis();
+  if (!force && now - lastPumpPubMs < 500) return;   // maks 2 Hz saat manual
+  bool published = false;
+  for (uint8_t i = 0; i < PUMP_COUNT; i++) {
+    PumpId p = static_cast<PumpId>(i);
+    bool isOn = (manDithSpraying && p == PUMP_DITHANE) ? true : relayIsOn(p);
+    bool isManual = manCtl[i].active;
+    /* Auto & tidak berubah: jangan bertele-tele; manual: perbarui mundur. */
+    if (!force && !isManual && !lastPubManual[i] && isOn == lastPubOn[i]) continue;
+    const char* keys[PUMP_COUNT] = { "ab", "ph", "dithane", "circ" };
+    char payload[160];
+    if (isManual) {
+      snprintf(payload, sizeof(payload),
+               "{\"pump\":\"%s\",\"state\":\"%s\",\"mode\":\"manual\",\"remaining_s\":%lu,\"ts\":%lld}",
+               keys[i], isOn ? "on" : "off", (unsigned long)manualRemainingS(p), (long long)mqttTs());
+    } else {
+      snprintf(payload, sizeof(payload),
+               "{\"pump\":\"%s\",\"state\":\"%s\",\"mode\":\"auto\",\"ts\":%lld}",
+               keys[i], isOn ? "on" : "off", (long long)mqttTs());
+    }
+    mqtt.publish("hydrotech/pump/status", payload, true);   // retained: status boleh
+    lastPubOn[i] = isOn; lastPubManual[i] = isManual;
+    published = true;
+  }
+  if (published) lastPumpPubMs = now;
+}
+
+void publishSensorsMqtt() {
+  char payload[96];
+  if (phValid) {
+    snprintf(payload, sizeof(payload), "{\"value\":%.2f,\"valid\":true,\"ts\":%lld}", phValue, (long long)mqttTs());
+  } else {
+    snprintf(payload, sizeof(payload), "{\"value\":0,\"valid\":false,\"ts\":%lld}", (long long)mqttTs());
+  }
+  mqtt.publish("hydrotech/sensor/ph", payload, false);        // QoS 0, tanpa retained
+  if (ppmValid) {
+    snprintf(payload, sizeof(payload), "{\"value\":%ld,\"valid\":true,\"ts\":%lld}", (long)roundf(ppmValue), (long long)mqttTs());
+  } else {
+    snprintf(payload, sizeof(payload), "{\"value\":0,\"valid\":false,\"ts\":%lld}", (long long)mqttTs());
+  }
+  mqtt.publish("hydrotech/sensor/ppm", payload, false);       // QoS 0, tanpa retained
+}
+
+void maintainMqtt() {
+  if (wifiState != WIFI_OK) return;                           // tunggu Wi-Fi stabil
+  if (!mqtt.connected()) {
+    if (millis() - lastMqttTryMs < MQTT_RETRY_MS) return;
+    lastMqttTryMs = millis();
+
+    /* Resolusi broker: nama .local -> IP via mDNS. Cache 5 menit supaya
+       reconnect cepat, tapi perubahan IP laptop tetap diikuti.          */
+    String host = MQTT_HOST;
+    if (host.endsWith(".local")) {
+      static IPAddress brokerIp;
+      static uint32_t lastResolveMs = 0;
+      if (brokerIp == IPAddress(0, 0, 0, 0) || millis() - lastResolveMs > 300000UL) {
+        brokerIp = MDNS.queryHost(host.substring(0, host.length() - 6), 2000);
+        lastResolveMs = millis();
+        if (brokerIp == IPAddress(0, 0, 0, 0)) {
+          Serial.println("[MQTT] broker .local tidak ditemukan — coba lagi nanti");
+          return;
+        }
+        mqtt.setServer(brokerIp, MQTT_PORT);
+        Serial.printf("[MQTT] broker %s = %s (mDNS)\n", host.c_str(), brokerIp.toString().c_str());
+      }
+      if (brokerIp == IPAddress(0, 0, 0, 0)) return;
+    }
+
+    /* Client-id unik per perangkat: broker menendang klien id sama.    */
+    String clientId = String(MQTT_CLIENT_ID) + "-" + WiFi.macAddress();
+    boolean ok = mqtt.connect(clientId.c_str(), MQTT_USER, MQTT_PASS,
+                              "hydrotech/device/status", 1, true,
+                              "{\"type\":\"status\",\"online\":false,\"reason\":\"lwt\"}");
+    if (ok) {
+      Serial.println("[MQTT] terhubung ke broker");
+      mqtt.subscribe("hydrotech/cmd/esp32/ph", 1);
+      mqtt.subscribe("hydrotech/cmd/esp32/ppm", 1);
+      mqtt.subscribe("hydrotech/cmd/esp32/dithane", 1);
+      mqtt.subscribe("hydrotech/cmd/esp32/pump", 1);
+      mqttPublishDeviceStatus(true);
+      publishPumpStatusMqtt(true);                            // status terkini sekali
+      lastCfgReqMs = millis();
+      requestConfigMqtt();                                    // ambang + jadwal
+    }
+    return;
+  }
+  mqtt.loop();
+
+  /* Sensor: WAJIB terkirim tiap 2 detik saat MQTT hidup.                 */
+  if (millis() - lastMqttSensorMs >= MQTT_PUBLISH_MS) {
+    lastMqttSensorMs = millis();
+    if (phValid || ppmValid) publishSensorsMqtt();
+  }
+  if (millis() - lastMqttStatusMs >= MQTT_STATUS_MS) {
+    lastMqttStatusMs = millis();
+    mqttPublishDeviceStatus(true);
+  }
+  publishPumpStatusMqtt(false);
+}
+
+/* Minta konfigurasi: worker PHP menjawab dengan dorongan cmd/*.        */
+void requestConfigMqtt() {
+  if (!mqtt.connected()) return;
+  char payload[96];
+  snprintf(payload, sizeof(payload), "{\"type\":\"config_request\",\"ts\":%lld}", (long long)mqttTs());
+  mqtt.publish("hydrotech/device/status", payload, false);
+  Serial.println("[MQTT] config_request terkirim — menunggu dorongan konfigurasi");
 }
 
 /* =====================================================================
@@ -1179,7 +1362,8 @@ void reportPump(const char* pump, const char* state, long durationS) {
  * ===================================================================== */
 
 bool configFresh() { return cfg.valid && (millis() - cfg.fetchedMs) <= MAX_CONFIG_AGE_MS; }
-bool sprayActive() { return dithState == DITH_SPRAYING; }
+/* sprayActive mencakup spray manual dari dashboard (interlock sama).     */
+bool sprayActive() { return dithState == DITH_SPRAYING || manDithSpraying; }
 
 bool dosingAllowed() {                            // prasyarat bersama dosing
   return !safeMode && configFresh() && !sprayActive() && systemTimeValid();
@@ -1433,6 +1617,7 @@ bool dithDue(time_t& slotOut) {
    juga diadopsi otomatis dari server (last_completed_at) bila lebih baru:
    inilah ketahanan pasca-restart/NVS-hilang yang diminta spesifikasi.  */
 void controlDithane() {
+  if (manDithSpraying) return;               // spray manual sedang berjalan
   switch (dithState) {
     case DITH_IDLE: {
       if (safeMode || !dithArmed() || !configFresh()) return;
@@ -1525,14 +1710,19 @@ void controlCirculation() {
 
 void evaluateFailsafe() {
   static uint32_t last = 0;
+  static uint8_t invalidStreak = 0;
   if (millis() - last < 5000) return;
   last = millis();
+  /* MODE AMAN sekarang dipicu SENSOR (bukan koneksi): koneksi hilang
+     TIDAK boleh menghentikan otomatisasi lokal (syarat ketahanan).
+     Sensor kedua invalid beruntun -> pompa dikunci (keselamatan kimia);
+     pulih otomatis begitu sensor valid kembali.                        */
+  if (!phValid && !ppmValid) invalidStreak++; else invalidStreak = 0;
   bool was = safeMode;
-  safeMode = (uploadFails >= UPLOAD_FAIL_LIMIT);
+  safeMode = (invalidStreak >= 5);
   if (safeMode && !was) {
-    Serial.println("[FAILSAFE] MODE AMAN: upload gagal berulang â€” semua pompa "
-                   "dikunci OFF. Sensor tetap dibaca; sistem pulih otomatis "
-                   "bila upload berhasil kembali.");
+    Serial.println("[FAILSAFE] MODE AMAN: sensor tidak valid beruntun â€” semua pompa "
+                   "dikunci OFF. Pulih otomatis bila sensor kembali valid.");
   }
   if (!safeMode && was) Serial.println("[FAILSAFE] pulih â€” kontrol pompa aktif ulang");
 }
@@ -1669,7 +1859,7 @@ void updateLED() {
   uint32_t period = 0;                       // 0 = steady
   if (safeMode)                  period = 1300;
   else if (wifiState != WIFI_OK) period = 1600;
-  else if (uploadFails > 0)      period = 300;
+  else if (!mqtt.connected())    period = 300;
   if (period == 0) { if (!ledOn) { digitalWrite(LED_PIN, HIGH); ledOn = true; } return; }
   uint32_t half = period / 2;
   if (millis() - led0 >= half) { led0 = millis(); ledOn = !ledOn; digitalWrite(LED_PIN, ledOn); }
@@ -1687,14 +1877,14 @@ void serialHelp() {
   Serial.println(" resetcal");
   Serial.println(" arm | disarm   (interlock Dithane)");
   Serial.println(" test <ab|ph|dith|circ> <1..2000 ms>   (uji relay)");
-  Serial.println(" upload | sync | lcdscan");
+  Serial.println(" sync | lcdscan        (sync = minta config via MQTT)");
   Serial.println(" setup | reboot — portal AP / restart bersih");
 }
 
 void printStatus() {
   Serial.println("---- STATUS ----");
-  Serial.printf("wifi=%d safe=%d uploadFails=%u ntpValid=%d rssi=%d\n",
-                (int)wifiState, (int)safeMode, uploadFails,
+  Serial.printf("wifi=%d safe=%d mqtt=%d ntpValid=%d rssi=%d\n",
+                (int)wifiState, (int)safeMode, (int)mqtt.connected(),
                 (int)systemTimeValid(), WiFi.RSSI());
   Serial.printf("pH  raw=%.0f mV -> %.2f (valid=%d)\n", phRawMv, phValue, (int)phValid);
   Serial.printf("PPM raw=%.0f mV -> %.0f (valid=%d)\n", ppmRawMv, ppmValue, (int)ppmValid);
@@ -1790,8 +1980,7 @@ void handleSerial() {
       relayWrite(p, false);
       Serial.println("uji selesai");
     }
-    else if (cmd == "upload") Serial.println(postSensors() ? "upload OK" : "upload gagal (lihat log)");
-    else if (cmd == "sync")   Serial.println(getRemoteConfig() ? "config OK" : "config gagal (lihat log)");
+    else if (cmd == "sync")   requestConfigMqtt();
     else if (cmd == "lcdscan") {
       Serial.println("Scanning I2C ...");
       for (uint8_t a = 1; a < 127; a++) {
@@ -1808,7 +1997,7 @@ void handleSerial() {
  * 17. SETUP & LOOP
  * ===================================================================== */
 
-uint32_t lastSensorMs = 0, lastUploadMs = 0, lastCfgMs = 0;
+uint32_t lastSensorMs = 0;
 
 void setup() {
   setupPins();                          // SEMUA RELAY PERTAMA: OFF
@@ -1839,6 +2028,11 @@ void setup() {
     Serial.println("[SAFETY] Dithane DISARMED — aktifkan setelah setup sukses.");
   }
   setupWatchdog();
+  /* MQTT: broker + callback + buffer (payload cmd dithane > default 256). */
+  MDNS.begin("hydrotech-esp32");              // hidupkan stack mDNS (untuk queryHost)
+  mqtt.setServer(MQTT_HOST, MQTT_PORT);
+  mqtt.setCallback(mqttCallback);
+  mqtt.setBufferSize(512);
   Serial.println("[BOOT] siap");
 }
 
@@ -1873,26 +2067,26 @@ void loop() {
 
   if (now - lastSensorMs >= SENSOR_INTERVAL_MS) { lastSensorMs = now; validateSensors(); }
 
-  if (wifiState == WIFI_OK && now - lastUploadMs >= UPLOAD_INTERVAL_MS) {
-    lastUploadMs = now;
-    if (postSensors()) { uploadFails = 0; }
-    else uploadFails = (uint16_t)min((int)(uploadFails + 1), 250);
-  }
+  maintainMqtt();
+  bool mqttUp = mqtt.connected();
 
-  if (wifiState == WIFI_OK && now - lastCfgMs >= CONFIG_INTERVAL_MS) {
-    lastCfgMs = now;
-    if (getRemoteConfig()) Serial.println("[CFG] konfigurasi tersinkron");
+  /* Refresh konfigurasi berkala via MQTT (config_request).              */
+  if (mqttUp && now - lastCfgReqMs >= CONFIG_REQUEST_MS) {
+    lastCfgReqMs = now;
+    requestConfigMqtt();
   }
 
   if (!safeMode) {
+    applyManualOverrides();                   // override manual dijalankan dulu
     controlDithane();
     controlCirculation();
-    controlABMix();
-    controlPHDown();
+    if (!manualActive(PUMP_AB)) controlABMix();
+    if (!manualActive(PUMP_PHDOWN)) controlPHDown();
   } else {
     stopAllPumps();
     dosingOwner = PUMP_COUNT;
   }
+
 
   updateLED();
   updateLCD();

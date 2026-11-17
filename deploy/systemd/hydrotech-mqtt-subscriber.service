@@ -1,0 +1,20 @@
+# HydroTech - PHP MQTT Subscriber worker (dipasang oleh setup_mosquitto.sh)
+# Catatan: path proyek bisa mengandung spasi ("Local Disk") - WAJIB dikutip.
+[Unit]
+Description=HydroTech MQTT Subscriber (MQTT -> MySQL)
+After=network-online.target mosquitto.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=__PROJECT_ROOT__
+ExecStart=/usr/bin/php "__PROJECT_ROOT__/bin/mqtt_subscriber.php"
+Restart=always
+RestartSec=5
+User=Jhon
+Group=Jhon
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

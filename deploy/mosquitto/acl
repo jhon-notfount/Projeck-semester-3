@@ -1,0 +1,21 @@
+# =====================================================================
+# HydroTech - ACL (Access Control List) Mosquitto
+# Dipasang oleh: sudo deploy/mosquitto/setup_mosquitto.sh
+# =====================================================================
+
+# Pola topik:
+#   hydrotech/sensor/{ph|ppm|status}  : data sensor dari ESP32
+#   hydrotech/pump/status             : status pompa dari ESP32
+#   hydrotech/device/status           : heartbeat/LWT/ack ESP32
+#   hydrotech/cmd/esp32/{ph|ppm|dithane|pump} : perintah dari backend PHP
+
+# Pengguna phpworker (PHP subscriber + publisher): akses penuh namespace.
+user phpworker
+topic readwrite hydrotech/#
+
+# Pengguna esp32 (perangkat): boleh mengirim data & menerima perintah.
+user esp32
+topic readwrite hydrotech/sensor/#
+topic readwrite hydrotech/pump/status
+topic readwrite hydrotech/device/status
+topic read hydrotech/cmd/esp32/#

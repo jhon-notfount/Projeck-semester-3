@@ -5,6 +5,7 @@ Dashboard monitoring hidroponik berbasis PHP, MySQL, dan JavaScript.
 Database memiliki **7 tabel tanpa foreign key**: hasil pengukuran pH + PPM digabung pada tabel `sensor_readings` (satu baris per pengukuran), konfigurasi pada `settings`, dan `monitoring_logs` sebagai satu-satunya log aktivitas (dipakai dashboard, halaman pengaturan, dan halaman history).
 
 Lihat [panduan database, instalasi, migrasi, dan pengujian](database/README.md).
+Panduan lain: [arsitektur MQTT](docs/MQTT.md) · [instalasi di Windows/Laragon](docs/INSTALL-WINDOWS.md).
 
 - Instalasi baru: `php database/install.php`
 - Database lama 8 tabel: `php database/migrate_measurements.php`, lalu `php database/migrate_column_names.php`
