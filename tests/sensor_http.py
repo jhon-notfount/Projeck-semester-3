@@ -5,7 +5,8 @@ import http.cookiejar, json, os, shutil, socket, subprocess, time, urllib.reques
 root=Path(__file__).resolve().parent.parent
 php=shutil.which('php')
 ext=Path(php).parent/'ext'
-command=[php,'-d',f'extension_dir={ext}','-d','extension=pdo_mysql']
+# extension_dir khusus layout PHP Windows (Laragon); di Linux pakai default.
+command=([php,'-d',f'extension_dir={ext}','-d','extension=pdo_mysql'] if ext.is_dir() else [php])
 name='hydrotech_sensor_http_'+uuid.uuid4().hex[:10]
 env={**os.environ,'HYDROTECH_DB_NAME':name}
 flags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0

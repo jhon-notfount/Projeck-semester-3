@@ -60,10 +60,12 @@ foreach ([$phLatest, $ppmLatest] as $reading) {
 }
 $lastUpdateText = $lastUpdateAt ? relativeTimeId($lastUpdateAt) : 'belum ada data';
 
-/* ACTIVITIES: log monitoring asli terbaru (sensor, nutrisi, pH, Dithane). */
+/* ACTIVITIES: log monitoring asli terbaru (sensor, nutrisi, pH, Dithane).
+   Baris 'sistem' (kesimpulan gabungan) khusus halaman History - dikecualikan
+   agar panel aktivitas dashboard tidak berubah.                          */
 $activities = $pdo->query(
     "SELECT type, day_name, log_time, value, status, note, created_at
-     FROM monitoring_logs WHERE is_deleted = 0
+     FROM monitoring_logs WHERE is_deleted = 0 AND type != 'sistem'
      ORDER BY created_at DESC, monitoring_id DESC LIMIT 8"
 )->fetchAll(PDO::FETCH_ASSOC);
 $activityCount = count($activities);

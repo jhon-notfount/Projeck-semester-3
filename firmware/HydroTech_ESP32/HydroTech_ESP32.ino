@@ -41,7 +41,7 @@
  *   - Pompa dosing dihentikan langsung bila sensor invalid/aman/spray.
  *
  *  Library: WiFi/Preferences/esp_task_wdt (bawaan), PubSubClient (MQTT),
- *           ArduinoJson (>=6.19), LiquidCrystal_I2C.
+ *           ArduinoJson (>=6.19), hd44780 (Library Manager).
  *  Board  : ESP32 Dev Module, core arduino-esp32 >= 2.0.x
  *           (analogReadMilliVolts dibutuhkan).
  * ===================================================================
@@ -56,7 +56,8 @@
 #include <Preferences.h>
 #include <ArduinoJson.h>
 #include <PubSubClient.h>       // MQTT (Library Manager: "PubSubClient by Nick O'Leary")
-#include <LiquidCrystal_I2C.h>  // LCD 20x4 (Library Manager: "LiquidCrystal I2C" - Frank de Brabander)
+#include <hd44780.h>                        // LCD 20x4 (Library Manager: "hd44780" - Bill Perry)
+#include <hd44780ioClass/hd44780_I2Cexp.h>  // mendukung ESP32 penuh (nol peringatan arsitektur)
 #include <ESPmDNS.h>            // resolusi broker tanpa IP tetap (coba-coba.local)
 #include "esp_task_wdt.h"
 #include "time.h"
@@ -91,6 +92,8 @@ const char* MQTT_CLIENT_ID  = "hydrotech-esp32";
 const uint32_t MQTT_PUBLISH_MS      = 2000;       // wajib: sensor tiap 2 detik
 const uint32_t MQTT_RETRY_MS        = 5000;
 const uint32_t MQTT_STATUS_MS       = 30000;      // heartbeat device/status
+const uint32_t CONFIG_REQUEST_MS    = 900000;     // refresh konfigurasi (15 mnt)
+const uint32_t WIFI_RETRY_MS        = 10000;      // jeda antar percobaan Wi-Fi
 
 /* --- Interval ------------------------------------------------------- */
 const uint32_t SENSOR_INTERVAL_MS = 2000;        // sampling + stream MQTT 2 dtk
@@ -231,7 +234,7 @@ bool      safeMode = false;
 bool     ntpStarted = false;
 uint32_t bootMs = 0;
 
-LiquidCrystal_I2C* lcdPtr = nullptr;
+hd44780_I2Cexp* lcdPtr = nullptr;
 uint8_t  lcdAddrFound = 0;
 uint8_t  lcdPage = 0; uint32_t lcdPage0 = 0, lcdDraw0 = 0;
 bool     ledOn = false; uint32_t led0 = 0;
@@ -721,7 +724,7 @@ void handleConnect() {
 
 String wlFailReason(wl_status_t s) {
   switch (s) {
-    case WL_NO_SSID_FOUND: return "SSID tidak ditemukan di sekitar.";
+    case WL_NO_SSID_AVAIL: return "SSID tidak ditemukan di sekitar.";
 #ifdef WL_WRONG_PASSWORD
     case WL_WRONG_PASSWORD: return "Password WiFi salah.";
 #endif
@@ -744,8 +747,8 @@ void handleStatus() {
       Serial.printf("[SETUP] TERHUBUNG ip=%s â€” AP + halaman masih hidup Â±2 menit\n",
                     connIp.c_str());
     } else if (elapsed >= CONNECT_TIMEOUT_MS / 1000UL
-               || s == WL_CONNECT_FAILED || s == WL_NO_SSID_FOUND) {
-      if (s == WL_CONNECT_FAILED || s == WL_NO_SSID_FOUND
+               || s == WL_CONNECT_FAILED || s == WL_NO_SSID_AVAIL) {
+      if (s == WL_CONNECT_FAILED || s == WL_NO_SSID_AVAIL
 #ifdef WL_WRONG_PASSWORD
           || s == WL_WRONG_PASSWORD
 #endif
@@ -958,6 +961,8 @@ uint32_t lastMqttSensorMs = 0, lastMqttStatusMs = 0, lastMqttTryMs = 0;
 uint32_t lastPumpPubMs = 0, lastCfgReqMs = 0;
 time_t   mqttTs();
 void     requestConfigMqtt();
+time_t   dithLastDone();
+void     dithMarkDone(time_t t);
 
 void reportPump(const char* pump, const char* state, long durationS) {
   if (!mqtt.connected() || wifiState != WIFI_OK) return;
@@ -1761,8 +1766,8 @@ void setupLCD() {
     if (lcdAddrFound) nvs.putUChar("lcdaddr", lcdAddrFound);
   }
   if (!lcdAddrFound) { Serial.println("[LCD] tidak terdeteksi â€” berjalan tanpa LCD"); return; }
-  lcdPtr = new LiquidCrystal_I2C(lcdAddrFound, LCD_COLS, LCD_ROWS);
-  lcdPtr->init();
+  lcdPtr = new hd44780_I2Cexp(lcdAddrFound);
+  lcdPtr->begin(LCD_COLS, LCD_ROWS);
   lcdPtr->backlight();
   lcdLine(0, "HYDROTECH SYSTEM");
   lcdLine(1, "Booting ...");

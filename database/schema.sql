@@ -90,12 +90,15 @@ CREATE TABLE IF NOT EXISTS `dithane_schedules` (
 
 CREATE TABLE IF NOT EXISTS `monitoring_logs` (
     `monitoring_id` INT AUTO_INCREMENT PRIMARY KEY,
-    `type` ENUM('ppm','ph','dithane') NOT NULL,
+    `type` ENUM('ppm','ph','dithane','sistem') NOT NULL COMMENT 'pH/PPM/Dithane = log komponen; sistem = kesimpulan gabungan',
     `day_name` VARCHAR(20) NOT NULL,
     `log_time` VARCHAR(10) NOT NULL,
     `value` VARCHAR(20) NOT NULL,
     `status` VARCHAR(30) NOT NULL,
     `note` TEXT,
+    `ph_value` DECIMAL(6,4) NULL COMMENT 'Nilai pH pada baris sistem',
+    `ppm_value` INT NULL COMMENT 'Nilai PPM pada baris sistem',
+    `dithane_state` VARCHAR(30) NULL COMMENT 'menunggu|menyemprot|selesai|terlambat|kosong',
     `reading_id` INT NULL,
     `schedule_id` INT NULL,
     `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,

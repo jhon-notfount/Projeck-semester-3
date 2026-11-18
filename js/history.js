@@ -1,72 +1,149 @@
 (function () {
-  /* HISTORY SETUP: konfigurasi tabel, filter, pagination, dan tombol export history. */
-  const storageKey = "hydrotech.history.deletedRows";
+  /* HISTORY SETUP: Data Aktivitas Sistem = riwayat KESIMPULAN gabungan
+     (pH + PPM + Dithane, satu baris per kejadian, type='sistem').
+     Semua filter dieksekusi di DATABASE (api/history/list.php); halaman
+     hanya merender hasilnya. Pagination tetap di sisi klien. */
   const rowsPerPage = 5;
   const table = document.querySelector(".history-table");
   if (!table) return;
+  const tableBody = table.querySelector("tbody");
 
   const searchInput = document.querySelector("[data-history-search]");
-  const typeFilter = document.querySelector("[data-history-type]");
   const dayFilter = document.querySelector("[data-history-day]");
   const monthFilter = document.querySelector("[data-history-month]");
+  const yearFilter = document.querySelector("[data-history-year]");
   const statusFilter = document.querySelector("[data-history-status]");
+  const timeFromInput = document.querySelector("[data-history-time-from]");
+  const timeToInput = document.querySelector("[data-history-time-to]");
   const resetButton = document.querySelector("[data-history-reset]");
   const exportButton = document.querySelector("[data-history-export]");
   const showing = document.querySelector("[data-history-showing]");
   const pagination = document.querySelector("[data-history-pagination]");
   const emptyState = document.querySelector("[data-history-empty]");
   let currentPage = 1;
+  let historyRows = [];          // dataset hasil filter terkini (dari database)
 
-  /* TEXT NORMALIZER: menyeragamkan teks supaya pencarian dan filter lebih mudah. */
+  const monthNames = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+  ];
+  const dayNamesLower = ["senin", "selasa", "rabu", "kamis", "jumat", "sabtu", "minggu"];
+
+  /* TEXT HELPERS: penampilan tanggal Indonesia + normalisasi huruf. */
   function normalize(value) {
-    return String(value || "")
-      .trim()
-      .toLowerCase();
+    return String(value || "").trim().toLowerCase();
   }
 
-  /* DELETE STORAGE: sekarang ditangani oleh backend via API. */
-
-  /* ROW HELPERS: mengambil baris tabel dan mengubah isi kolom menjadi data terstruktur. */
-  function getRows() {
-    return Array.from(table.querySelectorAll("tbody tr"));
+  function formatTanggalIndo(logDate) {
+    if (!logDate) return "-";
+    const parts = String(logDate).split("-");
+    if (parts.length !== 3) return logDate;
+    const day = Number(parts[2]);
+    const month = Number(parts[1]) - 1;
+    const year = parts[0];
+    if (!Number.isFinite(day) || !monthNames[month]) return logDate;
+    return `${day} ${monthNames[month]} ${year}`;
   }
 
-  function getRowData(row) {
-    const cells = row.querySelectorAll("td");
-    const date = cells[2]?.textContent.trim() || "";
-    return {
-      day: cells[1]?.textContent.trim() || "",
-      date,
-      month: date.split(" ")[1] || "",
-      time: cells[3]?.textContent.trim() || "",
-      type: cells[4]?.textContent.trim() || "",
-      status: cells[5]?.textContent.trim() || "",
-      note: cells[6]?.textContent.trim() || "",
-    };
+  /* STATUS BADGE: pemetaan status sistem ke kelas warna yang sudah ada. */
+  function statusClass(status) {
+    const s = normalize(status);
+    if (s === "tidak normal") return "high";
+    if (s === "perhatian") return "low";
+    return "normal";
   }
 
-  /* FILTER DATA: memilih baris yang cocok dengan keyword, tipe, hari, bulan, dan status. */
-  function getFilteredRows() {
-    const keyword = normalize(searchInput?.value);
-    const type = normalize(typeFilter?.value);
-    const day = normalize(dayFilter?.value);
-    const month = normalize(monthFilter?.value);
-    const status = normalize(statusFilter?.value);
+  /* FETCH: ambil data dari database dengan seluruh filter (server-side). */
+  let fetchSeq = 0;
+  async function fetchRows() {
+    const seq = ++fetchSeq;
+    const params = new URLSearchParams();
+    if (searchInput?.value.trim()) params.set("search", searchInput.value.trim());
+    if (dayFilter?.value) params.set("day", dayFilter.value);
+    if (monthFilter?.value) params.set("month", monthFilter.value);
+    if (yearFilter?.value) params.set("year", yearFilter.value);
+    if (statusFilter?.value) params.set("status", statusFilter.value);
+    if (timeFromInput?.value) params.set("time_from", timeFromInput.value);
+    if (timeToInput?.value) params.set("time_to", timeToInput.value);
+    try {
+      const response = await fetch(`../api/history/list.php?${params.toString()}`, { cache: "no-store" });
+      const result = await response.json();
+      if (!result.success || !result.data) throw new Error(result.message || "Gagal memuat data.");
+      if (seq !== fetchSeq) return;   // respons lama tidak menimpa yang terbaru
+      historyRows = Array.isArray(result.data.rows) ? result.data.rows : [];
+      populateYears(result.data.years || []);
+      renderTable();
+    } catch (error) {
+      console.error("Gagal memuat Data Aktivitas Sistem:", error);
+    }
+  }
 
-    return getRows().filter((row) => {
-      const data = getRowData(row);
-      const rowText = normalize(
-        `${data.day} ${data.date} ${data.time} ${data.type} ${data.status} ${data.note}`,
-      );
-
-      return (
-        (!keyword || rowText.includes(keyword)) &&
-        (!type || normalize(data.type) === type) &&
-        (!day || normalize(data.day) === day) &&
-        (!month || normalize(data.month) === month) &&
-        (!status || normalize(data.status) === status)
-      );
+  /* FILTER TAHUN: isi pilihan dari data yang tersedia (sekali per fetch). */
+  function populateYears(years) {
+    if (!yearFilter) return;
+    const selected = yearFilter.value;
+    yearFilter.querySelectorAll("option:not(:first-child)").forEach((o) => o.remove());
+    years.forEach((year) => {
+      const option = document.createElement("option");
+      option.value = String(year);
+      option.textContent = String(year);
+      yearFilter.appendChild(option);
     });
+    if (selected && years.map(String).includes(selected)) yearFilter.value = selected;
+  }
+
+  /* TABLE RENDER: baris kesimpulan (No, Hari, Tanggal, Jam, Status, Keterangan, Aksi). */
+  function renderTable() {
+    const totalPages = Math.max(1, Math.ceil(historyRows.length / rowsPerPage));
+    if (currentPage > totalPages) currentPage = totalPages;
+    const pageStart = (currentPage - 1) * rowsPerPage;
+    const pageRows = historyRows.slice(pageStart, pageStart + rowsPerPage);
+
+    tableBody.innerHTML = "";
+    pageRows.forEach((row, index) => {
+      const tr = document.createElement("tr");
+      tr.dataset.rowId = row.id;
+      const cells = [
+        String(pageStart + index + 1),
+        row.day_name || "-",
+        formatTanggalIndo(row.log_date),
+        (row.log_time || "-").replace(":", ".").slice(0, 5),
+        null, // badge status
+        row.note || "-",
+        null, // tombol hapus
+      ];
+      cells.forEach((value, cellIndex) => {
+        const td = document.createElement("td");
+        if (cellIndex === 4) {
+          const badge = document.createElement("span");
+          badge.className = `badge ${statusClass(row.status)}`;
+          badge.textContent = row.status || "-";
+          td.appendChild(badge);
+        } else if (cellIndex === 6) {
+          td.className = "trash";
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "trash-btn";
+          button.setAttribute("aria-label", "Hapus data");
+          button.innerHTML = "&#128465;";
+          td.appendChild(button);
+        } else {
+          td.textContent = value;
+        }
+        tr.appendChild(td);
+      });
+      tableBody.appendChild(tr);
+    });
+
+    if (showing) {
+      const from = historyRows.length ? pageStart + 1 : 0;
+      const to = pageStart + pageRows.length;
+      showing.textContent = `Menampilkan ${from}-${to} dari ${historyRows.length} data`;
+    }
+    if (emptyState) {
+      emptyState.classList.toggle("show", historyRows.length === 0);
+    }
+    renderPagination(totalPages);
   }
 
   /* PAGINATION: membuat tombol halaman sebelumnya, nomor halaman, dan halaman berikutnya. */
@@ -81,7 +158,7 @@
     previous.addEventListener("click", function () {
       if (currentPage > 1) {
         currentPage -= 1;
-        render();
+        renderTable();
       }
     });
     pagination.appendChild(previous);
@@ -93,7 +170,7 @@
       button.classList.toggle("current", page === currentPage);
       button.addEventListener("click", function () {
         currentPage = page;
-        render();
+        renderTable();
       });
       pagination.appendChild(button);
     }
@@ -105,87 +182,28 @@
     next.addEventListener("click", function () {
       if (currentPage < totalPages) {
         currentPage += 1;
-        render();
+        renderTable();
       }
     });
     pagination.appendChild(next);
   }
 
-  /* TABLE RENDER: menampilkan baris sesuai filter dan halaman yang sedang aktif. */
-  function render() {
-    const filteredRows = getFilteredRows();
-    const totalPages = Math.max(
-      1,
-      Math.ceil(filteredRows.length / rowsPerPage),
-    );
-    if (currentPage > totalPages) currentPage = totalPages;
-
-    const pageStart = (currentPage - 1) * rowsPerPage;
-    const pageRows = filteredRows.slice(pageStart, pageStart + rowsPerPage);
-
-    getRows().forEach((row) => {
-      row.style.display = "none";
-    });
-
-    pageRows.forEach((row, index) => {
-      row.style.display = "";
-      row.querySelector("td").textContent = pageStart + index + 1;
-    });
-
-    if (showing) {
-      const from = filteredRows.length ? pageStart + 1 : 0;
-      const to = pageStart + pageRows.length;
-      showing.textContent = `Menampilkan ${from}-${to} dari ${filteredRows.length} data`;
-    }
-
-    if (emptyState) {
-      emptyState.classList.toggle("show", filteredRows.length === 0);
-    }
-
-    renderPagination(totalPages);
-  }
-
-  /* RESET FILTER: mengosongkan semua filter dan kembali ke halaman pertama. */
+  /* RESET FILTER: mengosongkan semua filter dan memuat ulang dari database. */
   function resetFilters() {
     if (searchInput) searchInput.value = "";
-    if (typeFilter) typeFilter.value = "";
     if (dayFilter) dayFilter.value = "";
     if (monthFilter) monthFilter.value = "";
+    if (yearFilter) yearFilter.value = "";
     if (statusFilter) statusFilter.value = "";
+    if (timeFromInput) timeFromInput.value = "";
+    if (timeToInput) timeToInput.value = "";
     currentPage = 1;
-    render();
+    fetchRows();
   }
 
   /* DELETED ROWS: baris dihapus langsung oleh backend, tidak perlu disembunyikan via JS lagi. */
 
-  const monthNames = [
-    "Januari",
-    "Februari",
-    "Maret",
-    "April",
-    "Mei",
-    "Juni",
-    "Juli",
-    "Agustus",
-    "September",
-    "Oktober",
-    "November",
-    "Desember",
-  ];
-
-  /* MONTH DATA: memilih data aktual dan tren berdasarkan bulan laporan. */
-  function getCurrentMonthIndex() {
-    return new Date().getMonth();
-  }
-
-  function getRowsByMonth(monthIndex) {
-    const monthName = normalize(monthNames[monthIndex]);
-    return getRows()
-      .map(getRowData)
-      .filter((data) => normalize(data.month) === monthName);
-  }
-
-  /* SUMMARY HELPERS: menghitung jumlah data, rata-rata, dan teks ringkasan laporan. */
+  /* SUMMARY HELPERS: menghitung jumlah data dan rata-rata dari dataset terfilter. */
   function countBy(items, key) {
     return items.reduce((result, item) => {
       const value = item[key] || "Tidak diketahui";
@@ -200,33 +218,27 @@
     return entries.map(([label, total]) => `${label}: ${total}`).join(", ");
   }
 
-  /* RECOMMENDATION: membuat catatan tindakan untuk pemilik berdasarkan data bulanan. */
-  function getMonthlyRecommendation(rows, trends) {
+  /* RECOMMENDATION: catatan tindakan pemilik berdasarkan dataset terfilter. */
+  function getFilteredRecommendation(rows) {
     const statusCounts = countBy(rows, "status");
-    const averagePh = Number(getAverage(trends, "ph", 1));
-    const averagePpm = Number(getAverage(trends, "ppm", 0));
     const notes = [];
 
-    if (statusCounts.Tinggi) {
-      notes.push("Ada status Tinggi, pemilik perlu mengecek penyebab kenaikan parameter dan melakukan penyesuaian bertahap.");
+    if (statusCounts["Tidak Normal"]) {
+      notes.push("Terdapat periode dengan status Tidak Normal (pH dan PPM sekaligus di luar rentang). Periksa sensor, larutan nutrisi, dan penyebab kenaikan/penurunan parameter secara bersamaan.");
     }
-    if (statusCounts.Rendah) {
-      notes.push("Ada status Rendah, pemilik perlu memastikan nutrisi, pH, dan jadwal penyemprotan tidak berada di bawah kebutuhan tanaman.");
+    if (statusCounts["Perhatian"]) {
+      notes.push("Terdapat status Perhatian (parameter keluar rentang, data sensor tidak tersedia, atau Dithane melebihi jadwal). Lakukan pemeriksaan dan penyesuaian bertahap.");
     }
-    if (Number.isFinite(averagePh) && (averagePh < 5.5 || averagePh > 6.5)) {
-      notes.push(`Rata-rata pH ${averagePh} berada di luar rentang aman 5.5 - 6.5, sehingga kalibrasi larutan disarankan.`);
-    }
-    if (Number.isFinite(averagePpm) && (averagePpm < 800 || averagePpm > 1000)) {
-      notes.push(`Rata-rata PPM ${averagePpm} berada di luar target 800 - 1000 PPM, sehingga komposisi nutrisi perlu dievaluasi.`);
+    if (!notes.length && statusCounts.Normal) {
+      notes.push("Kondisi sistem relatif stabil pada periode terfilter. Tetap pantau tren harian agar perubahan kecil tidak terlambat ditangani.");
     }
     if (!notes.length) {
-      notes.push("Kondisi bulanan relatif stabil. Pemilik tetap disarankan memantau tren harian agar perubahan kecil tidak terlambat ditangani.");
+      notes.push("Belum ada data pada periode terfilter. Pastikan perangkat ESP mengirim data sensor dan jadwal Dithane berjalan.");
     }
-
     return notes;
   }
 
-  /* EXPORT PROMPT: menyiapkan tanggal laporan dan meminta pilihan bulan PDF. */
+  /* EXPORT PROMPT: tanggal pembuatan laporan (ekspor mengikuti filter aktif). */
   function getGeneratedAtText() {
     return new Intl.DateTimeFormat("id-ID", {
       day: "numeric",
@@ -238,57 +250,21 @@
     }).format(new Date());
   }
 
-  function getMonthSelectionOptions() {
-    const currentMonth = getCurrentMonthIndex();
-    return {
-      current: `Sekarang (${monthNames[currentMonth]})`,
-      ...monthNames.reduce((options, month, index) => {
-        options[String(index)] = month;
-        return options;
-      }, {}),
-    };
-  }
-
-  async function requestExportMonth() {
-    const currentMonth = getCurrentMonthIndex();
-    if (window.Swal) {
-      const result = await Swal.fire({
-        title: "Pilih bulan laporan",
-        text: "History bulanan akan dibuat sebagai PDF lengkap untuk bahan pertimbangan pemilik.",
-        input: "select",
-        inputOptions: getMonthSelectionOptions(),
-        inputValue: "current",
-        showCancelButton: true,
-        confirmButtonText: "Download PDF",
-        cancelButtonText: "Batal",
-        reverseButtons: true,
-        focusCancel: true,
-        buttonsStyling: false,
-        customClass: {
-          popup: "hydrotech-swal history-export-swal",
-          title: "hydrotech-swal-title",
-          htmlContainer: "hydrotech-swal-text",
-          actions: "hydrotech-swal-actions",
-          confirmButton: "hydrotech-swal-confirm",
-          cancelButton: "hydrotech-swal-cancel",
-        },
-      });
-
-      if (!result.isConfirmed) return null;
-      return result.value === "current" ? currentMonth : Number(result.value);
+  /* FILTER DESCRIPTION: teks periode/filter aktif untuk judul PDF. */
+  function getFilterDescription() {
+    const parts = [];
+    const monthIdx = monthFilter?.value;
+    if (monthIdx) parts.push(monthNames[Number(monthIdx) - 1]);
+    if (yearFilter?.value) parts.push(yearFilter.value);
+    if (dayFilter?.value) {
+      const d = normalize(dayFilter.value);
+      parts.push("hari " + d.charAt(0).toUpperCase() + d.slice(1));
     }
-
-    const answer = window.prompt(
-      `Pilih bulan laporan (1-12). Kosongkan untuk bulan sekarang: ${monthNames[currentMonth]}`,
-      String(currentMonth + 1),
-    );
-    if (answer === null) return null;
-    const monthNumber = Number(answer || currentMonth + 1);
-    if (!Number.isFinite(monthNumber) || monthNumber < 1 || monthNumber > 12) {
-      alert("Bulan tidak valid.");
-      return null;
+    if (timeFromInput?.value || timeToInput?.value) {
+      parts.push(`jam ${timeFromInput?.value || "00.00"} - ${timeToInput?.value || "23.59"}`);
     }
-    return monthNumber - 1;
+    if (statusFilter?.value) parts.push(`status ${statusFilter.value}`);
+    return parts.length ? parts.join(", ") : "semua data";
   }
 
   /* PDF DATA HELPERS: membungkus teks, membaca status, dan membuat detail tabel bulanan. */
@@ -296,104 +272,6 @@
     const lines = doc.splitTextToSize(text, maxWidth);
     doc.text(lines, x, y);
     return y + lines.length * lineHeight;
-  }
-
-  function getOutOfRangeSummary(trends) {
-    return trends.reduce(
-      (summary, item) => {
-        if (Number.isFinite(item.ph)) {
-          if (item.ph < 5.5) summary.phLow += 1;
-          if (item.ph > 6.5) summary.phHigh += 1;
-        }
-        if (Number.isFinite(item.ppm)) {
-          if (item.ppm < 800) summary.ppmLow += 1;
-          if (item.ppm > 1000) summary.ppmHigh += 1;
-        }
-        return summary;
-      },
-      { phLow: 0, phHigh: 0, ppmLow: 0, ppmHigh: 0 },
-    );
-  }
-
-  function getMostFrequent(counts) {
-    const entries = Object.entries(counts);
-    if (!entries.length) return "-";
-    return entries.sort((a, b) => b[1] - a[1])[0][0];
-  }
-
-  function getTrendStatus(type, value) {
-    if (!Number.isFinite(value)) return "Tidak ada data";
-    if (type === "pH") {
-      if (value < 5.5) return "Rendah";
-      if (value > 6.5) return "Tinggi";
-      return "Normal";
-    }
-
-    if (value < 800) return "Rendah";
-    if (value > 1000) return "Tinggi";
-    return "Normal";
-  }
-
-  function getDetailedMonthlyRows(actualRows, trends) {
-    const actualByDateType = actualRows.reduce((result, row) => {
-      result[`${row.date}|${row.type}`] = row;
-      return result;
-    }, {});
-
-    return trends.flatMap((item) => {
-      const phActual = actualByDateType[`${item.date}|pH`];
-      const ppmActual = actualByDateType[`${item.date}|PPM`];
-      const dithaneActual = actualByDateType[`${item.date}|Dithane`];
-      const phStatus = phActual?.status || getTrendStatus("pH", item.ph);
-      const ppmStatus = ppmActual?.status || getTrendStatus("PPM", item.ppm);
-
-      return [
-        {
-          day: item.day,
-          date: item.date,
-          time: phActual?.time || item.time,
-          type: "pH",
-          value: Number.isFinite(item.ph) ? `${item.ph} pH` : "Tidak ada data",
-          status: phStatus,
-          note:
-            phActual?.note ||
-            (!Number.isFinite(item.ph)
-              ? "Belum ada pengukuran pH pada tanggal ini."
-              : phStatus === "Normal"
-                ? "Nilai pH berada pada rentang aman."
-                : "Nilai pH perlu dikoreksi agar kembali ke rentang aman."),
-          source: phActual ? "Aktual + tren" : "Tren bulanan",
-        },
-        {
-          day: item.day,
-          date: item.date,
-          time: ppmActual?.time || item.time,
-          type: "PPM",
-          value: Number.isFinite(item.ppm) ? `${item.ppm} PPM` : "Tidak ada data",
-          status: ppmStatus,
-          note:
-            ppmActual?.note ||
-            (!Number.isFinite(item.ppm)
-              ? "Belum ada pengukuran PPM pada tanggal ini."
-              : ppmStatus === "Normal"
-                ? "Konsentrasi nutrisi berada pada target."
-                : "Konsentrasi nutrisi perlu disesuaikan."),
-          source: ppmActual ? "Aktual + tren" : "Tren bulanan",
-        },
-        {
-          day: item.day,
-          date: item.date,
-          time: dithaneActual?.time || "14:00",
-          type: "Dithane",
-          value: "Jadwal semprot",
-          status: dithaneActual?.status || "Terjadwal",
-          note:
-            dithaneActual?.note ||
-            "Penyemprotan mengikuti jadwal kontrol harian.",
-          source: dithaneActual ? "Aktual" : "Jadwal sistem",
-        },
-      ];
-    });
   }
 
   /* PDF STYLE: membuat kotak metrik dan footer di setiap halaman laporan. */
@@ -540,29 +418,48 @@
   }
 
   /* PDF EXPORT: menyusun laporan bulanan lengkap berisi ringkasan, grafik, tabel, dan kesimpulan. */
-  async function exportMonthlyPdf(monthIndex) {
+  async function exportHistoryPdf() {
     const jsPdf = window.jspdf?.jsPDF;
     if (!jsPdf) {
       alert("Generator PDF belum berhasil dimuat. Pastikan koneksi internet aktif lalu coba lagi.");
       return;
     }
+    if (!historyRows.length) {
+      if (window.Swal) {
+        Swal.fire({ title: "Tidak ada data", text: "Tidak ada data pada filter aktif untuk diekspor.", icon: "info" });
+      } else { alert("Tidak ada data pada filter aktif."); }
+      return;
+    }
 
-    const monthName = monthNames[monthIndex];
-    const reportYear = new Date().getFullYear();
-    const rows = getRowsByMonth(monthIndex);
-    const trends = await fetchMonthlyTrend(monthIndex);
+    /* EKSPOR MENGIKUTI FILTER AKTIF: dataset = hasil filter database. */
+    const rows = historyRows;
+    const filterText = getFilterDescription();
+
+    /* Bulan tren untuk grafik = bulan catatan terbaru pada filter aktif. */
+    const newest = rows[0];
+    const newestDate = new Date(String(newest.created_at || "").replace(" ", "T"));
+    const trendMonth = Number.isFinite(newestDate.getMonth()) && newest.created_at
+      ? newestDate.getMonth()
+      : new Date().getMonth();
+    const trendYear = newest.created_at ? newestDate.getFullYear() : new Date().getFullYear();
+    const monthName = monthNames[trendMonth];
+
+    const trends = await fetchMonthlyTrend(trendMonth);
     const averagePh = getAverage(trends, "ph", 1);
     const averagePpm = getAverage(trends, "ppm", 0);
     const phRange = getAxisRange(trends, "ph", 0, 0.1, { min: 5, max: 7 });
     const ppmRange = getAxisRange(trends, "ppm", 0, 1, { min: 750, max: 1050 });
-    const typeCounts = countBy(rows, "type");
     const statusCounts = countBy(rows, "status");
-    const recommendations = getMonthlyRecommendation(rows, trends);
-    const outOfRange = getOutOfRangeSummary(trends);
-    const dominantStatus = getMostFrequent(statusCounts);
-    const dominantType = getMostFrequent(typeCounts);
-    const detailedMonthlyRows = getDetailedMonthlyRows(rows, trends);
-    const chartImage = await createMonthlyChartImage(trends, monthName, reportYear);
+    const recommendations = getFilteredRecommendation(rows);
+    const dominantStatus = Object.entries(statusCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "-";
+
+    /* Rata-rata nilai sensor dari baris kesimpulan terfilter (kolom baru). */
+    const phValues = rows.map((r) => Number(r.ph_value)).filter(Number.isFinite);
+    const ppmValues = rows.map((r) => Number(r.ppm_value)).filter(Number.isFinite);
+    const avgPhFiltered = phValues.length ? (phValues.reduce((s, v) => s + v, 0) / phValues.length).toFixed(2) : "-";
+    const avgPpmFiltered = ppmValues.length ? Math.round(ppmValues.reduce((s, v) => s + v, 0) / ppmValues.length) : "-";
+
+    const chartImage = await createMonthlyChartImage(trends, monthName, trendYear);
     const doc = new jsPdf({ orientation: "landscape", unit: "mm", format: "a4" });
     if (typeof doc.autoTable !== "function") {
       alert("Plugin tabel PDF belum berhasil dimuat. Pastikan koneksi internet aktif lalu coba lagi.");
@@ -574,8 +471,8 @@
     const usableWidth = pageWidth - margin * 2;
 
     doc.setProperties({
-      title: `Laporan History Hydrotech - ${monthName} ${reportYear}`,
-      subject: "Laporan monitoring pH, PPM, dan Dithane",
+      title: "Laporan Data Aktivitas Sistem Hydrotech",
+      subject: "Kesimpulan kondisi pH, PPM, dan Dithane",
       author: "Hydrotech Dashboard Admin",
     });
 
@@ -584,10 +481,10 @@
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(17);
-    doc.text("Laporan History Monitoring Hydrotech", margin, 13);
+    doc.text("Laporan Data Aktivitas Sistem Hydrotech", margin, 13);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.text(`Periode: ${monthName} ${reportYear} | Dibuat: ${getGeneratedAtText()} WIB`, margin, 21);
+    doc.text(`Filter: ${filterText} | Dibuat: ${getGeneratedAtText()} WIB`, margin, 21);
 
     doc.setTextColor(35, 52, 40);
     doc.setFont("helvetica", "bold");
@@ -597,7 +494,7 @@
     doc.setFontSize(9);
     let y = addWrappedText(
       doc,
-      `Laporan ini merangkum kondisi sistem hidroponik selama bulan ${monthName} ${reportYear}. Data diambil dari tabel history dan dilengkapi analisis tren harian pH serta PPM agar pemilik dapat menilai stabilitas nutrisi, kondisi keasaman larutan, dan aktivitas Dithane secara lebih utuh.`,
+      `Laporan ini merupakan kesimpulan gabungan kondisi pH, PPM, dan Dithane sebagaimana tampil pada halaman Data Aktivitas Sistem, dengan filter aktif: ${filterText}. Setiap baris mewakili kondisi keseluruhan sistem pada satu waktu pencatatan.`,
       margin,
       47,
       usableWidth,
@@ -606,10 +503,10 @@
 
     const metricY = y + 5;
     const metricWidth = (usableWidth - 18) / 4;
-    drawMetricBox(doc, margin, metricY, metricWidth, "Data history aktual", rows.length, "catatan bulan ini", [7, 141, 67]);
-    drawMetricBox(doc, margin + metricWidth + 6, metricY, metricWidth, "Rata-rata pH", averagePh, "target 5.5 - 6.5", [217, 95, 95]);
-    drawMetricBox(doc, margin + (metricWidth + 6) * 2, metricY, metricWidth, "Rata-rata PPM", averagePpm, "target 800 - 1000", [7, 141, 67]);
-    drawMetricBox(doc, margin + (metricWidth + 6) * 3, metricY, metricWidth, "Status dominan", dominantStatus, "berdasarkan history", [22, 118, 164]);
+    drawMetricBox(doc, margin, metricY, metricWidth, "Catatan terfilter", rows.length, "kesimpulan sistem", [7, 141, 67]);
+    drawMetricBox(doc, margin + metricWidth + 6, metricY, metricWidth, "Rata-rata pH", avgPhFiltered, "dari nilai terfilter", [217, 95, 95]);
+    drawMetricBox(doc, margin + (metricWidth + 6) * 2, metricY, metricWidth, "Rata-rata PPM", avgPpmFiltered, "dari nilai terfilter", [7, 141, 67]);
+    drawMetricBox(doc, margin + (metricWidth + 6) * 3, metricY, metricWidth, "Status dominan", dominantStatus, "berdasarkan filter", [22, 118, 164]);
     y = metricY + 30;
 
     doc.autoTable({
@@ -621,33 +518,27 @@
       headStyles: { fillColor: [7, 141, 67], textColor: 255 },
       head: [["Indikator", "Nilai / Penjelasan"]],
       body: [
-        ["Total data history bulan ini", `${rows.length} data tercatat`],
-        ["Komposisi tipe data", formatCounts(typeCounts)],
-        ["Komposisi status", formatCounts(statusCounts)],
-        ["Tipe dan status dominan", `${dominantType} | ${dominantStatus}`],
-        ["Rata-rata pH tren harian", `${averagePh} pH (acuan aman 5.5 - 6.5)`],
+        ["Total kesimpulan terfilter", `${rows.length} catatan`],
+        ["Komposisi status sistem", formatCounts(statusCounts)],
+        ["Rata-rata pH (terfilter)", `${avgPhFiltered} pH (acuan aman 5.5 - 6.5)`],
+        ["Rata-rata PPM (terfilter)", `${avgPpmFiltered} PPM (target 800 - 1000 PPM)`],
         ["Rentang pH tren harian", `${phRange.min.toFixed(1)} - ${phRange.max.toFixed(1)} pH`],
-        ["Rata-rata PPM tren harian", `${averagePpm} PPM (target 800 - 1000 PPM)`],
         ["Rentang PPM tren harian", `${ppmRange.min} - ${ppmRange.max} PPM`],
-        ["Hari di luar batas", `pH rendah ${outOfRange.phLow}, pH tinggi ${outOfRange.phHigh}, PPM rendah ${outOfRange.ppmLow}, PPM tinggi ${outOfRange.ppmHigh}`],
       ],
       margin: { left: margin, right: margin },
-      columnStyles: {
-        0: { cellWidth: 64 },
-        1: { cellWidth: usableWidth - 64 },
-      },
+      columnStyles: { 0: { cellWidth: 64 }, 1: { cellWidth: usableWidth - 64 } },
     });
 
     doc.addPage();
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.setTextColor(35, 52, 40);
-    doc.text(`Analisis Kondisi Bulanan - ${monthName} ${reportYear}`, margin, 18);
+    doc.text("Analisis Kondisi & Rekomendasi", margin, 18);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     y = addWrappedText(
       doc,
-      "Halaman ini menjelaskan arti data, risiko operasional, dan tindakan yang dapat diprioritaskan oleh pemilik berdasarkan rangkuman history serta tren harian.",
+      "Status Normal: pH dan PPM dalam rentang serta Dithane berjalan sesuai jadwal. Status Perhatian: salah satu parameter di luar rentang, data sensor tidak tersedia, atau Dithane melebihi jadwal. Status Tidak Normal: pH dan PPM sekaligus di luar rentang - perlu penanganan segera.",
       margin,
       26,
       usableWidth,
@@ -656,72 +547,22 @@
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.text("Penjelasan Parameter", margin, y + 6);
+    doc.text("Rekomendasi Tindakan", margin, y + 8);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
-    y = addWrappedText(
-      doc,
-      "pH menunjukkan tingkat keasaman larutan. PPM menunjukkan konsentrasi nutrisi terlarut. Dithane menunjukkan aktivitas penyemprotan yang dijadwalkan untuk menjaga perlindungan tanaman. Status Normal berarti parameter berada dalam kondisi aman, Rendah berarti perlu penambahan atau pemeriksaan, dan Tinggi berarti perlu penurunan atau evaluasi penyebab kenaikan.",
-      margin,
-      y + 13,
-      usableWidth,
-      4.5,
-    );
-
-    doc.autoTable({
-      startY: y + 6,
-      theme: "grid",
-      styles: { fontSize: 8, cellPadding: 2.8, lineColor: [222, 234, 226] },
-      headStyles: { fillColor: [22, 118, 164], textColor: 255 },
-      head: [["Area", "Temuan", "Dampak Jika Diabaikan", "Prioritas"]],
-      body: [
-        [
-          "pH",
-          `Rata-rata ${averagePh}; ${outOfRange.phLow} hari rendah dan ${outOfRange.phHigh} hari tinggi.`,
-          "Akar lebih sulit menyerap nutrisi dan pertumbuhan dapat melambat.",
-          outOfRange.phLow + outOfRange.phHigh > 0 ? "Tinggi" : "Pantau",
-        ],
-        [
-          "PPM",
-          `Rata-rata ${averagePpm} PPM; ${outOfRange.ppmLow} hari rendah dan ${outOfRange.ppmHigh} hari tinggi.`,
-          "Tanaman dapat kekurangan nutrisi atau mengalami kelebihan garam terlarut.",
-          outOfRange.ppmLow + outOfRange.ppmHigh > 0 ? "Tinggi" : "Pantau",
-        ],
-        [
-          "Dithane",
-          `Data aktual: ${typeCounts.Dithane || 0} catatan.`,
-          "Jadwal penyemprotan yang tidak konsisten dapat mengurangi perlindungan tanaman.",
-          typeCounts.Dithane ? "Pantau" : "Periksa jadwal",
-        ],
-        [
-          "History",
-          `${rows.length} catatan aktual, status dominan: ${dominantStatus}.`,
-          "Data yang minim membuat keputusan pemilik kurang kuat.",
-          rows.length ? "Cukup" : "Perlu data",
-        ],
-      ],
-      margin: { left: margin, right: margin },
-    });
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    y = doc.lastAutoTable.finalY + 9;
-    doc.text("Rekomendasi Tindakan", margin, y);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    y += 7;
+    let ry = y + 15;
     recommendations.forEach((note, index) => {
-      y = addWrappedText(doc, `${index + 1}. ${note}`, margin, y, usableWidth, 4.5) + 1;
+      ry = addWrappedText(doc, `${index + 1}. ${note}`, margin, ry, usableWidth, 4.5) + 1;
     });
 
     doc.addPage();
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.setTextColor(35, 52, 40);
-    doc.text(`Grafik Tren Harian - ${monthName} ${reportYear}`, margin, 18);
+    doc.text(`Grafik Tren Harian - ${monthName} ${trendYear}`, margin, 18);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
-    doc.text("Grafik ini memperlihatkan perubahan pH dan PPM harian untuk membantu pemilik membaca pola kenaikan atau penurunan parameter.", margin, 25);
+    doc.text("Grafik pH dan PPM asli dari data sensor (bukan kesimpulan), bulan catatan terbaru pada filter aktif.", margin, 25);
     if (chartImage) {
       doc.addImage(chartImage, "PNG", margin, 33, usableWidth, 105);
     } else {
@@ -729,168 +570,49 @@
       doc.text("Grafik tidak dapat dimuat karena Chart.js belum tersedia saat PDF dibuat.", margin, 45);
       doc.setTextColor(35, 52, 40);
     }
-    doc.autoTable({
-      startY: chartImage ? 145 : 55,
-      theme: "grid",
-      styles: { fontSize: 8, cellPadding: 2.8, lineColor: [222, 234, 226] },
-      headStyles: { fillColor: [7, 141, 67], textColor: 255 },
-      head: [["Analisis Grafik", "Catatan"]],
-      body: [
-        ["Arah pH", `Rata-rata ${averagePh} pH dengan rentang ${phRange.min.toFixed(1)} - ${phRange.max.toFixed(1)}.`],
-        ["Arah PPM", `Rata-rata ${averagePpm} PPM dengan rentang ${ppmRange.min} - ${ppmRange.max} PPM.`],
-        ["Periode pengamatan", `${trends.length} hari data tren dalam bulan ${monthName} ${reportYear}.`],
-        ["Kegunaan grafik", "Membantu pemilik melihat pola sebelum mengambil keputusan koreksi nutrisi, pH, atau jadwal kontrol."],
-      ],
-      margin: { left: margin, right: margin },
-    });
 
     doc.addPage();
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.setTextColor(35, 52, 40);
-    doc.text(`Data History Bulanan - ${monthName} ${reportYear}`, margin, 18);
+    doc.text("Data Aktivitas Sistem (Hasil Filter)", margin, 18);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
-    doc.text("Tabel ini berisi detail harian satu bulan penuh: pH, PPM, dan Dithane. Data aktual dari halaman history digabung dengan tren bulanan dan jadwal sistem.", margin, 25);
+    doc.text("Tabel berisi kesimpulan gabungan yang sama dengan tabel halaman - mengikuti filter yang sedang digunakan.", margin, 25);
 
     doc.autoTable({
       startY: 31,
       theme: "striped",
-      styles: { fontSize: 6.8, cellPadding: 1.6, overflow: "linebreak" },
+      styles: { fontSize: 7, cellPadding: 1.8, overflow: "linebreak" },
       headStyles: { fillColor: [39, 93, 41], textColor: 255 },
-      head: [["No", "Hari", "Tanggal", "Jam", "Tipe", "Nilai", "Status", "Keterangan", "Sumber"]],
-      body: detailedMonthlyRows.map((data, index) => [
-            index + 1,
-            data.day,
-            data.date,
-            data.time,
-            data.type,
-            data.value,
-            data.status,
-            data.note,
-            data.source,
-          ]),
+      head: [["No", "Hari", "Tanggal", "Jam", "Status Sistem", "Keterangan"]],
+      body: rows.map((row, index) => [
+        index + 1,
+        row.day_name || "-",
+        formatTanggalIndo(row.log_date),
+        (row.log_time || "-").slice(0, 5),
+        row.status || "-",
+        row.note || "-",
+      ]),
       margin: { left: margin, right: margin },
       columnStyles: {
         0: { cellWidth: 10 },
         1: { cellWidth: 20 },
-        2: { cellWidth: 31 },
+        2: { cellWidth: 32 },
         3: { cellWidth: 16 },
-        4: { cellWidth: 18 },
-        5: { cellWidth: 24 },
-        6: { cellWidth: 21 },
-        7: { cellWidth: 82 },
-        8: { cellWidth: 32 },
+        4: { cellWidth: 26 },
+        5: { cellWidth: usableWidth - 104 },
       },
     });
 
-    doc.addPage();
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.text(`Lampiran Tren Harian pH dan PPM - ${monthName} ${reportYear}`, margin, 18);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.text(
-      "Lampiran ini memperlihatkan estimasi tren harian lengkap selama satu bulan sebagai bahan pembanding terhadap data history utama.",
-      margin,
-      25,
-    );
-
-    doc.autoTable({
-      startY: 31,
-      theme: "grid",
-      styles: { fontSize: 7.5, cellPadding: 2 },
-      headStyles: { fillColor: [7, 141, 67], textColor: 255 },
-      head: [["No", "Hari", "Tanggal", "Jam", "pH", "PPM", "Interpretasi"]],
-      body: trends.map((item, index) => {
-        const phStatus = item.ph < 5.5 ? "pH rendah" : item.ph > 6.5 ? "pH tinggi" : "pH normal";
-        const ppmStatus = item.ppm < 800 ? "PPM rendah" : item.ppm > 1000 ? "PPM tinggi" : "PPM normal";
-        return [
-          index + 1,
-          item.day,
-          item.date,
-          item.time,
-          item.ph,
-          `${item.ppm} PPM`,
-          `${phStatus}; ${ppmStatus}`,
-        ];
-      }),
-      margin: { left: margin, right: margin },
-      columnStyles: { 6: { cellWidth: 58 } },
-      didDrawPage: function () {
-        const pageCount = doc.internal.getNumberOfPages();
-        doc.setFontSize(8);
-        doc.setTextColor(110, 124, 112);
-        doc.text(
-          `Hydrotech | Laporan ${monthName} ${reportYear} | Halaman ${pageCount}`,
-          margin,
-          doc.internal.pageSize.getHeight() - 8,
-        );
-      },
-    });
-
-    doc.addPage();
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.setTextColor(35, 52, 40);
-    doc.text("Metodologi, Catatan, dan Kesimpulan", margin, 18);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    y = addWrappedText(
-      doc,
-      "Sumber data laporan berasal dari tabel history pada dashboard Hydrotech dan data tren harian pH/PPM yang digunakan oleh grafik monitoring. Laporan ini ditujukan sebagai bahan pertimbangan pemilik untuk melihat kestabilan sistem, bukan sebagai pengganti inspeksi langsung di instalasi hidroponik.",
-      margin,
-      27,
-      usableWidth,
-      4.5,
-    );
-
-    doc.autoTable({
-      startY: y + 6,
-      theme: "grid",
-      styles: { fontSize: 8, cellPadding: 3, lineColor: [222, 234, 226] },
-      headStyles: { fillColor: [39, 93, 41], textColor: 255 },
-      head: [["Bagian", "Isi"]],
-      body: [
-        ["Metode pembacaan", "Data aktual dikelompokkan berdasarkan bulan, tipe monitoring, status, dan keterangan."],
-        ["Batas acuan pH", "Rentang aman yang digunakan: 5.5 - 6.5 pH."],
-        ["Batas acuan PPM", "Target nutrisi yang digunakan: 800 - 1000 PPM."],
-        ["Interpretasi status", "Normal berarti aman, Rendah berarti perlu penambahan/pemeriksaan, Tinggi berarti perlu penurunan/evaluasi."],
-        ["Catatan validasi", "Jika data aktual bulan tertentu masih sedikit, keputusan akhir sebaiknya dikombinasikan dengan pengecekan fisik tanaman dan sensor."],
-      ],
-      margin: { left: margin, right: margin },
-    });
-
-    y = doc.lastAutoTable.finalY + 10;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text("Kesimpulan Pemilik", margin, y);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    y = addWrappedText(
-      doc,
-      `Pada bulan ${monthName} ${reportYear}, sistem mencatat ${rows.length} data history aktual dengan status dominan ${dominantStatus}. Tren harian menunjukkan rata-rata pH ${averagePh} dan rata-rata PPM ${averagePpm}. Prioritas utama pemilik adalah menjaga pH tetap pada 5.5 - 6.5, menjaga PPM di kisaran 800 - 1000, dan memastikan jadwal Dithane tetap konsisten.`,
-      margin,
-      y + 7,
-      usableWidth,
-      4.5,
-    );
-
-    doc.setDrawColor(215, 233, 222);
-    doc.setFillColor(248, 252, 250);
-    doc.roundedRect(margin, y + 8, usableWidth, 26, 3, 3, "FD");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(7, 141, 67);
-    doc.text("Checklist tindak lanjut:", margin + 5, y + 16);
-    doc.setTextColor(65, 82, 70);
-    doc.setFont("helvetica", "normal");
-    doc.text("1. Cek sensor pH dan PPM.  2. Bandingkan kondisi tanaman.  3. Simpan PDF sebagai arsip bulanan.  4. Tindak lanjuti status Rendah/Tinggi.", margin + 5, y + 23);
-
-    addReportFooters(doc, monthName, margin, reportYear);
-    doc.save(`laporan-history-hydrotech-${monthName.toLowerCase()}-${reportYear}.pdf`);
+    addReportFooters(doc, `Aktivitas Sistem (${filterText})`, margin, trendYear);
+    doc.save("data-aktivitas-sistem-hydrotech.pdf");
   }
   /* CHART CONFIG: sumber data grafik history pH dan PPM dari API (data asli). */
+  function getCurrentMonthIndex() {
+    return new Date().getMonth();
+  }
+
   const chartRangeLabels = {
     7: "1 minggu",
     14: "2 minggu",
@@ -1155,18 +877,19 @@
   }
 
   /* FILTER EVENTS: menghubungkan input filter tabel dengan render history. */
-  [searchInput, typeFilter, dayFilter, monthFilter, statusFilter].forEach(
-    (control) => {
-      control?.addEventListener("input", function () {
-        currentPage = 1;
-        render();
-      });
-      control?.addEventListener("change", function () {
-        currentPage = 1;
-        render();
-      });
-    },
-  );
+  [
+    searchInput, dayFilter, monthFilter, yearFilter, statusFilter,
+    timeFromInput, timeToInput,
+  ].forEach((control) => {
+    control?.addEventListener("input", function () {
+      currentPage = 1;
+      fetchRows();
+    });
+    control?.addEventListener("change", function () {
+      currentPage = 1;
+      fetchRows();
+    });
+  });
 
   /* RESET EVENT: menampilkan konfirmasi sebelum filter history dikosongkan. */
   resetButton?.addEventListener("click", async function (event) {
@@ -1219,7 +942,7 @@
     .then(result => {
       if (result.success) {
         row.remove();
-        render();
+        fetchRows();      // muat ulang dari database (sinkron dgn filter aktif)
       } else {
         alert("Gagal menghapus data history.");
       }
@@ -1230,11 +953,9 @@
     });
   });
 
-  /* EXPORT EVENT: membuat PDF history bulanan setelah pengguna memilih bulan. */
+  /* EXPORT EVENT: membuat PDF dari dataset hasil filter aktif. */
   exportButton?.addEventListener("click", async function () {
-    const selectedMonth = await requestExportMonth();
-    if (selectedMonth === null) return;
-    await exportMonthlyPdf(selectedMonth);
+    await exportHistoryPdf();
   });
 
   document
@@ -1255,7 +976,7 @@
     });
   });
 
-  /* INITIAL RENDER: menerapkan data tersimpan, tabel, dan grafik saat halaman dibuka. */
-  render();
+  /* INITIAL RENDER: memuat data kesimpulan + grafik saat halaman dibuka. */
+  fetchRows();
   renderHistoryChart();
 })();

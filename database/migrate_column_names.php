@@ -57,8 +57,17 @@ function migrateColumnNames(PDO $pdo, string $backupDirectory, ?array $mapping =
             $dropped = []; $renamed = false;
             try {
                 foreach ($checks as $check) {
-                    $sql = "ALTER TABLE `$table` DROP CHECK `" . $check['CONSTRAINT_NAME'] . '`';
-                    $pdo->exec($sql); $statements[] = $sql . ';'; $dropped[] = $check;
+                    /* MariaDB tidak mendukung `DROP CHECK`; `DROP CONSTRAINT`
+                       untuk CHECK juga bervariasi antar versi. Percobaan dua
+                       cara, kegagalan diabaikan (non-fatal) karena rename
+                       kolom di MariaDB memperbarui CHECK otomatis.          */
+                    $sql = "ALTER TABLE `$table` DROP CONSTRAINT `" . $check['CONSTRAINT_NAME'] . '`';
+                    try { $pdo->exec($sql); $statements[] = $sql . ';'; $dropped[] = $check; }
+                    catch (Throwable $e2) {
+                        $sql = "ALTER TABLE `$table` DROP CHECK `" . $check['CONSTRAINT_NAME'] . '`';
+                        try { $pdo->exec($sql); $statements[] = $sql . ';'; $dropped[] = $check; }
+                        catch (Throwable $e3) { /* constraint terlanjur tetap - lanjutkan rename */ }
+                    }
                 }
                 $alter=[];
                 foreach ($columns as $old=>$new) $alter[]="RENAME COLUMN `$old` TO `$new`";

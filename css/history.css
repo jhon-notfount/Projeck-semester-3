@@ -309,6 +309,8 @@
   text-align: center;
   vertical-align: middle;
 }
+/* Lebar kolom untuk tabel BARU (7 kolom): Keterangan paling lebar,
+   Aksi pas ukuran ikon hapus.                                          */
 .history-card table th:nth-child(1),
 .history-card table td:nth-child(1) {
   width: 5%;
@@ -319,33 +321,41 @@
 }
 .history-card table th:nth-child(3),
 .history-card table td:nth-child(3) {
-  width: 17%;
+  width: 15%;
 }
 .history-card table th:nth-child(4),
 .history-card table td:nth-child(4) {
-  width: 8%;
+  width: 7%;
 }
 .history-card table th:nth-child(5),
 .history-card table td:nth-child(5) {
-  width: 10%;
+  width: 12%;
 }
 .history-card table th:nth-child(6),
 .history-card table td:nth-child(6) {
-  width: 11%;
+  width: 47%;
 }
 .history-card table th:nth-child(7),
 .history-card table td:nth-child(7) {
-  width: 30%;
+  width: 4%;
 }
-.history-card table th:nth-child(8),
-.history-card table td:nth-child(8) {
-  width: 9%;
-}
+.history-card table th:nth-child(7),
 .history-card table td:nth-child(7) {
+  min-width: 44px;
+  max-width: 52px;
+}
+/* Keterangan (kolom 6): rata kiri, teks panjang mengalir. */
+.history-card table td:nth-child(6) {
   min-width: 0;
   color: #6b7c70;
   text-align: left;
   padding: 8px 10px;
+}
+/* Aksi (kolom 7): tepat ukuran ikon, rata tengah. */
+.history-card table th:nth-child(7),
+.history-card table td:nth-child(7) {
+  min-width: 0;
+  text-align: center;
 }
 .history-card .badge {
   display: inline-flex;
@@ -1381,4 +1391,29 @@ body:not(.login-page):not(.popup-body) .content > :nth-child(5) {
 .status-filter {
   border-color: rgba(211, 231, 220, 0.95);
   background: rgba(255, 255, 255, 0.92);
+}
+
+/* FILTER RENTANG JAM: dua input time inline (mulai - selesai). */
+.history-time-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.history-time-range input[type="time"] {
+  border: 1px solid rgba(225, 235, 229, 0.9);
+  border-radius: 10px;
+  background: #ffffff;
+  color: #3d4a42;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 8px 10px;
+  min-width: 0;
+}
+.history-time-range input[type="time"]:focus {
+  outline: 2px solid rgba(7, 141, 67, 0.25);
+}
+.history-time-range span {
+  color: #9fb0a4;
+  font-weight: 800;
 }

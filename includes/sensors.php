@@ -1,5 +1,7 @@
 <?php
 /** Penyimpanan pengukuran pH/PPM asli dalam satu tabel sensor_readings. */
+require_once __DIR__ . '/system_activity.php';
+
 function sensorNumber($value, string $name): float {
     if (!is_scalar($value) || !is_numeric($value) || !is_finite((float)$value)) {
         throw new InvalidArgumentException("Nilai $name harus berupa angka valid.");
@@ -169,6 +171,10 @@ function saveSensorMeasurements(PDO $pdo, array $input, ?int $operatorId = null)
             sensorWarning($pdo, $reading, $limits, false, false, $monitoringId, $operatorId);
             $result[] = $reading;
         }
+
+        /* KESIMPULAN SISTEM: satu catatan gabungan pH+PPM+Dithane
+           (Data Aktivitas Sistem) — dedup internal per perubahan kondisi. */
+            recordSystemActivity($pdo, $readingId, $values['ph'] ?? null, $values['ppm'] ?? null);
         $pdo->commit();
         return $result;
     } catch (Throwable $e) {

@@ -5,18 +5,10 @@ require_once '../config/database.php';
 
 $pdo = getDBConnection();
 
-/* LOG UTAMA: halaman history membaca tabel monitoring_logs (satu sumber log). */
-$stmt = $pdo->query("SELECT `monitoring_id` AS `id`, `type`, `day_name`, `log_time`, `value`, `status`, `note`, `is_deleted`, DATE(`created_at`) AS `log_date`, `created_at` FROM monitoring_logs WHERE is_deleted=0 ORDER BY created_at DESC, monitoring_id DESC LIMIT 500");
-$logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-/* TANGGAL INDO: format "23 Oktober 2026" agar filter bulan di JavaScript bekerja. */
+/* DATA AKTIVITAS SISTEM: baris type='sistem' = SATU kesimpulan gabungan
+   pH+PPM+Dithane per kejadian. Filter dieksekusi di database lewat
+   api/history/list.php; tabel diisi ulang oleh js/history.js. */
 $bulanIndo = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-function formatTanggalIndo(string $date): string {
-    global $bulanIndo;
-    $d = date_create($date);
-    if (!$d) return $date;
-    return date_format($d, 'j') . ' ' . $bulanIndo[(int)date_format($d, 'n') - 1] . ' ' . date_format($d, 'Y');
-}
 ?>
 <!doctype html>
 <html lang="id">
@@ -60,8 +52,9 @@ function formatTanggalIndo(string $date): string {
                 <span class="history-kicker">Riwayat Monitoring</span>
                 <h2>Data Aktivitas Sistem</h2>
                 <p>
-                  Pantau perubahan pH, PPM, dan Dithane berdasarkan tanggal,
-                  bulan, jam, tipe, dan status.
+                  Kesimpulan gabungan kondisi pH, PPM, dan Dithane —
+                  dapat difilter berdasarkan tanggal, jam, hari, bulan,
+                  tahun, dan status.
                 </p>
               </div>
               <button type="button" class="history-export" data-history-export>
@@ -71,19 +64,16 @@ function formatTanggalIndo(string $date): string {
 
             <!-- TABLE PANEL: area filter, tabel data history, empty state, dan pagination. -->
             <div class="history-table-panel">
-              <!-- FILTER BAR: pencarian dan filter tipe, hari, bulan, serta status. -->
+              <!-- FILTER BAR: pencarian + rentang jam + hari, bulan, tahun, status. -->
               <div class="filter-bar history-filter">
                 <input
                   data-history-search
                   type="search"
-                  placeholder="Cari tanggal, tipe, status, hari, atau jam..." />
-                <span class="filter-select">
-                  <select data-history-type aria-label="Filter tipe">
-                    <option value="">Semua Tipe</option>
-                    <option value="ph">pH</option>
-                    <option value="ppm">PPM</option>
-                    <option value="dithane">Dithane</option>
-                  </select>
+                  placeholder="Cari tanggal, jam, status, atau keterangan..." />
+                <span class="filter-select history-time-range" aria-label="Rentang jam">
+                  <input data-history-time-from type="time" aria-label="Jam mulai" />
+                  <span>–</span>
+                  <input data-history-time-to type="time" aria-label="Jam selesai" />
                 </span>
                 <span class="filter-select">
                   <select data-history-day aria-label="Filter hari">
@@ -93,39 +83,44 @@ function formatTanggalIndo(string $date): string {
                     <option value="rabu">Rabu</option>
                     <option value="kamis">Kamis</option>
                     <option value="jumat">Jumat</option>
+                    <option value="sabtu">Sabtu</option>
+                    <option value="minggu">Minggu</option>
                   </select>
                 </span>
                 <span class="filter-select">
                   <select data-history-month aria-label="Filter bulan">
                     <option value="">Semua Bulan</option>
-                    <option value="januari">Januari</option>
-                    <option value="februari">Februari</option>
-                    <option value="maret">Maret</option>
-                    <option value="april">April</option>
-                    <option value="mei">Mei</option>
-                    <option value="juni">Juni</option>
-                    <option value="juli">Juli</option>
-                    <option value="agustus">Agustus</option>
-                    <option value="september">September</option>
-                    <option value="oktober">Oktober</option>
-                    <option value="november">November</option>
-                    <option value="desember">Desember</option>
+                    <option value="1">Januari</option>
+                    <option value="2">Februari</option>
+                    <option value="3">Maret</option>
+                    <option value="4">April</option>
+                    <option value="5">Mei</option>
+                    <option value="6">Juni</option>
+                    <option value="7">Juli</option>
+                    <option value="8">Agustus</option>
+                    <option value="9">September</option>
+                    <option value="10">Oktober</option>
+                    <option value="11">November</option>
+                    <option value="12">Desember</option>
                   </select>
                 </span>
                 <span class="filter-select">
-                  <select data-history-status aria-label="Filter status">
+                  <select data-history-year aria-label="Filter tahun">
+                    <option value="">Semua Tahun</option>
+                  </select>
+                </span>
+                <span class="filter-select">
+                  <select data-history-status aria-label="Filter status sistem">
                     <option value="">Semua Status</option>
-                    <option value="normal">Normal</option>
-                    <option value="rendah">Rendah</option>
-                    <option value="tinggi">Tinggi</option>
-                    <option value="menyala">Menyala</option>
-                    <option value="selesai">Selesai</option>
+                    <option value="Normal">Normal</option>
+                    <option value="Perhatian">Perhatian</option>
+                    <option value="Tidak Normal">Tidak Normal</option>
                   </select>
                 </span>
                 <button type="button" data-history-reset>Reset</button>
               </div>
 
-              <!-- HISTORY TABLE: daftar aktivitas monitoring pH, PPM, dan Dithane. -->
+              <!-- HISTORY TABLE: riwayat kesimpulan kondisi keseluruhan sistem. -->
               <div class="history-table-wrap">
                 <table class="history-table">
                   <thead>
@@ -134,49 +129,14 @@ function formatTanggalIndo(string $date): string {
                       <th>Hari</th>
                       <th>Tanggal</th>
                       <th>Jam</th>
-                      <th>Tipe</th>
-                      <th>Status</th>
+                      <th>Status Sistem</th>
                       <th>Keterangan</th>
                       <th>Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <?php $no = 1; foreach ($logs as $log): ?>
-                    <tr data-row-id="<?= htmlspecialchars($log['id']) ?>">
-                      <td><?= $no++ ?></td>
-                      <td><?= htmlspecialchars($log['day_name'] ?? '') ?></td>
-                      <td><?= htmlspecialchars(formatTanggalIndo($log['log_date'] ?? '')) ?></td>
-                      <td><?= htmlspecialchars($log['log_time'] ?? '') ?></td>
-                      <td>
-                        <?php if (strtolower($log['type'] ?? '') === 'ph'): ?>
-                          <span class="badge blue">pH</span>
-                        <?php elseif (strtolower($log['type'] ?? '') === 'ppm'): ?>
-                          <span class="badge normal">PPM</span>
-                        <?php elseif (strtolower($log['type'] ?? '') === 'dithane'): ?>
-                          <span class="badge purple">Dithane</span>
-                        <?php else: ?>
-                          <span class="badge"><?= htmlspecialchars($log['type'] ?? '') ?></span>
-                        <?php endif; ?>
-                      </td>
-                      <td>
-                        <?php
-                        $statusClass = 'normal';
-                        if (strtolower($log['status'] ?? '') === 'rendah') $statusClass = 'low';
-                        elseif (strtolower($log['status'] ?? '') === 'tinggi') $statusClass = 'high';
-                        ?>
-                        <span class="badge <?= $statusClass ?>"><?= htmlspecialchars($log['status'] ?? '') ?></span>
-                      </td>
-                      <td><?= htmlspecialchars($log['note'] ?? '') ?></td>
-                      <td class="trash">
-                        <button
-                          type="button"
-                          class="trash-btn"
-                          aria-label="Hapus data">
-                          &#128465;
-                        </button>
-                      </td>
-                    </tr>
-                    <?php endforeach; ?>
+                    <?php /* Baris diisi dinamis oleh js/history.js (data dari database,
+                               filter dieksekusi di server). */ ?>
                   </tbody>
                 </table>
                 <div class="history-empty" data-history-empty>
@@ -287,6 +247,6 @@ function formatTanggalIndo(string $date): string {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
-    <script src="../js/history.js?v=3"></script>
+    <script src="../js/history.js?v=4"></script>
   </body>
 </html>

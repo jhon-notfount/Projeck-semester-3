@@ -4,7 +4,8 @@ import os, subprocess, shutil, socket, time, json, urllib.request, urllib.parse,
 root=Path(__file__).resolve().parents[1]
 php=shutil.which('php')
 ext=Path(php).parent/'ext'
-cmd=[php,'-d',f'extension_dir={ext}','-d','extension=pdo_mysql']
+# extension_dir khusus layout PHP Windows (Laragon); di Linux pakai default.
+cmd=([php,'-d',f'extension_dir={ext}','-d','extension=pdo_mysql'] if ext.is_dir() else [php])
 name='hydrotech_http_test_'+secrets.token_hex(5)
 env=dict(os.environ,HYDROTECH_DB_NAME=name)
 server=None

@@ -17,6 +17,7 @@
  */
 
 require_once __DIR__ . '/sensors.php';
+require_once __DIR__ . '/system_activity.php';
 
 function recordDithaneActivity(PDO $pdo, string $pump, string $state, int $durationS, string $deviceSeen): array {
     if ($pump !== 'dithane') {
@@ -66,6 +67,8 @@ function recordDithaneActivity(PDO $pdo, string $pump, string $state, int $durat
             /* 2) Notifikasi web (fitur notifikasi tetap berjalan).         */
             sensorWarningDithane($pdo, 'Penyemprotan Dithane dimulai',
                 "Pompa Dithane mulai menyala ({$dedupKey}).", 'info', $monitoringId);
+            /* 3) Kesimpulan sistem: kondisi Dithane berubah (menyemprot).  */
+            recordSystemActivity($pdo, null, null, null);
             return ['state' => 'started', 'dedup' => false, 'logged' => true, 'notified' => true, 'last_completed_at' => null];
         }
 
@@ -73,8 +76,11 @@ function recordDithaneActivity(PDO $pdo, string $pump, string $state, int $durat
            tabel aktivitas tidak berisi berulang untuk satu penyalaan.  */
         sensorWarningDithane($pdo, 'Penyemprotan Dithane selesai',
             "Penyemprotan selesai; durasi aktual {$durationS} detik ({$dedupKey}).", 'success', null);
-        return ['state' => 'completed', 'dedup' => false, 'logged' => false, 'notified' => true,
+        $result = ['state' => 'completed', 'dedup' => false, 'logged' => false, 'notified' => true,
                 'last_completed_at' => $clock->format('Y-m-d H:i:s')];
+        /* Kondisi Dithane berubah -> perbarui kesimpulan sistem.           */
+        recordSystemActivity($pdo, null, null, null);
+        return $result;
     } finally { measurementUnlock($pdo, $lock); }
 }
 
