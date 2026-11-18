@@ -20,7 +20,7 @@ $client = new MqttClient($cfg['host'], $cfg['port'], 'fake-esp32', $cfg['user_es
 if (!$client->connect(5)) { fwrite(STDERR, "Gagal konek ke broker\n"); exit(1); }
 echo "[fake-esp] terhubung ke broker {$cfg['host']}:{$cfg['port']}\n";
 
-$client->setOnMessage(function (string $topic, string $payload): void {
+$client->setOnMessage(function (string $topic, string $payload) use (&$client): void {
     $data = json_decode($payload, true);
     echo "[fake-esp] TERIMA $topic => {$payload}\n";
     if (str_starts_with($topic, 'hydrotech/cmd/esp32/')) {

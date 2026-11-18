@@ -73,7 +73,9 @@ function upsertPumpState(array $data): void
 
 $cfg = mqttConfig();
 $client = mqttWorkerClient();
-$client->setOnMessage(function (string $topic, string $payload) use (&$pairing, &$client): void {
+$lastActivity = microtime(true);            // reset oleh pesan masuk (watchdog)
+$client->setOnMessage(function (string $topic, string $payload) use (&$pairing, &$client, &$lastActivity): void {
+    $lastActivity = microtime(true);
     $data = json_decode($payload, true);
     if (!is_array($data)) return;
 
@@ -195,6 +197,7 @@ while (true) {
         try {
             if ($client->connect(5)) {
                 logLine('Terhubung ke broker.');
+                $lastActivity = microtime(true);
                 $backoff = 2;
                 foreach (SENSOR_TOPICS as $t) {
                     if (!$client->subscribe($t, 0)) logLine("SUBSCRIBE $t gagal");
@@ -212,6 +215,15 @@ while (true) {
         }
     }
     $client->loop(500);
+
+    /* WATCHDOG: koneksi yang terlalu lama sunyi (broker wedged / socket
+       setengah mati) diputus paksa agar loop atas menyambung ulang.
+       Data asli tetap aman: broker akan menerbitkan ulang pesan QoS 1.  */
+    if (microtime(true) - $lastActivity >= 600) {
+        logLine('Tidak ada aktivitas 10 menit - paksa reconnect');
+        $client->close();
+        $lastActivity = microtime(true);
+    }
     if (time() - $lastFlush >= FLUSH_EVERY_S) {
         $lastFlush = time();
         flushStale($pairing);
