@@ -37,13 +37,15 @@ PPM selalu bilangan bulat. PHP subscriber memasangkan pH+PPM dengan `ts`
 yang sama menjadi **satu baris** `sensor_readings` (aturan lama dipertahankan:
 monitoring_logs + notifikasi tetap berjalan lewat `saveSensorMeasurements()`).
 
-### 3. `hydrotech/pump/status` — QoS 1, saat berubah (retained)
+### 3. `hydrotech/pump/status` — QoS 1, saat berubah (retained) — telemetri opsional
 ```json
 {"pump": "ab", "state": "on", "mode": "manual", "remaining_s": 27, "ts": 1700000000}
 ```
 `pump` ∈ `ab | ph | dithane | circ`; `mode` ∈ `auto | manual`.
-Dashboard membaca status ini (via `pump_states`) agar tombol mencerminkan
-kondisi pompa sebenarnya. Retained diizinkan karena ini **status**, bukan perintah.
+Catatan desain: dashboard **tidak menyimpan/menampilkan** status pompa —
+tombol ON/OFF hanyalah pengirim perintah (keputusan desain, tabel
+`pump_states` dihapus). Topik ini tetap dipublikasikan sebagai telemetri
+ untuk debugging/monitoring eksternal (mosquitto_sub).
 
 ### 4. `hydrotech/device/status` — QoS 1, tiap 30 detik (retained) + LWT
 ```json
@@ -125,7 +127,7 @@ ESP32 kembali ke otomatisasi (timer lokal — aman meski broker mati).
 | `deploy/mosquitto/acl` | aturan topik per user |
 | `deploy/mosquitto/setup_mosquitto.sh` | instalasi sekali jalan (sudo) |
 | `vendor/hydrotech/MqttClient.php` | klien MQTT 3.1.1 minimal untuk PHP |
-| `bin/mqtt_subscriber.php` | worker: sensor → MySQL, relay antrean perintah, terima ack (systemd: `hydrotech-mqtt-subscriber`) |
+| `bin/mqtt_subscriber.php` | worker: sensor → MySQL, config_request, pump_activity (systemd: `hydrotech-mqtt-subscriber`) |
 | `bin/mqtt_publisher.php` | CLI publish manual (untuk uji/debug) |
 
 ## Uji cepat (setelah setup)

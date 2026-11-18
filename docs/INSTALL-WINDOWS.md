@@ -1,121 +1,77 @@
-# Panduan Instalasi HydroTech di Windows (Laragon)
+# Instalasi HydroTech di Windows — Cepat & Tanpa Konfigurasi
 
-Untuk anggota tim yang memakai Windows. Dashboard + database berjalan penuh
-di Windows; bagian MQTT (realtime) punya dua opsi — lihat Bagian D.
+Cukup **dua program** diinstal, sisanya otomatis. Semua config default sudah
+ikut git — tidak perlu membuat file apa pun.
 
 ---
 
-## A. Persiapan
+## Langkah 1 — Install Laragon (dashboard + database)
 
-| Kebutuhan | Catatan |
-|---|---|
-| [Laragon](https://laragon.org) | menyediakan MySQL + HeidiSQL; aktifkan MySQL saja |
-| PHP 8.1+ | Laragon default sudah memilikinya (cek `php -v` di terminal Laragon) |
-| Ekstensi `pdo_mysql` | aktif secara default di Laragon (`php -m` untuk memeriksa) |
-| Git (opsional) | untuk clone repo |
+1. Download & install: <https://laragon.org/download/> (pilih *Full*).
+2. Buka Laragon → klik **Start All** (MySQL ikut menyala).
+3. Selesai. Tidak perlu buat database/user manual — `php database\install.php`
+   (langkah 3) otomatis memakai akun root default Laragon.
 
-Tidak perlu Composer dan tidak ada dependensi lain.
+## Langkah 2 — Install Mosquitto (broker MQTT realtime)
 
-## B. Kode + Database
-
-1. Salin/clone proyek ke dalam folder `www` Laragon:
+1. Download installer: <https://mosquitto.org/download/> (Windows).
+2. Setelah terpasang, **timpa config** dengan yang sudah disediakan proyek:
    ```
-   C:\laragon\www\hydrotech
+   copy "deploy\mosquitto\mosquitto-windows.conf" "C:\Program Files\mosquitto\mosquitto.conf"
    ```
-2. Buka **Terminal Laragon**, pastikan MySQL aktif (tombol Start All), lalu buat
-   database dan user — cara paling mudah agar `config/database.php` TIDAK perlu
-   diubah, samakan dengan default proyek (user `Jhon`, password `#Jhon45`):
-   ```sql
-   -- jalankan di HeidiSQL / mysql.exe
-   CREATE DATABASE hydrotech CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   CREATE USER 'Jhon'@'localhost' IDENTIFIED BY '#Jhon45';
-   GRANT ALL PRIVILEGES ON hydrotech.* TO 'Jhon'@'localhost';
-   FLUSH PRIVILEGES;
+   (jalankan di CMD dari folder proyek; ini broker lokal + anonymous, aman
+   karena hanya melayani komputer sendiri)
+3. Jalankan:
    ```
-   (Alternatif tanpa membuat user: set environment variable
-   `HYDROTECH_DB_USER` dan `HYDROTECH_DB_PASS` sebelum menjalankan PHP.)
-3. Instal skema + data awal **dari folder proyek**:
+   net start mosquitto
    ```
-   cd C:\laragon\www\hydrotech
-   php database\install.php
-   php database\migrate_pump_control.php
-   ```
-   `install.php` menolak dijalankan dua kali pada database yang sudah terisi —
-   itu perilaku aman, bukan error.
-4. Buat `config\mqtt_auth.local.php` (lihat Bagian D) — file ini di-gitignore,
-   setiap orang membuat sendiri.
+   Kalau service belum terdaftar, jalankan dulu: `mosquitto install`.
 
-## C. Menjalankan Dashboard (web + database)
+## Langkah 3 — Siapkan database (1 perintah)
 
+Dari folder proyek (misal `C:\laragon\www\hydrotech`):
 ```
-cd C:\laragon\www\hydrotech
+php database\install.php
+```
+Ini otomatis membuat database + semua tabel + akun login + pengaturan awal.
+Tidak perlu apa-apa lagi.
+
+## Langkah 4 — Jalankan (2 terminal)
+
+**Terminal 1 — dashboard:**
+```
 php -S localhost:8000
 ```
 
-Buka `http://localhost:8000/pages/hydrotech-dashboard-panel-2026.php`
-Login: **hydrotech / Admin123**.
-
-Semua fitur non-realtime bekerja: login, pengaturan pH/PPM/Dithane, riwayat,
-notifikasi, ekspor, dsb. Data sensor lama (hasil migrasi/backup) tampil normal.
-
-## D. Realtime MQTT — pilih salah satu
-
-Kontrol pompa manual, sensor 2 detik, dan push konfigurasi membutuhkan
-broker + worker. **Opsi 1 direkomendasikan** untuk kerja tim.
-
-### Opsi 1 — Terhubung ke broker di laptop Fedora (tidak ada yang diinstal)
-Sudah ada broker yang berjalan di laptop Fedora (service `mosquitto`).
-1. Minta isi `config/mqtt_auth.local.php` dari yang punya laptop Fedora
-   (JANGAN lewat repo — file itu memang tidak ikut git).
-2. Ubah satu baris di `config\mqtt_auth.local.php` milikmu:
-   ```php
-   $MQTT_HOST = "coba-coba.local";   // bukan 127.0.0.1 — broker di Fedora
-   ```
-   (Windows 10/11 sudah mampu meresolusi `.local`/mDNS di jaringan yang sama.)
-3. Jalankan worker di terminal terpisah:
-   ```
-   php bin\mqtt_subscriber.php
-   ```
-   Biarkan terminal terbuka selama sesi kerja. Keluar proses = data realtime
-   berhenti; jalankan lagi. (Untuk permanen: daftarkan sebagai service dengan
-   NSSM, atau cukup jalankan manual saat dibutuhkan.)
-
-### Opsi 2 — Broker sendiri di Windows (jarang diperlukan)
-Pasang [Mosquitto for Windows](https://mosquitto.org/download/), salin
-`deploy\mosquitto\mosquitto.conf` + `deploy\mosquitto\acl` ke `C:\Program Files\mosquitto\`
-(ubah `listener 1883 0.0.0.0` → `listener 1883 127.0.0.1` agar lokal saja),
-buat password file:
+**Terminal 2 — realtime MQTT:**
 ```
-mosquitto_passwd -c "C:\Program Files\mosquitto\passwd" esp32
-mosquitto_passwd -b "C:\Program Files\mosquitto\passwd" phpworker <password>
-net start mosquitto
+php bin\mqtt_subscriber.php
 ```
-`$MQTT_HOST` tetap `127.0.0.1`. Konsekuensinya: ESP32 di firmware tertunjuk
-ke broker Fedora (`coba-coba.local`) — kalau demo dari Windows, koordinasikan
-dengan tim; jangan diubah asal-asalan (firmware perlu re-kompile jika ganti host).
+Biarkan terminal 2 terbuka selama kerja (ini penerima data sensor dari broker).
+Selesai — buka <http://localhost:8000>, login **hydrotech / Admin123**.
 
-## E. Hal yang perlu diingat
+---
 
-- **ESP32 hanya menunjuk ke satu backend.** Firmware saat ini tersambung ke
-  broker Fedora (mDNS `coba-coba.local`) dan kredensial MQTT di-set saat
-  kompile (`MQTT_PASS` di blok konfigurasi). Kerja web di Windows tidak
-  mengganggu itu, tapi data sensor baru hanya mengalir ke backend yang
-  ditunjuk perangkat.
-- `config/mqtt_auth.local.php` dan `config/esp_key.txt` **tidak ikut git** —
-  itu disengaja (kredensial). Bagikan lewat pesan pribadi tim.
-- Portal setup ESP32 (AP `hydrotech`) hanya menanyakan WiFi — tidak ada lagi
-  kolom API Key.
-- Kalau server PHP dijalankan dengan `php -S 0.0.0.0:8000`, dashboard bisa
-  dibuka dari HP/PC lain di WiFi yang sama lewat IP Windows (`ipconfig`).
+## Tanya-jawab cepat
 
-## F. Ringkasan cepat
+| Masalah | Solusi |
+|---|---|
+| `php` tidak dikenali | Buka **Terminal Laragon** (Menu → Terminal), atau tambahkan PHP Laragon ke PATH |
+| Tombol pompa: "Broker MQTT tidak merespons" | Mosquitto belum jalan → `net start mosquitto` |
+| Data sensor tidak mengalir | Normal — data sensor datang dari ESP32 yang tertunjuk ke server tim (lihat di bawah) |
+| Mau diakses dari HP/PC lain | `php -S 0.0.0.0:8000`, lalu buka IP komputermu (`ipconfig`) dari perangkat lain |
 
-```
-1. Clone  -> C:\laragon\www\hydrotech
-2. MySQL  -> buat db + user (samakan dengan config default)
-3. php database\install.php
-4. php database\migrate_pump_control.php
-5. isi config\mqtt_auth.local.php (minta ke tim)
-6. php -S localhost:8000            (dashboard)
-7. php bin\mqtt_subscriber.php      (realtime; terminal terpisah)
-```
+## Tentang ESP32 (pembagian tugas tim)
+
+ESP32 tersambung ke **satu server yang jadi "otak"** — saat ini laptop Fedora
+(broker + dashboard). Laptop Windows cukup untuk: pengembangan web, melihat
+data, uji fitur. Kalau suatu saat demo dari Windows dan ingin ESP32 menunjuk
+ke Windows: ganti `MQTT_HOST` di firmware menjadi IP Windows, isi
+`MQTT_PASS` bebas (broker lokal anonymous), kompile ulang, dan jalankan
+`php bin\mqtt_subscriber.php` di Windows.
+
+## Catatan keamanan
+
+Default lokal ini (anonymous broker, user DB root) **hanya untuk
+pembangunan**. Broker produksi (laptop Fedora) memakai auth + ACL ketat
+via `config/mqtt_auth.local.php` — file rahasia yang tidak ikut git.

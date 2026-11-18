@@ -135,36 +135,6 @@ CREATE TABLE IF NOT EXISTS `notifications` (
         REFERENCES `users` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Kontrol pompa manual: status pompa terkini dari perangkat (upsert saat
--- poll perintah) dan antrean perintah ON/OFF dari dashboard. Perangkat
--- mengambil perintah pending via api/device/commands.php (X-API-Key);
--- dashboard membuat perintah via api/pump/control.php (login + CSRF).
-CREATE TABLE IF NOT EXISTS `pump_states` (
-    `pump` ENUM('ab','ph','dithane','circ') NOT NULL PRIMARY KEY,
-    `state` ENUM('on','off') NOT NULL DEFAULT 'off',
-    `mode` ENUM('auto','manual') NOT NULL DEFAULT 'auto',
-    `remaining_s` INT NULL COMMENT 'Sisa detik override manual (NULL = tidak berlaku)',
-    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `device_commands` (
-    `command_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `pump` ENUM('ab','ph','dithane') NOT NULL,
-    `action` ENUM('on','off') NOT NULL,
-    `duration_s` INT NOT NULL DEFAULT 0 COMMENT 'Durasi override (detik); 0 = off tanpa durasi',
-    `issued_by` INT NULL,
-    `status` ENUM('pending','delivered','done','rejected') NOT NULL DEFAULT 'pending',
-    `result_note` VARCHAR(255) NULL,
-    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `delivered_at` TIMESTAMP NULL DEFAULT NULL,
-    `completed_at` TIMESTAMP NULL DEFAULT NULL,
-    INDEX `idx_device_commands_status` (`status`, `command_id`),
-    INDEX `idx_device_commands_created` (`created_at`),
-    CONSTRAINT `fk_device_commands_user` FOREIGN KEY (`issued_by`)
-        REFERENCES `users` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT `chk_device_commands_duration` CHECK (`duration_s` BETWEEN 0 AND 3600)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 -- Profil per akun (baris label-nilai milik satu user; unique per user per
 -- section per label agar tidak ada isian dobel). ON DELETE CASCADE mengikuti
 -- polar account_change_logs: akun hilang, profilnya ikut terhapus.

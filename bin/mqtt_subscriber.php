@@ -67,17 +67,8 @@ function flushStale(array &$pairing): void
 
 function upsertPumpState(array $data): void
 {
-    $pump = $data['pump'] ?? null;
-    if (!in_array($pump, ['ab', 'ph', 'dithane', 'circ'], true)) return;
-    $state = ($data['state'] ?? 'off') === 'on' ? 'on' : 'off';
-    $mode = ($data['mode'] ?? 'auto') === 'manual' ? 'manual' : 'auto';
-    $remaining = filter_var($data['remaining_s'] ?? null, FILTER_VALIDATE_INT);
-    $remaining = $remaining === false ? null : max(0, min(3600, $remaining));
-    if ($mode === 'auto') $remaining = null;
-    getDBConnection()
-        ->prepare('INSERT INTO pump_states (pump, state, mode, remaining_s) VALUES (?, ?, ?, ?)
-                   ON DUPLICATE KEY UPDATE state = VALUES(state), mode = VALUES(mode), remaining_s = VALUES(remaining_s)')
-        ->execute([$pump, $state, $mode, $remaining]);
+    /* Keputusan desain: dashboard tidak menyimpan status pompa —
+       fungsi ini tidak lagi dipakai (tabel pump_states dihapus). */
 }
 
 $cfg = mqttConfig();
@@ -108,25 +99,13 @@ $client->setOnMessage(function (string $topic, string $payload) use (&$pairing, 
     }
 
     if ($topic === 'hydrotech/pump/status') {
-        upsertPumpState($data);
+        /* Telemetri status pompa tidak disimpan (keputusan desain). */
         return;
     }
-    /* hydrotech/device/status: heartbeat/LWT cukup untuk log; status online
-       dashboard tetap dari kesegaran sensor_readings (api/device/status.php).
-       Payload {"type":"ack","msg_id":..} menandai perintah antrean selesai. */
+    /* hydrotech/device/status: ack perintah tidak dilacak di database
+       (tombol = kirim langsung); cukup log.                              */
     if ($topic === 'hydrotech/device/status' && ($data['type'] ?? null) === 'ack') {
-        $msgId = (string)($data['msg_id'] ?? '');
-        if (str_starts_with($msgId, 'httpcmd-')) {
-            $commandId = substr($msgId, 8);
-            if (ctype_digit($commandId)) {
-                getDBConnection()
-                    ->prepare("UPDATE device_commands
-                                  SET status = 'done', completed_at = CURRENT_TIMESTAMP,
-                                      result_note = ?
-                                WHERE command_id = ? AND status = 'delivered'")
-                    ->execute([(string)($data['note'] ?? ''), (int)$commandId]);
-            }
-        }
+        logLine('ack perangkat: ' . ($data['msg_id'] ?? '?') . ' ok=' . var_export($data['ok'] ?? null, true));
         return;
     }
 
@@ -158,46 +137,6 @@ $client->setOnMessage(function (string $topic, string $payload) use (&$pairing, 
 });
 
 logLine('Worker mulai; broker ' . $cfg['host'] . ':' . $cfg['port']);
-
-/**
- * JEMBATAN ANTREAN: perintah kontrol pompa dari dashboard (device_commands)
- * dipublikasikan ke hydrotech/cmd/esp32/pump (QoS 1, tanpa retained).
- * msg_id = "httpcmd-<command_id>" — ESP32 menolak eksekusi msg_id ganda,
- * sehingga pengiriman ulang perintah yang sama tidak pernah dijalankan ulang.
- */
-function relayPendingCommands(MqttClient $client, array &$inFlight): void
-{
-    $pdo = getDBConnection();
-    /* Perintah yang tidak pernah di-ack >60 s dikembalikan pending
-       (aman: dedup msg_id mencegah eksekusi ganda di ESP32).           */
-    $pdo->exec("UPDATE device_commands SET status = 'pending'
-                 WHERE status = 'delivered' AND delivered_at < CURRENT_TIMESTAMP - INTERVAL 60 SECOND");
-    $rows = $pdo->query(
-        "SELECT command_id, pump, action, duration_s FROM device_commands
-          WHERE status = 'pending' ORDER BY command_id ASC LIMIT 10"
-    )->fetchAll(PDO::FETCH_ASSOC);
-    $mark = $pdo->prepare("UPDATE device_commands SET status = 'delivered', delivered_at = CURRENT_TIMESTAMP WHERE command_id = ?");
-    foreach ($rows as $row) {
-        $msgId = 'httpcmd-' . $row['command_id'];
-        if (isset($inFlight[$msgId]) && time() - $inFlight[$msgId] < 30) continue; // belum di-ack
-        $payload = json_encode([
-            'msg_id' => $msgId,
-            'pump' => $row['pump'],
-            'action' => $row['action'],
-            'duration_s' => (int)$row['duration_s'],
-            'issued_by' => 'dashboard',
-        ]);
-        if ($client->publish('hydrotech/cmd/esp32/pump', $payload, 1, false)) {
-            $inFlight[$msgId] = time();
-            $mark->execute([(int)$row['command_id']]);
-        }
-    }
-    /* Bersihkan in-flight yang sudah lama. */
-    foreach ($inFlight as $k => $t) if (time() - $t > 300) unset($inFlight[$k]);
-}
-
-$inFlight = [];
-$lastRelay = 0;
 
 /**
  * Dorong konfigurasi aktif (ambang pH/PPM + jadwal Dithane) ke ESP32.
@@ -260,7 +199,6 @@ while (true) {
                 foreach (SENSOR_TOPICS as $t) {
                     if (!$client->subscribe($t, 0)) logLine("SUBSCRIBE $t gagal");
                 }
-                $client->subscribe('hydrotech/pump/status', 1);
                 $client->subscribe('hydrotech/device/status', 1);
             }
         } catch (Throwable $e) {
@@ -274,11 +212,6 @@ while (true) {
         }
     }
     $client->loop(500);
-    if (time() - $lastRelay >= 2) {                       // jembatan antrean perintah
-        $lastRelay = time();
-        try { relayPendingCommands($client, $inFlight); }
-        catch (Throwable $e) { logLine('Relay perintah gagal: ' . $e->getMessage()); }
-    }
     if (time() - $lastFlush >= FLUSH_EVERY_S) {
         $lastFlush = time();
         flushStale($pairing);

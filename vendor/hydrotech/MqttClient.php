@@ -58,7 +58,19 @@ class MqttClient
 
     public function connected(): bool
     {
-        return is_resource($this->socket);
+        return is_resource($this->socket) && !feof($this->socket);
+    }
+
+    /** Tulis ke socket; socket mati -> close() agar loop atas reconnect. */
+    private function write(string $bytes): bool
+    {
+        if (!$this->connected()) return false;
+        $n = @fwrite($this->socket, $bytes);
+        if ($n === false || ($n === 0 && $bytes !== '')) {
+            $this->close();
+            return false;
+        }
+        return true;
     }
 
     /** Koneksi + MQTT CONNECT; true bila CONNACK diterima. */
@@ -83,7 +95,7 @@ class MqttClient
 
         $body = $this->str('MQTT') . chr(4) . chr($flags)
             . pack('n', $this->keepalive) . $payload;
-        fwrite($this->socket, $this->packet(0x10, $body));
+        if (!$this->write($this->packet(0x10, $body))) return false;
 
         $this->buffer = '';
         $pkt = $this->readPacket($timeoutSec);
@@ -99,7 +111,7 @@ class MqttClient
     {
         if (!$this->connected()) return false;
         $body = pack('n', $this->nextId()) . $this->str($topic) . chr($qos);
-        fwrite($this->socket, $this->packet(0x82, $body));
+        if (!$this->write($this->packet(0x82, $body))) return false;
         $deadline = microtime(true) + 5;
         while (microtime(true) < $deadline) {            // tunggu SUBACK (tipe 9)
             $pkt = $this->readPacket(1);
@@ -121,7 +133,7 @@ class MqttClient
             $this->unacked[$id] = ['topic' => $topic, 'payload' => $payload, 'at' => microtime(true), 'tries' => 0];
         }
         $body .= $payload;
-        fwrite($this->socket, $this->packet($byte, $body));
+        if (!$this->write($this->packet($byte, $body))) return false;
         return true;
     }
 
@@ -134,7 +146,7 @@ class MqttClient
 
         $now = microtime(true);
         if ($now - $this->lastActivity > $this->keepalive / 2) {
-            fwrite($this->socket, pack('CC', 0xC0, 0x00));  // PINGREQ
+            $this->write(pack('CC', 0xC0, 0x00));          // PINGREQ
             $this->lastActivity = $now;
         }
         foreach ($this->unacked as $id => $m) {          // retry PUBLISH QoS 1
@@ -143,14 +155,14 @@ class MqttClient
                 $m['at'] = $now;
                 $this->unacked[$id] = $m;
                 $body = $this->str($m['topic']) . pack('n', $id) . $m['payload'];
-                fwrite($this->socket, $this->packet(0x32, $body));
+                if (!$this->write($this->packet(0x32, $body))) { unset($this->unacked[$id]); return; }
             }
         }
     }
 
     public function disconnect(): void
     {
-        if ($this->connected()) fwrite($this->socket, pack('CC', 0xE0, 0x00));
+        if ($this->connected()) $this->write(pack('CC', 0xE0, 0x00));
         $this->close();
     }
 
@@ -174,7 +186,7 @@ class MqttClient
                     $offset += 2;
                 }
                 $payload = substr($pkt['body'], $offset);
-                if ($qos > 0) fwrite($this->socket, $this->packet(0x40, pack('n', $id))); // PUBACK
+                if ($qos > 0) $this->write($this->packet(0x40, pack('n', $id))); // PUBACK
                 if ($this->onMessage) ($this->onMessage)($topic, $payload);
                 break;
             }

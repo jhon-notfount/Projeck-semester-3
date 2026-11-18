@@ -304,6 +304,6 @@ function activityIcon(string $type): string {
     <script src="../js/dashboard-activity.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="../js/dashboard-live.js?v=2"></script>
-   <script src="../js/pump-control.js?v=1"></script>
+   <script src="../js/pump-control.js?v=2"></script>
   </body>
 </html>

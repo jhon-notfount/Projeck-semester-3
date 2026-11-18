@@ -94,8 +94,7 @@ function sensorWarningDithane(PDO $pdo, string $label, string $message, string $
  * Sengaja TIDAK menulis monitoring_logs: baris type 'ppm'/'ph' pada tabel
  * tersebut dipakai shouldRecordActivity() untuk mendeteksi perubahan kategori
  * sensor — pencampuran log pompa akan merusak logika dedup notifikasi sensor.
- * Penyalaan manual cukup tercatat sebagai notifikasi web (dedup otomatis),
- * sementara status pompa nyata mengalir lewat tabel pump_states.
+ * Penyalaan manual cukup tercatat sebagai notifikasi web (dedup otomatis).
  */
 function recordManualPumpActivity(PDO $pdo, string $pump, string $state, int $durationS): array {
     $labels = ['ab' => 'nutrisi AB-Mix (PPM)', 'ph' => 'pengatur pH'];

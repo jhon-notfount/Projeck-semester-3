@@ -23,6 +23,11 @@ $DB_TIMEZONE_OFFSET = '+07:00';
 
 /**
  * Get PDO database connection (singleton)
+ *
+ * Urutan kredensial: env HYDROTECH_DB_* -> default (user 'Jhon', produksi
+ * Fedora) -> fallback 'root' tanpa password (default Laragon di Windows).
+ * Inilah kenapa proyek jalan tanpa konfigurasi di kedua sistem operasi.
+ *
  * @return PDO
  */
 function getDBConnection() {
@@ -31,40 +36,58 @@ function getDBConnection() {
     if ($pdo === null) {
         global $DB_HOST, $DB_USER, $DB_PASS, $DB_NAME, $DB_CHARSET, $DB_TIMEZONE_OFFSET;
 
-        try {
-            // CHARSET: utamakan utf8mb4; bila server MySQL lama tidak mengenalinya
-            // (SQLSTATE HY000 2019 Unknown character set), ulangi koneksi tanpa
-            // charset di DSN lalu pakai SET NAMES utf8 agar tetap kompatibel.
+        $attempts = [
+            [$DB_USER, $DB_PASS],
+            ['root', ''],                              // Laragon (Windows) default
+        ];
+
+        $lastError = null;
+        foreach ($attempts as [$tryUser, $tryPass]) {
             try {
-                $pdo = new PDO("mysql:host={$DB_HOST};dbname={$DB_NAME};charset={$DB_CHARSET}", $DB_USER, $DB_PASS, [
-                    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_EMULATE_PREPARES   => false,
-                ]);
-            } catch (PDOException $charsetError) {
-                if (stripos($charsetError->getMessage(), 'Unknown character set') === false) {
-                    throw $charsetError;
-                }
-                $pdo = new PDO("mysql:host={$DB_HOST};dbname={$DB_NAME}", $DB_USER, $DB_PASS, [
-                    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_EMULATE_PREPARES   => false,
-                ]);
-                $pdo->exec('SET NAMES utf8');
+                $pdo = dbConnect($tryUser, $tryPass);
+                break;
+            } catch (PDOException $e) {
+                if (stripos($e->getMessage(), 'Access denied') === false) throw $e;
+                $lastError = $e;
             }
-            // Kunci zona waktu sesi MySQL agar string TIMESTAMP selalu WIB,
-            // konsisten dengan date_default_timezone_set di atas.
-            $pdo->exec("SET time_zone = '{$DB_TIMEZONE_OFFSET}'");
-        } catch (PDOException $e) {
+        }
+        if ($pdo === null) {
             http_response_code(500);
             header('Content-Type: application/json; charset=utf-8');
             echo json_encode([
                 'success' => false,
-                'message' => 'Database connection failed: ' . $e->getMessage()
+                'message' => 'Database connection failed: ' . ($lastError ? $lastError->getMessage() : 'kredensial tidak dikenal')
             ]);
             exit;
         }
     }
-    
+
+    return $pdo;
+}
+
+/** Buat koneksi PDO tunggal (dipakai getDBConnection). */
+function dbConnect(string $user, string $pass): PDO {
+    global $DB_HOST, $DB_NAME, $DB_CHARSET, $DB_TIMEZONE_OFFSET;
+
+    try {
+        $pdo = new PDO("mysql:host={$DB_HOST};dbname={$DB_NAME};charset={$DB_CHARSET}", $user, $pass, [
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES   => false,
+        ]);
+    } catch (PDOException $charsetError) {
+        if (stripos($charsetError->getMessage(), 'Unknown character set') === false) {
+            throw $charsetError;
+        }
+        $pdo = new PDO("mysql:host={$DB_HOST};dbname={$DB_NAME}", $user, $pass, [
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES   => false,
+        ]);
+        $pdo->exec('SET NAMES utf8');
+    }
+    // Kunci zona waktu sesi MySQL agar string TIMESTAMP selalu WIB,
+    // konsisten dengan date_default_timezone_set di config ini.
+    $pdo->exec("SET time_zone = '{$DB_TIMEZONE_OFFSET}'");
     return $pdo;
 }
