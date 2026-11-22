@@ -30,8 +30,9 @@ requireCsrfToken();
 
 /* Batas durasi override manual per pompa (detik). */
 const PUMP_MANUAL_LIMITS = ['ab' => 120, 'ph' => 120, 'dithane' => 600];
-/* Durasi default bila dashboard tidak mengirim duration_s. */
-const PUMP_DEFAULT_DURATION = ['on' => 30, 'off' => 300];
+/* Durasi default bila dashboard tidak mengirim duration_s.
+   OFF = paksa mati + tahan otomatisasi; dibatasi batas pompa. */
+const PUMP_DEFAULT_DURATION = ['on' => 30, 'off' => 120];
 
 try {
     $pump = $_POST['pump'] ?? '';
@@ -48,7 +49,8 @@ try {
         $duration = PUMP_DEFAULT_DURATION[$action];
     }
     $limit = PUMP_MANUAL_LIMITS[$pump];
-    if ($duration < 1 || $duration > $limit) {
+    if ($duration > $limit) $duration = $limit;   // OFF 300 utk ab/ph -> dipatok 120
+    if ($duration < 1) {
         errorResponse("Durasi override harus 1..{$limit} detik untuk pompa ini.", 400);
     }
 

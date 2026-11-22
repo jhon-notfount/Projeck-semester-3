@@ -60,6 +60,7 @@
 #include <hd44780ioClass/hd44780_I2Cexp.h>  // mendukung ESP32 penuh (nol peringatan arsitektur)
 #include <ESPmDNS.h>            // resolusi broker tanpa IP tetap (coba-coba.local)
 #include "esp_task_wdt.h"
+#include "esp_wifi.h"          // aturan wilayah WiFi (country code)
 #include "time.h"
 
 /* =====================================================================
@@ -84,7 +85,7 @@ const char* API_KEY        = "ISI-ESP-API-KEY";  // sama dengan config/esp_key.t
 const char* MQTT_HOST       = "coba-coba.local";  // hostname laptop Fedora
 const uint16_t MQTT_PORT    = 1883;
 const char* MQTT_USER       = "esp32";
-const char* MQTT_PASS       = "ISI-MQTT-PASS-ESP32";
+const char* MQTT_PASS       = "bf564b3196da7aa6ed77383dfce2e0764fe3";
 const char* MQTT_CLIENT_ID  = "hydrotech-esp32";
 /* QoS: sensor stream QoS 0 (realtime 2 dtk, kehilangan 1 titik wajar);
    perintah + ack + status pompa/perangkat QoS 1 (tepat sekali);
@@ -102,7 +103,11 @@ const uint32_t MAX_CONFIG_AGE_MS  = 7200000;     // batas umur konfigurasi (2 ja
 /* --- Pin ------------------------------------------------------------ */
 const uint8_t ADC_PH_PIN  = 34;    // AO sensor pH  (ADC1 â€” aman dengan Wi-Fi)
 const uint8_t ADC_PPM_PIN = 35;    // AO sensor TDS (ADC1)
-const uint8_t LED_PIN     = 23;
+const uint8_t LED_PIN     = 23;    // LED hijau: indikator sistem aktif
+/* LED indikator status (GPIO output aman; bebas dari pin strapping,
+   sensor ADC 34/35, I2C 21/22, dan relay 16-19).                    */
+const uint8_t LED_PPM_PIN = 25;    // LED kuning: PPM di bawah ambang minimum
+const uint8_t LED_PH_PIN  = 26;    // LED merah : pH di bawah ambang minimum
 const int     I2C_SDA     = 21;
 const int     I2C_SCL     = 22;
 const uint8_t LCD_ADDR_CAND[2] = { 0x27, 0x3F };  // alamat umum LCD 20x4
@@ -290,6 +295,10 @@ void setupPins() {
   }
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, LOW);
+  pinMode(LED_PPM_PIN, OUTPUT);
+  digitalWrite(LED_PPM_PIN, LOW);
+  pinMode(LED_PH_PIN, OUTPUT);
+  digitalWrite(LED_PH_PIN, LOW);
   analogReadResolution(12);
   analogSetPinAttenuation(ADC_PH_PIN,  ADC_11db);
   analogSetPinAttenuation(ADC_PPM_PIN, ADC_11db);
@@ -356,6 +365,7 @@ void validateSensors() {
 
 /* Deklarasi maju agar tidak bergantung pada pozisi torino di file:        */
 void updateLED();
+void updateStatusLeds();
 void updateLCD();
 void handleSerial();
 void stopAllPumps();
@@ -372,14 +382,9 @@ WebServer* setupSrv = nullptr;
 
 const char*  AP_SSID      = "hydrotech";   // nama AP sesuai spesifikasi
 const char*  AP_PASS      = "";            // AP terbuka (lebih cepat dipakai HP)
-bool         portalActive = false;
+/* Portal AP SELALU AKTIF (AP+STA simultan): ganti WiFi kapan pun
+   lewat http://192.168.4.1 tanpa menghentikan monitoring/pompa.      */
 String       portalApIp   = "192.168.4.1";
-uint32_t     portalStartMs   = 0;
-uint32_t     portalActivityMs = 0;         // di-set tiap request/kejadian
-bool         portalExitReq   = false;
-uint32_t     portalExitMs    = 0;
-const uint32_t PORTAL_IDLE_MS    = 300000; // 5 menit tanpa aktivitas -> exit
-const uint32_t PORTAL_GRACE_MS   = 120000; // 2 menit setelah sukses -> exit
 
 /* Posisi percobaan koneksi STA (dari halaman "Hubungkan")              */
 enum SetupConnState : uint8_t { SC_IDLE, SC_CONNECTING, SC_CONNECTED, SC_FAILED };
@@ -397,9 +402,15 @@ bool credsValid() {
 /* Tidak dipakai lagi (transport MQTT); portal tidak menampilkan kredensial. */
 
 void loadCreds() {
-  cred.ssid  = nvs.getString("c_ssid",  WIFI_SSID);
-  cred.wpass = nvs.getString("c_wpass", WIFI_PASS);
-  Serial.printf("[PROV] kred: ssid='%s'\n", cred.ssid.c_str());
+  /* Default KOSONG (bukan placeholder): NVS kosong = belum pernah
+     dikonfigurasi -> portal AP harus terbuka. WiFi diatur via portal,
+     bukan lewat source code.                                           */
+  cred.ssid  = nvs.getString("c_ssid",  "");
+  cred.wpass = nvs.getString("c_wpass", "");
+  if (cred.ssid.length() == 0)
+    Serial.println("[PROV] belum ada kredensial WiFi tersimpan - portal AP akan dibuka");
+  else
+    Serial.printf("[PROV] kred: ssid='%s'\n", cred.ssid.c_str());
 }
 
 void saveCreds() {
@@ -628,7 +639,6 @@ rescan();
  * --------------------------------------------------------------------- */
 
 void handleRoot() {
-  portalActivityMs = millis();
   setupSrv->send(200, "text/html", PORTAL_PAGE);
 }
 
@@ -639,13 +649,11 @@ void handleProbe() {
 }
 
 void handleScanStart() {
-  portalActivityMs = millis();
   WiFi.scanNetworks(true, false, false, 300);      // pemindaian sungguhan, async
   setupSrv->send(200, "application/json", "{\"scanning\":true}");
 }
 
 void handleScanResult() {
-  portalActivityMs = millis();
   int8_t result = WiFi.scanComplete();
   if (result == WIFI_SCAN_RUNNING || result < 0) {
     setupSrv->send(200, "application/json",
@@ -679,7 +687,6 @@ void handleScanResult() {
    AP TETAP hidup selama uji agar halaman dapat menampilkan status; AP
    dimatikan setelah sukses dikonfirmasi (tombol Selesai / grace).       */
 void handleConnect() {
-  portalActivityMs = millis();
   if (connState == SC_CONNECTING) {
     setupSrv->send(200, "application/json",
                    "{\"ok\":false,\"error\":\"Koneksi sedang berjalan - tunggu hasilnya.\"}");
@@ -735,7 +742,6 @@ String wlFailReason(wl_status_t s) {
 }
 
 void handleStatus() {
-  portalActivityMs = millis();
   if (connState == SC_CONNECTING) {
     wl_status_t s = WiFi.status();
     uint32_t elapsed = (millis() - connStartMs) / 1000UL;
@@ -777,26 +783,13 @@ void handleStatus() {
   setupSrv->send(200, "application/json", "{\"state\":\"idle\"}");
 }
 
-void handleCloseAp() {
-  portalActivityMs = millis();
-  portalExitReq = true;               // jalankan stopSetupMode setelah respons
-  portalExitMs  = millis() + 400;
-  connState = SC_IDLE;                // konfigurasi sudah tersimpan di NVS
-  setupSrv->send(200, "application/json", "{\"ok\":true}");
-}
-
 /* ---------------------------------------------------------------------
- * SIKLUS MODE SETUP
+ * SIKLUS PORTAL - SELALU AKTIF (AP+STA simultan)
+ * Sistem (monitoring/pompa/MQTT) TETAP BERJALAN saat portal dibuka.
  * --------------------------------------------------------------------- */
 
-void startSetupMode() {
-  if (portalActive) return;
-  stopAllPumps();
-  dosingOwner = PUMP_COUNT;
-  portalActive = true;
-  connState = SC_IDLE; connMsg = ""; connIp = ""; connSsid = "";
-  portalStartMs = portalActivityMs = millis();
-  portalExitReq = false;
+void startConfigPortal() {
+  if (setupSrv) return;                         // sudah aktif
 
   WiFi.softAPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1),
                     IPAddress(255, 255, 255, 0));
@@ -822,62 +815,17 @@ void startSetupMode() {
   setupSrv->on("/api/scanresult", handleScanResult);
   setupSrv->on("/api/connect", handleConnect);
   setupSrv->on("/api/status", handleStatus);
-  setupSrv->on("/api/closeap", handleCloseAp);
   setupSrv->onNotFound(handleProbe);              // URL apa pun -> halaman setup
   setupSrv->begin();
 
-  Serial.printf("[SETUP] AP '%s' aktif (terbuka) â€” buka http://%s/ (IP di LCD)\n",
+  Serial.printf("[SETUP] AP '%s' AKTIF TETAP - ganti WiFi kapan pun via http://%s/\n",
                 AP_SSID, portalApIp.c_str());
-  Serial.println("[SETUP] monitoring & pompa dihentikan sementara (modul terpisah).");
 }
 
-void stopSetupMode() {
-  if (!portalActive) return;
-  dnsServer.stop();
-  if (setupSrv) { setupSrv->stop(); delete setupSrv; setupSrv = nullptr; }
-  WiFi.softAPdisconnect(true);
-  portalActive = false;
-  connState = SC_IDLE;
-  Serial.print("[SETUP] portal ditutup. ");
-  if (credsValid()) {
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(cred.ssid.c_str(), cred.wpass.c_str());
-    wifiState = WIFI_CONNECTING;
-    wifiConnectStart = millis();
-    Serial.println("Mode normal lanjut â€” koneksi ke Wi-Fi tersimpan.");
-  } else {
-    Serial.println("kredensial belum lengkap â€” restart untuk membuka setup lagi.");
-    delay(500);
-    ESP.restart();
-  }
-}
-
-/* dipanggil dari loop() selama portalActive                             */
-void portalLoop() {
+/* dipanggil tiap loop: layani portal tanpa menghentikan sistem utama.   */
+void configPortalLoop() {
   if (setupSrv) setupSrv->handleClient();
   dnsServer.processNextRequest();
-
-  updateLED();
-  updateLCD();
-  handleSerial();
-
-  /* sukses: beri waktu pengguna membaca IP baru, lalu tutup AP.         */
-  if (connState == SC_CONNECTED && millis() - connSuccessMs >= PORTAL_GRACE_MS
-      && !portalExitReq) {
-    portalExitReq = true;
-    portalExitMs = millis();
-  }
-  if (portalExitReq && millis() >= portalExitMs) {
-    portalExitReq = false;
-    stopSetupMode();
-    return;
-  }
-  /* idle 5 menit tanpa perkara halaman/S: hindari perangkat "nyangkut". */
-  if (millis() - portalActivityMs >= PORTAL_IDLE_MS) {
-    Serial.println("[SETUP] idle 5 menit â€” keluar mode setup");
-    stopSetupMode();
-    return;
-  }
 }
 
 /* =====================================================================
@@ -885,9 +833,27 @@ void portalLoop() {
  * ===================================================================== */
 
 void connectWiFi() {
-  WiFi.mode(WIFI_STA);
+  WiFi.mode(WIFI_AP_STA);         // STA + AP portal tetap hidup bersamaan
   WiFi.setSleep(false);
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  /* Country code Indonesia: scan & asosiasi channel 1-13 (router rumah
+     bisa di channel 12/13). Tanpa ini jaringan ch12-13 sering gagal
+     asosiasi / tidak terlihat. Wajib SETELAH driver WiFi aktif.        */
+  esp_wifi_set_country_code("ID", true);
+  /* Kunci stabilitas AP+STA: softAP HARUS satu channel dengan jaringan
+     tujuan - asosiasi beda channel di ESP32 sering gagal/terputus.
+     Scan dulu, lalu pindahkan softAP ke channel SSID tujuan.           */
+  int n = WiFi.scanNetworks();
+  for (int i = 0; i < n; i++) {
+    if (WiFi.SSID(i) == cred.ssid) {
+      uint8_t ch = WiFi.channel(i);
+      if (ch && ch != 6) {
+        WiFi.softAP(AP_SSID, AP_PASS, ch);    // pindahkan AP ikut channel router
+        Serial.printf("[WiFi] softAP pindah ke channel %d (mengikuti %s)\n", ch, cred.ssid.c_str());
+      }
+      break;
+    }
+  }
+  WiFi.begin(cred.ssid.c_str(), cred.wpass.c_str());
   wifiState = WIFI_CONNECTING;
   wifiConnectStart = millis();
   Serial.println("[WiFi] menghubungkan...");
@@ -1326,6 +1292,11 @@ void maintainMqtt() {
     boolean ok = mqtt.connect(clientId.c_str(), MQTT_USER, MQTT_PASS,
                               "hydrotech/device/status", 1, true,
                               "{\"type\":\"status\",\"online\":false,\"reason\":\"lwt\"}");
+    if (!ok) {
+      /* Diagnosa gagal: -1/=-2 = jaringan/firewall, 4/5 = kredensial salah. */
+      Serial.printf("[MQTT] GAGAL konek (state=%d) - cek password/ACL/firewall\n", mqtt.state());
+      return;
+    }
     if (ok) {
       Serial.println("[MQTT] terhubung ke broker");
       mqtt.subscribe("hydrotech/cmd/esp32/ph", 1);
@@ -1758,57 +1729,33 @@ void lcdLine(uint8_t row, const char* text) {
 }
 
 void setupLCD() {
-  if (lcdAddrFound == 0) {                       // coba 0x27 lalu 0x3F
-    for (int i = 0; i < 2; i++) {
-      Wire.beginTransmission(LCD_ADDR_CAND[i]);
-      if (Wire.endTransmission() == 0) { lcdAddrFound = LCD_ADDR_CAND[i]; break; }
+  /* AUTO-LOCATE hd44780: deteksi alamat I2C (0x20-0x3F) + pemetaan pin
+     modul secara otomatis - menutupi semua varian modul I2C LCD.        */
+  lcdPtr = new hd44780_I2Cexp();
+  int status = lcdPtr->begin(LCD_COLS, LCD_ROWS);
+  if (status != 0) {                             // gagal: coba alamat eksplisit
+    delete lcdPtr; lcdPtr = nullptr;
+    uint8_t candidates[3] = { lcdAddrFound, LCD_ADDR_CAND[0], LCD_ADDR_CAND[1] };
+    for (int i = 0; i < 3 && !lcdPtr; i++) {
+      if (!candidates[i]) continue;
+      hd44780_I2Cexp* retry = new hd44780_I2Cexp(candidates[i]);
+      if (retry->begin(LCD_COLS, LCD_ROWS) == 0) lcdPtr = retry;
+      else delete retry;
     }
-    if (lcdAddrFound) nvs.putUChar("lcdaddr", lcdAddrFound);
   }
-  if (!lcdAddrFound) { Serial.println("[LCD] tidak terdeteksi â€” berjalan tanpa LCD"); return; }
-  lcdPtr = new hd44780_I2Cexp(lcdAddrFound);
-  lcdPtr->begin(LCD_COLS, LCD_ROWS);
+  if (!lcdPtr) {
+    Serial.println("[LCD] tidak terdeteksi - berjalan tanpa LCD (cek kabel SDA=21 SCL=22, jalankan 'lcdscan')");
+    return;
+  }
   lcdPtr->backlight();
+  lcdPtr->clear();
   lcdLine(0, "HYDROTECH SYSTEM");
   lcdLine(1, "Booting ...");
-  Serial.printf("[LCD] 20x4 I2C 0x%02X siap\n", lcdAddrFound);
+  Serial.println("[LCD] 20x4 I2C siap (auto-locate hd44780)");
 }
 
 void updateLCD() {
   if (!lcdPtr) return;
-
-  /* LAYAR SETUP (AP aktif): nama AP + IP untuk halaman setup, lalu
-     status koneksi (mencoba/terhubung/gagal) sesuai keinginan spec.   */
-  if (portalActive) {
-    char a[24], b[24], c[24];
-    switch (connState) {
-      case SC_CONNECTING:
-        snprintf(a, sizeof(a), "Sambung WiFi...");
-        snprintf(b, sizeof(b), "SSID: %s", connSsid.c_str());
-        snprintf(c, sizeof(c), "%lu dtk ...", (unsigned long)((millis() - connStartMs) / 1000UL));
-        break;
-      case SC_CONNECTED:
-        snprintf(a, sizeof(a), "WiFi terhubung");
-        snprintf(b, sizeof(b), "SSID: %s", connSsid.c_str());
-        snprintf(c, sizeof(c), "IP : %s", connIp.c_str());
-        break;
-      case SC_FAILED:
-        snprintf(a, sizeof(a), "Koneksi GAGAL");
-        snprintf(b, sizeof(b), "SSID: %s", connSsid.c_str());
-        snprintf(c, sizeof(c), "coba: %s", portalApIp.c_str());
-        break;
-      default: /* SC_IDLE — AP menunggu klien */
-        snprintf(a, sizeof(a), "AP : %s", AP_SSID);
-        snprintf(b, sizeof(b), "IP : %s", portalApIp.c_str());
-        snprintf(c, sizeof(c), "buka di HP/laptop");
-        break;
-    }
-    lcdLine(0, "HYDROTECH SETUP");
-    lcdLine(1, a);
-    lcdLine(2, b);
-    lcdLine(3, c);
-    return;
-  }
 
   uint32_t now = millis();
   if (now - lcdPage0 >= LCD_PAGE_MS) { lcdPage0 = now; lcdPage++; }
@@ -1871,6 +1818,26 @@ void updateLED() {
 }
 
 /* =====================================================================
+ * 15b. LED INDIKATOR STATUS (kuning = PPM rendah, merah = pH rendah)
+ *
+ * Ambang diambil dari konfigurasi DASHBOARD (cfg.ppmMin / cfg.phMin,
+ * tersinkron via MQTT config_request) — BUKAN angka hardcode.
+ * Update tiap loop mengikuti pembacaan sensor terbaru; bekerja
+ * independen satu sama lain.
+ *   - Menyala  : sensor valid + konfigurasi segar + nilai < minimum
+ *   - Mati     : nilai sudah mencapai/masuk rentang normal, ATAU
+ *                sensor tidak valid / konfigurasi belum tersinkron
+ *                (data tidak ada = jangan diasumsikan normal)
+ * ===================================================================== */
+
+void updateStatusLeds() {
+  bool ppmLow = ppmValid && configFresh() && (ppmValue < cfg.ppmMin);
+  bool phLow  = phValid  && configFresh() && (phValue  < cfg.phMin);
+  digitalWrite(LED_PPM_PIN, ppmLow ? HIGH : LOW);
+  digitalWrite(LED_PH_PIN,  phLow  ? HIGH : LOW);
+}
+
+/* =====================================================================
  * 16. SERIAL CONFIG â€” API key TIDAK pernah dicetak
  * ===================================================================== */
 
@@ -1916,6 +1883,9 @@ void printStatus() {
   for (uint8_t p = 0; p < PUMP_COUNT; p++)
     Serial.printf("%s=%d ", PUMP_NAME[p], (int)relayIsOn(static_cast<PumpId>(p)));
   Serial.println();
+  Serial.printf("LED: ppm-rendah=%d (kuning), ph-rendah=%d (merah)\n",
+                (int)(ppmValid && configFresh() && (ppmValue < cfg.ppmMin)),
+                (int)(phValid && configFresh() && (phValue < cfg.phMin)));
 }
 
 void handleSerial() {
@@ -1930,8 +1900,8 @@ void handleSerial() {
     else if (cmd == "sensors") { validateSensors(); printStatus(); }
     else if (cmd == "reboot") { stopAllPumps(); dosingOwner = PUMP_COUNT; delay(300); ESP.restart(); }
     else if (cmd == "setup") {
-      Serial.println("[SETUP] membuka portal AP — operasi normal dijeda hingga setup selesai");
-      startSetupMode();
+      Serial.printf("[SETUP] AP '%s' selalu aktif - buka http://%s/ di HP/laptop\n",
+                    AP_SSID, portalApIp.c_str());
     }
     else if (cmd == "cal") {
       Serial.printf("pH : 4.01 -> %.0f mV | 7.00 -> %.0f mV | pembagi=%.4f\n",
@@ -2022,16 +1992,12 @@ void setup() {
   setupLCD();
   bootMs = millis(); circT0 = bootMs;
   loadCreds();
-  if (credsValid()) {
-    connectWiFi();
-    if (!nvs.getBool("armed", false))
-      Serial.println("[SAFETY] Dithane DISARMED. Ketik 'arm' untuk aktivasi "
-                     "penyemprotan (setelah pemasangan fisik diverifikasi).");
-  } else {
-    /* BELUM ADA KONFIGURASI -> mode AP "hydrotech" + halaman setup   */
-    startSetupMode();
-    Serial.println("[SAFETY] Dithane DISARMED — aktifkan setelah setup sukses.");
-  }
+  startConfigPortal();          // SELALU AKTIF: ganti WiFi kapan pun via 192.168.4.1
+  if (credsValid()) connectWiFi();
+  else Serial.println("[SAFETY] Belum ada WiFi - sambungkan HP ke AP 'hydrotech' untuk konfigurasi.");
+  if (!nvs.getBool("armed", false))
+    Serial.println("[SAFETY] Dithane DISARMED. Ketik 'arm' untuk aktivasi "
+                   "penyemprotan (setelah pemasangan fisik diverifikasi).");
   setupWatchdog();
   /* MQTT: broker + callback + buffer (payload cmd dithane > default 256). */
   MDNS.begin("hydrotech-esp32");              // hidupkan stack mDNS (untuk queryHost)
@@ -2044,17 +2010,10 @@ void setup() {
 void loop() {
   esp_task_wdt_reset();
 
-  /* MODE SETUP (AP "hydrotech" + captive portal): alur Terpisah dari
-     jurnal monitoring/pompa — pompa sudah dijaga aman OFF saat masuk
-     mode ini; sensor/LCD/LED tetap hidup pada halaman setup.         */
-  if (portalActive) {
-    portalLoop();
-    return;
-  }
-
   uint32_t now = millis();
 
   maintainWiFi();
+  configPortalLoop();          // portal AP selalu aktif (tanpa menghentikan sistem)
 
   /* NTP sekali per sesi Wi-Fi (untuk slot Dithane; server menetapkan
      waktu data yang dikirim ke DB).                                  */
@@ -2094,6 +2053,7 @@ void loop() {
 
 
   updateLED();
+  updateStatusLeds();          // indikator PPM/pH mengikuti sensor terbaru
   updateLCD();
   evaluateFailsafe();
   handleSerial();

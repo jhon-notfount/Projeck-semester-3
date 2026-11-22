@@ -13,7 +13,7 @@
   const csrfMeta = document.querySelector('meta[name="csrf-token"]');
   const POLL_MS = 5000;
   /* Durasi default override (detik) per aksi — server membatasi maksimum. */
-  const DEFAULT_DURATION = { on: 30, off: 300 };
+  const DEFAULT_ON = 30;
 
   function token() {
     return csrfMeta ? csrfMeta.getAttribute("content") : "";
@@ -45,7 +45,7 @@
     const body = new URLSearchParams({
       pump: button.dataset.pump,
       action,
-      duration_s: String(DEFAULT_DURATION[action]),
+      duration_s: String(dur),
       csrf_token: token(),
     });
     const response = await fetch("../api/pump/control.php", { method: "POST", body });
@@ -57,7 +57,8 @@
     button.addEventListener("click", async () => {
       const isOn = button.classList.contains("on");
       const action = isOn ? "off" : "on";
-      const dur = DEFAULT_DURATION[action];
+      const max = Number(button.dataset.pumpMax || 120);
+      const dur = action === "on" ? DEFAULT_ON : max;   // OFF = batas maksimum pompa
       const label = button.dataset.pumpLabel || button.dataset.pump;
       const confirmText = action === "on"
         ? `Kirim perintah ON pompa ${label} (${dur} detik, lalu kembali otomatis)?`

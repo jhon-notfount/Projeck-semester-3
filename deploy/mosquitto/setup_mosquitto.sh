@@ -40,10 +40,14 @@ systemctl --no-pager is-active mosquitto
 
 echo "==> 4/5 firewalld: izinkan 1883 hanya dari subnet lokal"
 if systemctl is-active firewalld >/dev/null; then
-  firewall-cmd --permanent --remove-port=1883/tcp >/dev/null 2>&1 || true
-  firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="192.168.1.0/24" port protocol="tcp" port="1883" accept' >/dev/null
+  # Subnet diturunkan dari IP AKTIF saat skrip dijalankan (jaringan bisa pindah)
+  IP_CUR="$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}')"
+  SUBNET="$(echo "${IP_CUR:-192.168.1.22}" | cut -d. -f1-3).0/24"
+  firewall-cmd --permanent --remove-rich-rule="rule family=\"ipv4\" source address=\"192.168.1.0/24\" port protocol=\"tcp\" port=\"1883\" accept" >/dev/null 2>&1 || true
+  firewall-cmd --permanent --remove-rich-rule="rule family=\"ipv4\" source address=\"192.168.0.0/24\" port protocol=\"tcp\" port=\"1883\" accept" >/dev/null 2>&1 || true
+  firewall-cmd --permanent --add-rich-rule="rule family=\"ipv4\" source address=\"$SUBNET\" port protocol=\"tcp\" port=\"1883\" accept" >/dev/null
   firewall-cmd --reload >/dev/null
-  echo "    rich rule 192.168.1.0/24 -> 1883/tcp dipasang"
+  echo "    rich rule $SUBNET -> 1883/tcp dipasang"
 else
   echo "    firewalld tidak aktif - lewati (pastikan router tidak meneruskan port 1883)"
 fi
