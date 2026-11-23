@@ -263,32 +263,44 @@
             ? String(settings[field.key] || "").replace(".", ":")
             : settings[field.key] || "";
         const isTimeField = field.key === "start";
-        const type = isTimeField ? "time" : "text";
-        const inputMode = isTimeField ? "" : "decimal";
         const fieldClass =
           isTimeField
             ? "settings-modal-field time-field"
             : "settings-modal-field";
         const clockIcon =
           isTimeField ? '<span class="settings-modal-clock">◷</span>' : "";
-        const placeholder =
-          isTimeField ? "08:00" : `Masukkan ${field.label.toLowerCase()}`;
-        const timeAttributes = isTimeField
-          ? 'step="60" data-time-picker="true"'
-          : "";
+
+        /* Jam mulai: DROPDOWN FORMAT 24 JAM (tanpa AM/PM).           */
+        if (isTimeField) {
+          let jamOps = "", menitOps = "";
+          for (let h = 0; h < 24; h++) jamOps += `<option value="${String(h).padStart(2,"0")}">${String(h).padStart(2,"0")}</option>`;
+          for (let m = 0; m < 60; m++) menitOps += `<option value="${String(m).padStart(2,"0")}">${String(m).padStart(2,"0")}</option>`;
+          const [hVal, mVal] = value.split(":");
+          return `
+          <label class="${fieldClass}">
+            <span>${escapeHtml(field.label)} <small style="font-weight:600;color:#7d8f83">(format 24 jam)</small></span>
+            <div class="settings-modal-control time-pair">
+              ${clockIcon}
+              <select data-start-jam>${jamOps}</select>
+              <b class="time-colon">:</b>
+              <select data-start-menit>${menitOps}</select>
+              <input type="hidden" data-setting-key="start" value="${escapeHtml(value)}">
+              <small>${escapeHtml(field.unit)}</small>
+            </div>
+          </label>
+        `;
+        }
 
         return `
           <label class="${fieldClass}">
             <span>${escapeHtml(field.label)}</span>
             <div class="settings-modal-control">
-              ${clockIcon}
               <input
-                type="${type}"
-                inputmode="${inputMode}"
+                type="text"
+                inputmode="decimal"
                 data-setting-key="${escapeHtml(field.key)}"
                 value="${escapeHtml(value)}"
-                placeholder="${escapeHtml(placeholder)}"
-                ${timeAttributes}
+                placeholder="Masukkan ${field.label.toLowerCase()}"
               />
               <small>${escapeHtml(field.unit)}</small>
             </div>
@@ -336,38 +348,34 @@
     const modal = createModal(settings);
     const message = modal.querySelector("#settingsModalMessage");
     const inputs = Array.from(modal.querySelectorAll("[data-setting-key]"));
-    const timeInput = modal.querySelector('[data-setting-key="start"]');
+    const startHidden = modal.querySelector('[data-setting-key="start"]');
+    const jamSel = modal.querySelector("[data-start-jam]");
+    const menitSel = modal.querySelector("[data-start-menit]");
 
-    if (timeInput) {
-      function openTimePicker() {
-        if (typeof timeInput.showPicker === "function") {
-          try {
-            timeInput.showPicker();
-          } catch (error) {
-            timeInput.focus();
-          }
-        }
-      }
-
-      timeInput.addEventListener("click", openTimePicker);
-      timeInput.addEventListener("focus", openTimePicker);
-      timeInput.addEventListener("keydown", function (event) {
-        const allowedKeys = ["Tab", "Shift", "Escape", "Enter"];
-        if (allowedKeys.includes(event.key)) return;
-        event.preventDefault();
-        openTimePicker();
-      });
+    /* Sinkron dropdown 24 jam <-> nilai HH:MM yang dikirim ke server.   */
+    function syncStartFromSelects() {
+      if (!startHidden || !jamSel || !menitSel) return;
+      startHidden.value = `${jamSel.value}:${menitSel.value}`;
+    }
+    function syncSelectsFromValue(value) {
+      if (!jamSel || !menitSel) return;
+      const parts = String(value || "08:00").split(":");
+      jamSel.value = parts[0] || "08";
+      menitSel.value = parts[1] || "00";
+      syncStartFromSelects();
+    }
+    if (jamSel && menitSel) {
+      jamSel.addEventListener("change", syncStartFromSelects);
+      menitSel.addEventListener("change", syncStartFromSelects);
     }
 
     async function openModal() {
       const latestSettings = await readSettings();
       inputs.forEach((input) => {
         const key = input.dataset.settingKey;
-        input.value =
-          key === "start"
-            ? String(latestSettings[key] || "").replace(".", ":")
-            : latestSettings[key] || "";
+        input.value = latestSettings[key] || "";
       });
+      syncSelectsFromValue(latestSettings.start || "08:00");
       message.textContent = "";
       modal.classList.add("show");
       document.body.classList.add("modal-open");
@@ -443,18 +451,41 @@
   /* INPUT PAGE: mengisi form input, reset nilai, batal, dan simpan pengaturan baru via API. */
   async function applyInputPage() {
     const settings = await readSettings();
-    const inputs = Array.from(document.querySelectorAll(".field input"));
+    const inputs = Array.from(document.querySelectorAll("[data-setting-key]"));
 
-    config.fields.forEach((field, index) => {
-      const input = inputs[index];
-      if (!input) return;
-      input.type = field.key === "start" ? "time" : "text";
-      input.inputMode = field.key === "start" ? "numeric" : "decimal";
-      input.value =
-        field.key === "start"
-          ? String(settings[field.key] || "").replace(".", ":")
-          : settings[field.key] || "";
-    });
+    /* Isi nilai + sinkronkan dropdown jam 24 jam.                    */
+    function syncStartSelects(value) {
+      const jamSel = document.querySelector("[data-start-jam]");
+      const menitSel = document.querySelector("[data-start-menit]");
+      const hidden = document.querySelector('[data-setting-key="start"]');
+      if (!jamSel || !menitSel || !hidden) return;
+      if (jamSel.options.length === 0) {
+        for (let h = 0; h < 24; h++) {
+          const o = document.createElement("option");
+          o.value = String(h).padStart(2, "0"); o.textContent = String(h).padStart(2, "0");
+          jamSel.appendChild(o);
+        }
+        for (let m = 0; m < 60; m++) {
+          const o = document.createElement("option");
+          o.value = String(m).padStart(2, "0"); o.textContent = String(m).padStart(2, "0");
+          menitSel.appendChild(o);
+        }
+      }
+      const parts = String(value || "08:00").split(":");
+      jamSel.value = parts[0] || "08";
+      menitSel.value = parts[1] || "00";
+      hidden.value = `${jamSel.value}:${menitSel.value}`;
+    }
+    syncStartSelects(settings.start || "08:00");
+    [
+      document.querySelector('[data-setting-key="start-jam"]'),
+      document.querySelector('[data-setting-key="start-menit"]'),
+    ].forEach((sel) => sel?.addEventListener("change", () => {
+      const hidden = document.querySelector('[data-setting-key="start"]');
+      const jam = document.querySelector("[data-start-jam]").value;
+      const menit = document.querySelector("[data-start-menit]").value;
+      hidden.value = `${jam}:${menit}`;
+    }));
 
     const saveButton = document.querySelector(".btn-save");
     const cancelButton = document.querySelector(".btn-secondary");
@@ -481,13 +512,11 @@
           if (!confirmed) return;
         }
 
-        config.fields.forEach((field, index) => {
-          if (!inputs[index]) return;
-          inputs[index].value =
-            field.key === "start"
-              ? String(config.defaults[field.key] || "").replace(".", ":")
-              : config.defaults[field.key] || "";
+        config.fields.forEach((field) => {
+          const input = document.querySelector(`[data-setting-key="${field.key}"]`);
+          if (input) input.value = config.defaults[field.key] || "";
         });
+        syncStartSelects(config.defaults.start || "08:00");
       });
     }
 
@@ -497,8 +526,8 @@
       const nextSettings = {};
       let isValid = true;
 
-      config.fields.forEach((field, index) => {
-        const input = inputs[index];
+      config.fields.forEach((field) => {
+        const input = document.querySelector(`[data-setting-key="${field.key}"]`);
         const value = input ? input.value.trim() : "";
         if (!value) isValid = false;
         nextSettings[field.key] = value;

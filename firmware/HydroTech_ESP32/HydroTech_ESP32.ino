@@ -165,7 +165,7 @@ const uint32_t CIRC_PERIOD_S = 5400;              // periode siklus penuh
 /*  RELAY_ACTIVE_LOW = true  : GPIO LOW  -> relay ON (modul umum).
  *  RELAY_ACTIVE_LOW = false : GPIO HIGH -> relay ON; dipakai untuk
  *                              rancangan ULN2803A (GPIO HIGH membuat
- *                              driver menarik input relay active-low).
+ *                              driver menariku input relay active-low).
  *  Semua logika firmware memakai semantik logis via relayWrite().    */
 const bool RELAY_ACTIVE_LOW = false;
 
@@ -449,192 +449,240 @@ String jsonEsc(const String& s) {
 const char PORTAL_PAGE[] = R"html(
 <!DOCTYPE html><html lang="id"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HydroTech Â· Setup WiFi</title><style>
+<title>HydroTech · Pengaturan Jaringan</title><style>
 *{box-sizing:border-box}
-body{margin:0;background:#0d1526;color:#e6f0ff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
-.wrap{max-width:430px;margin:0 auto;padding:20px 14px 40px}
-.brand{display:flex;align-items:center;gap:12px;margin:6px 0 16px}
-.logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#2e7d32,#16a34a);display:flex;align-items:center;justify-content:center;font-size:20px}
-.brand b{font-size:17px;display:block}.brand small{color:#9fb3d9;font-size:12px}
-.card{background:#101b31;border:1px solid #1d2c4f;border-radius:14px;padding:16px}
-h2{font-size:14px;margin:0 0 10px;color:#9fb3d9;text-transform:uppercase;letter-spacing:.08em}
-.sechead{display:flex;justify-content:space-between;align-items:center;margin:18px 0 10px}
-.sechead h2{margin:0}
-button{font-family:inherit}
-.ghost{background:#182645;color:#cfe3ff;border:1px solid #24365e;border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer}
+body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:linear-gradient(160deg,#eef7f0,#e2f2e8 55%,#dcefe2);color:#16321f}
+body:after{content:"";position:fixed;inset:auto -120px -140px auto;width:340px;height:340px;border-radius:50%;
+  background:rgba(7,141,67,.06);pointer-events:none}
+.wrap{max-width:430px;margin:0 auto;padding:22px 16px 34px}
+.brand{display:flex;align-items:center;gap:13px;margin:2px 0 18px}
+.logo{width:56px;height:56px;border-radius:16px;background:linear-gradient(150deg,#e9f8ee,#c9ecd5);
+  display:grid;place-items:center;box-shadow:0 8px 18px rgba(7,141,67,.14)}
+.brand h1{margin:0;font-size:26px;font-weight:800;color:#14532d;letter-spacing:-.02em}
+.brand small{display:block;margin-top:3px;color:#7d8f83;font-size:13px;font-weight:600}
+.card{background:#fff;border:1px solid #dcebe0;border-radius:16px;box-shadow:0 10px 26px rgba(23,73,44,.08);
+  padding:16px;margin-bottom:14px}
+.status-card{background:linear-gradient(170deg,#f2fcf5,#e7f7ed);border-color:#bfe6cb;padding:15px 16px}
+.sc-head{display:flex;align-items:center;gap:9px;font-weight:700;color:#1d5b32;font-size:14.5px}
+.dot{width:11px;height:11px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 4px rgba(22,163,74,.15);
+  animation:pulse 1.6s ease-out infinite}
+.dot.warn{background:#e2a03f;box-shadow:0 0 0 4px rgba(226,160,63,.15)}
+.dot.off{background:#9aa8a0;box-shadow:0 0 0 4px rgba(120,140,128,.14);animation:none}
+@keyframes pulse{50%{box-shadow:0 0 0 7px rgba(22,163,74,.05)}}
+.sc-ssid{margin:7px 0 9px;font-size:19px;font-weight:800;color:#14532d;word-break:break-all}
+.sc-meta{display:flex;align-items:center;gap:9px;border-top:1px solid #d5ebda;padding-top:9px;
+  font-size:12.5px;color:#3e5a48;font-weight:600;flex-wrap:wrap}
+.sc-meta svg{vertical-align:-2px;margin-right:4px}
+.sc-meta b{color:#0e8a44}
+.sep{width:1px;height:14px;background:#cfe5d5}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-head h2{margin:0;font-size:16.5px;font-weight:800;color:#14532d}
+.ghost{display:inline-flex;align-items:center;gap:6px;background:#fff;color:#0e8a44;border:1.5px solid #9fd4ae;
+  border-radius:10px;padding:7px 13px;font-size:13px;font-weight:700;cursor:pointer}
 .ghost:disabled{opacity:.5;cursor:wait}
-.netlist{max-height:170px;overflow-y:auto;border:1px solid #1d2c4f;border-radius:10px;margin-bottom:8px}
-.net{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:0;color:#e6f0ff;padding:10px 12px;cursor:pointer;border-bottom:1px solid #16233f;text-align:left;font-size:14px}
-.net:hover,.net.sel{background:#16254a}
+.netlist{border:1px solid #e3efe6;border-radius:12px;overflow:hidden;margin-bottom:14px;max-height:212px;overflow-y:auto}
+.net{display:flex;align-items:center;gap:10px;width:100%;background:#fff;border:0;color:#1d4230;padding:11px 12px;
+  cursor:pointer;border-bottom:1px solid #eef4ef;text-align:left;font-family:inherit}
 .net:last-child{border-bottom:0}
-.sig{color:#9fb3d9;font-size:12px;white-space:nowrap;margin-left:8px}
-.open{color:#16a34a;font-size:12px}
-.muted{padding:12px;color:#7b90b8;font-size:13px}
-.field{margin:10px 0}
-label{display:block;font-size:12px;color:#9fb3d9;margin-bottom:5px}
-input[type=text],input[type=password]{width:100%;background:#0b1322;border:1px solid #24365e;border-radius:8px;padding:10px 12px;color:#e6f0ff;font-size:14px}
-input:disabled{opacity:.45}
-.pw{display:flex;gap:8px}
-.chk{display:flex;align-items:center;gap:8px;font-size:13px;color:#cfe3ff;margin:6px 0 2px}
-.chk input{width:16px;height:16px}
-.msg{padding:9px 11px;border-radius:8px;font-size:13px;margin:10px 0;line-height:1.4;display:none}
-.msg.err{display:block;background:#3a1622;border-left:3px solid #e05260;color:#ffd7db}
-.msg.ok{display:block;background:#123322;border-left:3px solid #2ecc71;color:#c8f7dc}
-.msg.wr{n display:block;background:#3a2d12;border-left:3px solid #e2a03f;color:#ffeec4}
-.primary{width:100%;padding:13px;border:0;border-radius:10px;background:#2e7d32;color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-top:6px}
-.primary:disabled{opacity:.55;cursor:wait}
-.stage{margin-top:12px}
-.spin{display:inline-block;width:14px;height:14px;border:2px solid #24365e;border-top-color:#16a34a;border-radius:50%;animation:sp 1s linear infinite;vertical-align:-2px;margin-right:8px}
-@keyframes sp{to{transform:rotate(360deg)}}
-.stage .okcard,.stage .failcard{border-radius:10px;padding:12px;font-size:13px;line-height:1.55}
-.okcard{background:#123322;border:1px solid #1f5c39}
-.failcard{background:#3a1622;border:1px solid #5c2830}
-.link{color:#7fd8a0;word-break:break-all}
-.foot{color:#5a6d92;font-size:11px;text-align:center;margin-top:14px}
+.net:hover{background:#f4fbf6}
+.net.sel{background:#e9f8ee}
+.net svg{flex-shrink:0;color:#0e8a44}
+.net .nm{flex:1;font-size:14px;font-weight:700;color:#20503a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.net .db{color:#7c8c82;font-size:12.5px;font-weight:600}
+.badge{background:#16a34a;color:#fff;border-radius:999px;font-size:10.5px;font-weight:800;padding:4px 10px}
+label{display:block;font-size:12.5px;font-weight:700;color:#3e5a48;margin:0 0 6px}
+input[type=text],input[type=password]{width:100%;background:#fff;border:1.5px solid #cfe0d3;border-radius:11px;
+  padding:11px 13px;color:#14532d;font-size:14.5px;font-weight:600;font-family:inherit}
+input:focus{outline:2px solid rgba(22,163,74,.25);border-color:#7cc98f}
+.f{margin-bottom:12px}
+.pw{position:relative}
+.pw input{padding-right:42px}
+.eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:0;padding:8px;cursor:pointer;color:#8a9a90}
+.eye:active{color:#0e8a44}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;color:#2e4a3a;font-weight:600;margin:2px 0 14px;cursor:pointer}
+.chk input{width:17px;height:17px;accent-color:#16a34a;cursor:pointer}
+.primary{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;background:linear-gradient(150deg,#16a34a,#0e8a44);
+  color:#fff;border:0;border-radius:12px;padding:13px;font-size:15.5px;font-weight:800;cursor:pointer;
+  box-shadow:0 10px 20px rgba(14,138,68,.24);transition:transform .15s ease,box-shadow .15s ease;font-family:inherit}
+.primary:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(14,138,68,.3)}
+.primary:active{transform:translateY(0)}
+.primary:disabled{opacity:.55;cursor:wait;transform:none}
+.msg{display:none;border-radius:10px;padding:10px 12px;font-size:12.5px;font-weight:600;margin-bottom:12px;line-height:1.45}
+.msg.err{display:block;background:#fdeeee;border:1px solid #eec6c6;color:#a33}
+.msg.ok{display:block;background:#e9f8ee;border:1px solid #c4e8cf;color:#0e8a44}
+.muted{padding:14px;color:#87978d;font-size:13px;text-align:center}
+footer{display:flex;align-items:center;gap:12px;margin-top:20px;color:#0e8a44;font-size:12.5px;font-weight:600}
+footer .line{flex:1;height:1px;background:#b9d8c2}
+@media (max-width:420px){.wrap{padding:16px 12px 28px}.brand h1{font-size:22px}}
 </style></head><body>
 <div class="wrap">
-  <div class="brand">
-    <div class="logo">âš¡</div>
-    <div><b>HydroTech</b><small>Setup &middot; ESP32</small></div>
+  <header class="brand">
+    <div class="logo">
+      <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="30" r="12" fill="#16a34a" opacity=".16"/>
+        <path d="M24 8c7 5 12 11 12 17a12 12 0 0 1-24 0c0-6 5-12 12-17Z" fill="#16a34a"/>
+        <path d="M24 40c0-8 3-14 9-18" stroke="#eafff1" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+        <path d="M24 12c-2 4-2 8 1 12 4-1 6-4 6-8" fill="#eafff1" opacity=".9"/>
+      </svg>
+    </div>
+    <div>
+      <h1>HydroTech</h1>
+      <small>Pengaturan Jaringan · ESP32</small>
+    </div>
+  </header>
+
+  <div class="card status-card" id="statusCard">
+    <div class="sc-head"><span class="dot off" id="scDot"></span><span id="scTitle">Memeriksa status...</span></div>
+    <div class="sc-ssid" id="scSsid">-</div>
+    <div class="sc-meta" id="scMeta"><span>Status diperiksa ulang setiap 2 detik</span></div>
   </div>
+
   <div class="card">
-    <div class="sechead"><h2>Pilih Jaringan WiFi</h2>
-      <button id="refreshBtn" class="ghost" type="button">&#x27F3; Pindai</button>
+    <div class="card-head">
+      <h2>Pilih Jaringan WiFi</h2>
+      <button type="button" class="ghost" id="refreshBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
+        Pindai</button>
     </div>
-    <div id="netList" class="netlist"><div class="muted">Memindai jaringan di sekitar ...</div></div>
-    <div class="field"><label>SSID WiFi</label>
-      <input id="ssid" maxlength="32" placeholder="pilih di daftar atau ketik manual">
+    <div id="netList" class="netlist"><div class="muted">Memindai jaringan di sekitar...</div></div>
+
+    <div class="f"><label for="ssid">SSID WiFi</label>
+      <input id="ssid" type="text" maxlength="32" placeholder="pilih dari daftar atau ketik manual" autocomplete="off">
     </div>
-    <div class="field"><label>Password WiFi</label>
-      <input id="pass" type="password" maxlength="63" autocomplete="off">
+    <div class="f"><label for="pass">Password WiFi</label>
+      <div class="pw">
+        <input id="pass" type="password" maxlength="63" autocomplete="new-password" placeholder="••••••••">
+        <button type="button" class="eye" id="eyeBtn" aria-label="Tampilkan password">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-7.5 11-7.5S23 12 23 12s-4 7.5-11 7.5S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
     </div>
-    <label class="chk"><input id="nopass" type="checkbox"> Tanpa Password (jaringan terbuka)</label>
+    <label class="chk"><input type="checkbox" id="nopass"> Tanpa Password (jaringan terbuka)</label>
 
     <div id="msg" class="msg"></div>
-    <button id="goBtn" class="primary">Hubungkan</button>
-    <div id="stage" class="stage"></div>
-    <div class="foot">HydroTech ESP32 &middot; halaman konfigurasi jaringan</div>
+    <button type="button" class="primary" id="goBtn">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5.5 5.5 0 0 1 7 0"/><circle cx="12" cy="19.4" r="1.6" fill="#fff" stroke="none"/></svg>
+      Simpan &amp; Hubungkan</button>
   </div>
+
+  <footer><span class="line"></span>HydroTech ESP32 · Konfigurasi jaringan<span class="line"></span></footer>
 </div>
+
 <script>
 const $ = (id) => document.getElementById(id);
-const nets = [];           // [{ssid,rssi,secure}]
-let chosen = "";
+const nets = [];
+let currentSsid = "";
+let ssidTouched = false;
 let pollTimer = null;
 
-function esc(t) {
-  return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;")
-                  .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-function bar(rssi) {
-  const d = rssi >= -55 ? 4 : rssi >= -67 ? 3 : rssi >= -78 ? 2 : 1;
-  return "\u2581".repeat(d) + "\u2581".repeat(4 - d).replace(/./g, " ");
-}
-function showMsg(text, cls) {
-  const m = $("msg");
-  if (!text) { m.className = "msg"; m.hidden = true; return; }
-  m.className = "msg " + cls; m.hidden = false; m.textContent = text;
-}
-function renderNets() {
-  if (!nets.length) { $("netList").innerHTML = '<div class="muted">Tidak ada jaringan ditemukan. Tekan Pindai.</div>'; return; }
-  $("netList").innerHTML = nets.map((n, i) =>
-    `<button class="net${n.ssid === chosen ? " sel" : ""}" data-i="${i}" type="button">
-       <span>${esc(n.ssid)}${n.secure ? "" : ' <span class="open">(terbuka)</span>'}</span>
-       <span class="sig">${bar(n.rssi)} ${n.rssi} dBm</span>
-     </button>`).join("");
-}
-$("netList").addEventListener("click", (e) => {
-  const b = e.target.closest(".net"); if (!b) return;
-  const n = nets[+b.dataset.i]; if (!n) return;
-  chosen = n.ssid; $("ssid").value = n.ssid;
-  if (!n.secure) { $("nopass").checked = true; applyNopass(); }
-  renderNets();
-  (n.secure ? $("pass") : $("goBtn")).focus();
-});
-async function rescan() {
-  const btn = $("refreshBtn"); btn.disabled = true; btn.innerHTML = "<span class='spin'></span> Memindai...";
-  $("netList").innerHTML = '<div class="muted">Memindai jaringan di sekitar ...</div>';
-  try {
-    await fetch("/api/scan", { cache: "no-store" });
-    for (let t = 0; t < 40; t++) {                 // tunggu pemindaian nyata di ESP
-      const r = await (await fetch("/api/scanresult", { cache: "no-store" })).json();
-      if (r.scanning) { await new Promise(res => setTimeout(res, 700)); continue; }
-      nets.length = 0;
-      (r.networks || []).forEach(n => nets.push(n));
-      renderNets();
-      break;
-    }
-  } catch (e) { showMsg("Gagal memindai jaringan - coba lagi.", "err"); }
-  btn.disabled = false; btn.innerHTML = "&#x27F3; Pindai";
-}
-$("refreshBtn").addEventListener("click", rescan);
+function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function showMsg(t,cls){const m=$("msg");if(!t){m.className="msg";return}m.className="msg "+cls;m.textContent=t;}
 
-function applyNopass() {
-  const off = $("nopass").checked;
-  $("pass").disabled = off;
-  if (off) $("pass").value = "";
-  showMsg("", null);
+/* ==== STATUS AKTUAL: poll /api/status tiap 2 detik ==== */
+async function pollStatus(){
+  try{
+    const r = await (await fetch("/api/status",{cache:"no-store"})).json();
+    renderStatus(r);
+  }catch(e){}
 }
-$("nopass").addEventListener("change", applyNopass);
+function bar(rssi){return rssi>=-55?"Kuat":rssi>=-67?"Baik":rssi>=-78?"Lemah":"Sangat lemah";}
 
-function validate() {
-  const ssid = $("ssid").value.trim(), pass = $("pass").value;
-  if (!ssid) return "Pilih jaringan WiFi dari daftar atau isi SSID.";
-  const open = $("nopass").checked;
-  if (!open && pass.length < 8) return "Password WiFi minimal 8 karakter (atau centang Tanpa Password).";
-  if (!open && !pass) return "Password wajib diisi, atau centang Tanpa Password.";
-  return null;
-}
-$("goBtn").addEventListener("click", async () => {
-  const err = validate();
-  if (err) { showMsg(err, "err"); return; }
-  showMsg("", null);
-  const btn = $("goBtn"); btn.disabled = true;
-  try {
-    const body = new URLSearchParams({
-      ssid: $("ssid").value.trim(),
-      pass: $("pass").value,
-      nopass: $("nopass").checked ? "1" : "0",
-    });
-    const r = await (await fetch("/api/connect", { method: "POST", body })).json();
-    if (!r.ok) throw new Error(r.error || "Server menolak data konfigurasi.");
-    startPolling(r);
-  } catch (e) {
-    showMsg(e.message || "Gagal mengirim konfigurasi.", "err");
-    btn.disabled = false;
+function renderStatus(s){
+  const dot=$("scDot"),title=$("scTitle"),ssidEl=$("scSsid"),meta=$("scMeta");
+  const connIcon='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0e8a44" stroke-width="2.4" stroke-linecap="round"><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5.5 5.5 0 0 1 7 0"/><circle cx="12" cy="19.4" r="1.4" fill="#0e8a44" stroke="none"/></svg>';
+  const pinIcon='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0e8a44" stroke-width="2.2" stroke-linecap="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.6"/></svg>';
+  if(s.state==="connected"&&s.online){
+    dot.className="dot"; title.textContent="Perangkat Terhubung";
+    ssidEl.textContent="WiFi saat ini: "+(s.ssid||"-");
+    meta.innerHTML=connIcon+"<span>Status: <b>Online</b></span><span class=\"sep\"></span>"+pinIcon+"<span>IP ESP32: <b>"+esc(s.ip||"-")+"</b></span>";
+    currentSsid=s.ssid||"";
+    if(!ssidTouched&&!$("ssid").value)$("ssid").value=currentSsid;
+  }else if(s.state==="connecting"){
+    dot.className="dot warn"; title.textContent="Menghubungkan...";
+    ssidEl.textContent=s.ssid?("Menyambung ke "+s.ssid):"Menyambung...";
+    meta.innerHTML="<span>Status: <b>Menghubungkan...</b></span>";
+  }else if(s.state==="failed"){
+    dot.className="dot off"; title.textContent="Disconnected";
+    ssidEl.textContent="Gagal terhubung";
+    meta.innerHTML="<span>"+esc(s.reason||"Coba pindai lalu hubungkan ulang")+"</span>";
+  }else{
+    dot.className="dot off"; title.textContent="Belum terhubung ke WiFi";
+    ssidEl.textContent="Disconnected";
+    meta.innerHTML="<span>Status: <b>Offline</b></span>";
   }
-});
-function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
-function startPolling() {
-  $("stage").innerHTML = '<div class="okcard"><span class="spin"></span>Menghubungkan ke WiFi... jangan tutup halaman ini.</div>';
-  stopPolling();
-  pollTimer = setInterval(async () => {
-    try {
-      const s = await (await fetch("/api/status", { cache: "no-store" })).json();
-      if (s.state === "connecting") {
-        $("stage").innerHTML = `<div class="okcard"><span class="spin"></span>Menghubungkan ke ${esc(s.ssid || "")}... (${s.elapsed || 0} dtk)</div>`;
-      } else if (s.state === "connected") {
-        stopPolling();
-        $("stage").innerHTML =
-          `<div class="okcard"><b>&#10004; Terhubung ke ${esc(s.ssid)}</b><br>
-           IP ESP32 di jaringan baru: <span class="link">${esc(s.ip)}</span><br>
-           Satukan perangkat ini (HP/laptop) ke WiFi tersebut, lalu buka Dashboard:<br>
-           <span class="link">http://${esc(s.ip)}:8000</span><br><br>
-           <button class="ghost" id="doneBtn" type="button">Selesai &amp; Tutup AP</button></div>`;
-        $("doneBtn").addEventListener("click", async () => { try { await fetch("/api/closeap", { method: "POST" }); } catch (e) {} $("stage").innerHTML = ""; showMsg("Konfigurasi selesai. Perangkat berjalan normal.", "ok"); });
-      } else if (s.state === "failed") {
-        stopPolling();
-        $("goBtn").disabled = false;
-        $("stage").innerHTML =
-          `<div class="failcard"><b>&#10008; Koneksi gagal</b><br>${esc(s.reason || "-")}<br><br>
-           <button class="ghost" id="retryBtn" type="button">Coba Lagi</button></div>`;
-        $("retryBtn").addEventListener("click", () => { $("stage").innerHTML = ""; });
-      }
-    } catch (e) { /* AP dapat berhenti setelah sukses: biarkan halaman tenang */ }
-  }, 1000);
+  renderNets();
 }
-applyNopass();
+
+/* ==== DAFTAR JARINGAN ==== */
+async function rescan(){
+  const btn=$("refreshBtn");btn.disabled=true;
+  $("netList").innerHTML='<div class="muted">Memindai jaringan di sekitar...</div>';
+  try{
+    await fetch("/api/scan",{cache:"no-store"});
+    for(let t=0;t<40;t++){
+      const r=await (await fetch("/api/scanresult",{cache:"no-store"})).json();
+      if(r.scanning){await new Promise(res=>setTimeout(res,650));continue}
+      nets.length=0;(r.networks||[]).forEach(n=>nets.push(n));
+      renderNets();break;
+    }
+  }catch(e){showMsg("Gagal memindai jaringan - coba lagi.","err")}
+  btn.disabled=false;
+}
+function renderNets(){
+  const el=$("netList");
+  if(!nets.length){el.innerHTML='<div class="muted">Tidak ada jaringan ditemukan. Tekan Pindai.</div>';return}
+  el.innerHTML=nets.map((n,i)=>{
+    const cur=currentSsid&&n.ssid===currentSsid;
+    const icon='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0e8a44" stroke-width="2.2" stroke-linecap="round"><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5.5 5.5 0 0 1 7 0"/><circle cx="12" cy="19.4" r="1.4" fill="#0e8a44" stroke="none"/></svg>';
+    const badge=cur?'<span class="badge">Terhubung</span>':'<span class="db">'+n.rssi+' dBm</span>';
+    return '<button class="net'+(cur?" sel":"")+'" data-i="'+i+'" type="button">'+icon+
+      '<span class="nm">'+esc(n.ssid)+'</span><span class="db">'+bar(n.rssi)+'</span>'+badge+'</button>';
+  }).join("");
+}
+$("netList").addEventListener("click",(e)=>{
+  const b=e.target.closest(".net");if(!b)return;
+  const n=nets[+b.dataset.i];if(!n)return;
+  $("ssid").value=n.ssid;ssidTouched=true;
+  if(!n.secure){$("nopass").checked=true;applyNopass()}else{$("nopass").checked=false;applyNopass()}
+  renderNets();
+  $("pass").focus();
+});
+
+/* ==== EYE + CHECKBOX ==== */
+$("eyeBtn").addEventListener("click",()=>{
+  const p=$("pass");const show=p.type==="password";
+  p.type=show?"text":"password";
+  $("eyeBtn").style.color=show?"#0e8a44":"";
+});
+function applyNopass(){
+  const off=$("nopass").checked;
+  $("pass").disabled=off;
+  if(off)$("pass").value="";
+}
+$("nopass").addEventListener("change",applyNopass);
+$("ssid").addEventListener("input",()=>{ssidTouched=true});
+
+/* ==== SIMPAN & HUBUNGKAN (mekanisme lama tetap dipakai) ==== */
+$("goBtn").addEventListener("click",async()=>{
+  const ssid=$("ssid").value.trim(),pass=$("pass").value,open=$("nopass").checked;
+  if(!ssid)return showMsg("Pilih jaringan WiFi dari daftar atau isi SSID.","err");
+  if(!open&&pass.length<8)return showMsg("Password WiFi minimal 8 karakter (atau centang Tanpa Password).","err");
+  showMsg("");
+  const btn=$("goBtn");btn.disabled=true;
+  try{
+    const body=new URLSearchParams({ssid,pass,nopass:open?"1":"0"});
+    const r=await (await fetch("/api/connect",{method:"POST",body})).json();
+    if(!r.ok)throw new Error(r.error||"Server menolak konfigurasi.");
+    showMsg("Konfigurasi disimpan - menyambung ke "+ssid+"...","ok");
+  }catch(e){showMsg(e.message||"Gagal mengirim konfigurasi.","err");btn.disabled=false}
+});
+
+/* ==== INIT ==== */
+$("pass").value="";
 rescan();
+pollTimer=setInterval(pollStatus,2000);
+pollStatus();
 </script></body></html>
 )html";
 
@@ -746,45 +794,48 @@ String wlFailReason(wl_status_t s) {
 }
 
 void handleStatus() {
-  if (connState == SC_CONNECTING) {
+  /* Status AKTUAL perangkat (bukan statis): online = STA tersambung.
+     state: connecting / connected / failed / idle.                     */
+  bool online = (WiFi.status() == WL_CONNECTED);
+
+  if (connState == SC_CONNECTING && !online) {
     wl_status_t s = WiFi.status();
     uint32_t elapsed = (millis() - connStartMs) / 1000UL;
-    if (s == WL_CONNECTED) {
-      connIp = WiFi.localIP().toString();
-      connState = SC_CONNECTED;
-      connSuccessMs = millis();
-      connMsg = "Terhubung ke " + connSsid;
-      Serial.printf("[SETUP] TERHUBUNG ip=%s â€” AP + halaman masih hidup Â±2 menit\n",
-                    connIp.c_str());
-    } else if (elapsed >= CONNECT_TIMEOUT_MS / 1000UL
-               || s == WL_CONNECT_FAILED || s == WL_NO_SSID_AVAIL) {
-      if (s == WL_CONNECT_FAILED || s == WL_NO_SSID_AVAIL
+    if (s == WL_CONNECT_FAILED || s == WL_NO_SSID_AVAIL
 #ifdef WL_WRONG_PASSWORD
-          || s == WL_WRONG_PASSWORD
+        || s == WL_WRONG_PASSWORD
 #endif
-         ) connMsg = wlFailReason(s);
-      else connMsg = "Waktu koneksi habis (" + String(elapsed) + " s). " + wlFailReason(s);
+       ) {
+      connMsg = wlFailReason(s);
       connState = SC_FAILED;
       Serial.printf("[SETUP] gagal: %s\n", connMsg.c_str());
-    } else {
-      setupSrv->send(200, "application/json",
-                     "{\"state\":\"connecting\",\"ssid\":\"" + jsonEsc(connSsid) +
-                     "\",\"elapsed\":" + String((unsigned long)elapsed) + "}");
-      return;
     }
   }
-  if (connState == SC_CONNECTED) {
-    setupSrv->send(200, "application/json",
-                   "{\"state\":\"connected\",\"ssid\":\"" + jsonEsc(connSsid) +
-                   "\",\"ip\":\"" + jsonEsc(connIp) + "\"}");
-    return;
+
+  String state;
+  String ssidOut;
+  String ipOut;
+  String reason = "";
+  if (online) {
+    state = "connected";
+    ssidOut = WiFi.SSID();
+    ipOut = WiFi.localIP().toString();
+  } else if (connState == SC_CONNECTING) {
+    state = "connecting";
+    ssidOut = connSsid;
+  } else if (connState == SC_FAILED) {
+    state = "failed";
+    reason = jsonEsc(connMsg);
+  } else {
+    state = "idle";
   }
-  if (connState == SC_FAILED) {
-    setupSrv->send(200, "application/json",
-                   "{\"state\":\"failed\",\"reason\":\"" + jsonEsc(connMsg) + "\"}");
-    return;
-  }
-  setupSrv->send(200, "application/json", "{\"state\":\"idle\"}");
+
+  setupSrv->send(200, "application/json",
+                 "{\"state\":\"" + state + "\",\"online\":" +
+                 (online ? "true" : "false") +
+                 ",\"ssid\":\"" + jsonEsc(ssidOut) +
+                 "\",\"ip\":\"" + jsonEsc(ipOut) +
+                 "\",\"reason\":\"" + reason + "\"}");
 }
 
 /* ---------------------------------------------------------------------
@@ -1126,12 +1177,14 @@ float jsonToFloat(JsonVariant v) {
   return t.toFloat();
 }
 
+time_t dithNextSlot();
 void mqttPublishDeviceStatus(bool online) {
-  char payload[160];
+  char payload[224];
   if (online) {
     snprintf(payload, sizeof(payload),
-             "{\"type\":\"status\",\"online\":true,\"ip\":\"%s\",\"rssi\":%d,\"ts\":%lld}",
-             WiFi.localIP().toString().c_str(), WiFi.RSSI(), (long long)mqttTs());
+             "{\"type\":\"status\",\"online\":true,\"ip\":\"%s\",\"rssi\":%d,\"next_due\":%lld,\"ts\":%lld}",
+             WiFi.localIP().toString().c_str(), WiFi.RSSI(),
+             (long long)dithNextSlot(), (long long)mqttTs());
   } else {
     snprintf(payload, sizeof(payload), "{\"type\":\"status\",\"online\":false,\"ts\":%lld}", (long long)mqttTs());
   }
@@ -1346,7 +1399,9 @@ bool configFresh() { return cfg.valid && (millis() - cfg.fetchedMs) <= MAX_CONFI
 bool sprayActive() { return dithState == DITH_SPRAYING || manDithSpraying; }
 
 bool dosingAllowed() {                            // prasyarat bersama dosing
-  return !safeMode && configFresh() && !sprayActive() && systemTimeValid();
+  /* Jam valid tidak lagi wajib untuk dosing pH/PPM (tidak memakai jam);
+     jam hanya wajib untuk slot Dithane terjadwal (dithDue).            */
+  return !safeMode && configFresh() && !sprayActive();
 }
 
 bool abTriggered() { return ppmValid && (ppmValue <  cfg.ppmMin); }
@@ -1410,8 +1465,11 @@ void runDose(DoseCtl& d) {
       }
       { bool trig = (d.pump == PUMP_AB) ? abTriggered() : phTriggered();
         if (!trig) { setDoseIdle(d); break; } }
+      if (dosingOwner != PUMP_COUNT && dosingOwner != d.pump) break;  // pompa lain sedang dosing
       d.state = DOSE_PUMPING; d.t0 = millis();
       dosingOwner = d.pump;
+      relayWrite(d.pump, true);              // RELAY ON (perbaikan: tidak pernah ditulis)
+      Serial.printf("[PUMP] %s dosing ulang (siklus berikutnya)\n", d.tag);
       break;
     case DOSE_PUMPING:
       /* KEAMANAN (ketentuan #4): dosis aktif langsung DIBATAL bila sensor
@@ -1430,6 +1488,7 @@ void runDose(DoseCtl& d) {
         d.runMsToday += d.doseMs;
         if (d.eventsToday < 250) d.eventsToday++;
         d.state = DOSE_RECHECK; d.t0 = millis();
+        dosingOwner = PUMP_COUNT;      // lepaskan hak: pompa lain boleh dosing
         Serial.printf("[PUMP] %s dosis #%u selesai (%lu ms; runtime hari ini %lu ms)\n",
                       d.tag, d.eventsToday, (unsigned long)d.doseMs,
                       (unsigned long)d.runMsToday);
@@ -1455,6 +1514,7 @@ void controlABMix() {
       doseAB.state = DOSE_PUMPING;
       doseAB.t0 = millis();
       dosingOwner = PUMP_AB;
+      relayWrite(PUMP_AB, true);             // RELAY ON (perbaikan)
       Serial.printf("[PUMP] %s mulai dosing (PPM=%.0f < min %.0f)\n",
                     PUMP_NAME[PUMP_AB], ppmValue, cfg.ppmMin);
       break;
@@ -1504,6 +1564,7 @@ void controlPHDown() {
       dosePH.state = DOSE_PUMPING;
       dosePH.t0 = millis();
       dosingOwner = PUMP_PHDOWN;
+      relayWrite(PUMP_PHDOWN, true);         // RELAY ON (perbaikan)
       Serial.printf("[PUMP] %s mulai dosing arah %s (pH=%.2f %s)\n",
                     PUMP_NAME[PUMP_PHDOWN],
                     (PH_PUMP_DIR == PH_RAISE) ? "PENAIK" : "PENURUN",
@@ -1552,7 +1613,7 @@ bool dithArmed() {
        (1 = armed, 0 = disarmed) sehingga operator tidak butuh akses
        Serial; sakelar tetap berganda (website ATAU Serial).            */
   if (cfg.hasDeviceCfg && cfg.respArmed >= 0) return cfg.respArmed == 1;
-  return nvs.getBool("armed", false);
+  return nvs.getBool("armed", true);    // jadwal otomatis AKTIF secara default
 }
 
 /* Tentukan waktu jatuh tempo (dueAt) penyemprotan berikutnya:
@@ -1561,34 +1622,55 @@ bool dithArmed() {
  * Kembalikan true hanya bila now berada di [dueAt, dueAt+GRACE].
  * Slot yang terlampaui melebihi GRACE untuk satu demi satu dilompati
  * (tanpa eksekusi susulan) hingga dueAt berada di masa depan/grace.    */
-bool dithDue(time_t& slotOut) {
-  if (!systemTimeValid() || !cfg.dithValid) return false;
+/* Tanda tangan jadwal aktif; berubah = jadwal BARU dari pengaturan.    */
+String dithSignature() {
+  return String(cfg.dithIntervalH) + "h/" + String(cfg.dithDurationS) + "s/" +
+         String(cfg.dithStartHM);
+}
+
+bool dithScheduleChanged() {
+  String sig = dithSignature();
+  String stored = nvs.getString("dithsig", "");
+  return stored != sig;
+}
+
+void dithRememberSchedule() { nvs.putString("dithsig", dithSignature()); }
+
+/* Hitung slot penyemprotan BERIKUTNYA (tanpa menyemprot):
+   dipakai mesin jadwal DAN telemetri next_due untuk countdown.        */
+time_t dithNextSlot() {
+  if (!systemTimeValid() || !cfg.dithValid) return 0;
   long period = cfg.dithIntervalH * 3600L;
-  if (period <= 0) return false;
+  if (period <= 0) return 0;
   time_t now = time(nullptr);
   time_t lastDone = dithLastDone();
   time_t dueAt;
-  if (lastDone == 0) {
-    /* Belum pernah selesai: jadwal pertama mengikuti jam mulai (WIB). */
+  if (lastDone == 0 || dithScheduleChanged()) {
+    /* Belum pernah menyemprot ATAU pengguna baru mengubah jadwal:
+       slot berikutnya = JAM MULAI yang baru diatur. Setelah semprot,
+       interval berantai dari waktu selesai.                           */
     struct tm b = localTm();
     b.tm_hour = (int)(cfg.dithStartHM / 60);
     b.tm_min  = (int)(cfg.dithStartHM % 60);
     b.tm_sec  = 0;
     dueAt = mktime(&b);
-    while (dueAt > now) dueAt -= period;             // mundur ke slot terdahulu
+    while (dueAt <= now && (now - dueAt) > (time_t)SPRAY_GRACE_S) dueAt += 86400;
+    dithRememberSchedule();                 // tandai jadwal sudah diadopsi
   } else {
     /* INTERVAL dari waktu penyemprotan terakhir SELESAI.             */
     dueAt = lastDone + period;
+    if (dueAt <= lastDone) return 0;                // data tak konsisten
+    while (now >= dueAt && (now - dueAt) > (time_t)SPRAY_GRACE_S) {
+      dueAt += period;                              // lewati slot lampau
+    }
   }
-  if (dueAt <= lastDone) return false;               // data tak konsisten
-  bool missed = false;
-  while (now >= dueAt && (now - dueAt) > (time_t)SPRAY_GRACE_S) {
-    dueAt += period;                                 // lewati tanpa eksekusi susulan
-    missed = true;
-  }
-  if (missed)
-    Serial.println("[DITH] ada jadwal terlewat (di luar toleransi) â€” "
-                   "tanpa semprot susulan; siklus dilanjutkan grid berikutnya");
+  return dueAt;
+}
+
+bool dithDue(time_t& slotOut) {
+  time_t dueAt = dithNextSlot();
+  if (dueAt == 0) return false;
+  time_t now = time(nullptr);
   slotOut = dueAt;
   return (now >= dueAt) && ((now - dueAt) <= (time_t)SPRAY_GRACE_S);
 }
@@ -2007,9 +2089,7 @@ void setup() {
   startConfigPortal();          // SELALU AKTIF: ganti WiFi kapan pun via 192.168.4.1
   if (credsValid()) connectWiFi();
   else Serial.println("[SAFETY] Belum ada WiFi - sambungkan HP ke AP 'hydrotech' untuk konfigurasi.");
-  if (!nvs.getBool("armed", false))
-    Serial.println("[SAFETY] Dithane DISARMED. Ketik 'arm' untuk aktivasi "
-                   "penyemprotan (setelah pemasangan fisik diverifikasi).");
+
   setupWatchdog();
   /* MQTT: broker + callback + buffer (payload cmd dithane > default 256). */
   MDNS.begin("hydrotech-esp32");              // hidupkan stack mDNS (untuk queryHost)

@@ -588,3 +588,12 @@ body:not(.login-page):not(.popup-body) .content > :nth-child(5) {
   width: auto;
 }
 
+
+/* DROPDOWN JAM 24 JAM (tanpa AM/PM) */
+.control.time-pair { display: flex; align-items: center; gap: 8px; }
+.control.time-pair select {
+  flex: 1; min-width: 0; padding: 10px 10px; border: 1px solid rgba(220,235,227,.98);
+  border-radius: 12px; background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(250,255,252,.98));
+  color: #275d29; font-size: 16px; font-weight: 800; font-family: inherit; cursor: pointer;
+}
+.control.time-pair .time-colon { color: #0e8a44; font-size: 18px; font-weight: 800; }

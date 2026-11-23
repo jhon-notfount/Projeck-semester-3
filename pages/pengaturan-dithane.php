@@ -32,4 +32,4 @@ elseif (strtolower($log['status'] ?? '') === 'tinggi') $statusClass = 'high';
 <td class="trash"><button type="button" class="trash-btn" aria-label="Hapus data">&#128465;</button></td>
 </tr>
 <?php endforeach; ?>
-</tbody></table><div class="showing">Menampilkan data</div><div class="pagination"><span>‹</span><span class="current">1</span><span>2</span><span>›</span></div></div></div></main></div><!-- PAGE SCRIPTS: library dialog dan logika halaman. --><script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script><script src="../js/confirm-modal.js"></script><script src="../js/settings-storage.js"></script></body></html>
+</tbody></table><div class="showing">Menampilkan data</div><div class="pagination"><span>‹</span><span class="current">1</span><span>2</span><span>›</span></div></div></div></main></div><!-- PAGE SCRIPTS: library dialog dan logika halaman. --><script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script><script src="../js/confirm-modal.js"></script><script src="../js/settings-storage.js?v=4"></script></body></html>

@@ -1036,3 +1036,12 @@ body:not(.login-page) {
     display: none;
   }
 }
+
+/* DROPDOWN JAM 24 JAM di modal pengaturan (tanpa AM/PM) */
+.time-pair { display: flex; align-items: center; gap: 6px; flex: 1; padding-right: 10px; }
+.time-pair select {
+  flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
+  color: #275d29; font-size: 19px; font-weight: 800; font-family: inherit; cursor: pointer;
+  padding: 0 4px;
+}
+.time-pair .time-colon { color: #078d43; font-size: 20px; font-weight: 800; }

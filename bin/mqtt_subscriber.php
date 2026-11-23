@@ -126,6 +126,21 @@ $client->setOnMessage(function (string $topic, string $payload) use (&$pairing, 
     }
     /* hydrotech/device/status: ack perintah tidak dilacak di database
        (tombol = kirim langsung); cukup log.                              */
+    if ($topic === 'hydrotech/device/status' && ($data['type'] ?? null) === 'status') {
+        /* Slot Dithane berikutnya versi PERANGKAT (sumber kebenaran
+           countdown dashboard) ditulis ke runtime status.              */
+        $file = __DIR__ . '/../runtime/pump_status.json';
+        if (!is_dir(dirname($file))) @mkdir(dirname($file), 0775, true);
+        $all = is_readable($file) ? (json_decode((string)file_get_contents($file), true) ?: []) : [];
+        $all['device'] = [
+            'next_due'   => (int)($data['next_due'] ?? 0),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ];
+        @file_put_contents($file . '.tmp', json_encode($all), LOCK_EX);
+        @rename($file . '.tmp', $file);
+        return;
+    }
+
     if ($topic === 'hydrotech/device/status' && ($data['type'] ?? null) === 'ack') {
         logLine('ack perangkat: ' . ($data['msg_id'] ?? '?') . ' ok=' . var_export($data['ok'] ?? null, true));
         return;
