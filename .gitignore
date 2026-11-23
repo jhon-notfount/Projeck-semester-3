@@ -4,3 +4,6 @@ config/esp_key.txt
 
 # Kredensial MQTT lokal
 config/mqtt_auth.local.php
+
+# Runtime state (status pompa realtime)
+runtime/

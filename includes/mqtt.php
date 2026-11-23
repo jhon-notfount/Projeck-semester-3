@@ -52,3 +52,27 @@ function mqttWorkerClient(): MqttClient
         30
     );
 }
+
+/**
+ * Normalisasi konfigurasi dari dashboard menjadi payload NUMERIK untuk
+ * firmware: "5,5" (desimal koma Indonesia) -> 5.5 dst. Firmware menolak
+ * string yang tidak bisa dikonversi penuh (ArduinoJson 7 ketat).
+ */
+function mqttConfigPayload(string $type, array $config): array
+{
+    $toNum = function ($v) use ($type): float {
+        if ($type === 'ppm' && floor((float)$v) == (float)$v) return (float)$v;
+        return (float)str_replace(',', '.', (string)$v);
+    };
+    $msgId = $type . '-' . date('Ymd-His') . '-' . substr(bin2hex(random_bytes(3)), 0, 6);
+    if ($type === 'ph' || $type === 'ppm') {
+        return ['msg_id' => $msgId,
+                'min' => $toNum($config['min'] ?? 0),
+                'max' => $toNum($config['max'] ?? 0)];
+    }
+    /* dithane: interval/durasi/start dibaca firmware via atol/sscanf */
+    return ['msg_id' => $msgId,
+            'interval' => (string)($config['interval'] ?? ''),
+            'duration' => (string)($config['duration'] ?? ''),
+            'start' => (string)($config['start'] ?? '')];
+}

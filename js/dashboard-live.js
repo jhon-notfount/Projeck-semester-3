@@ -90,6 +90,21 @@
     requestAnimationFrame(frame);
   }
 
+  /* RATA-RATA PERIODE 24 JAM: nilai + progres kumulatif dari database.
+     Periode tersimpan persisten (tabel settings type='system'); halaman
+     dimuat ulang tidak mereset periode.                                */
+  let averageCache = null;
+  async function fetchAverage() {
+    try {
+      const response = await fetch("../api/dashboard/average.php", { cache: "no-store" });
+      const result = await response.json();
+      if (result.success && result.data) averageCache = result.data;
+    } catch (error) {
+      console.error("Gagal membaca rata-rata periode:", error);
+    }
+    return averageCache;
+  }
+
   /* CHART STYLE: membuat gradasi area di bawah garis pH dan PPM. */
   function makeGradient(context, color) {
     const gradient = context.createLinearGradient(0, 0, 0, 220);
@@ -345,25 +360,28 @@
     const latestPh = phSeries.length ? phSeries[phSeries.length - 1] : null;
     const latestPpm = ppmSeries.length ? ppmSeries[ppmSeries.length - 1] : null;
 
+    /* RINGKASAN BAWAH = RATA-RATA PERIODE 24 JAM (metrik sama dgn kartu:
+       pH dengan pH, PPM dengan PPM). Ambling NaN dgn pengaman Number.   */
+    const avg = await fetchAverage();
     if (phSummary) {
-      if (latestPh) {
+      if (avg && avg.avg_ph !== null && avg.avg_ph !== undefined) {
         const previous = Number(phSummary.textContent);
-        animateValue(previous, latestPh.value, 600, (value) => {
-          phSummary.textContent = value.toFixed(1);
-        });
-      } else {
-        phSummary.textContent = "-";
-      }
+        if (Number.isFinite(previous)) {
+          animateValue(previous, avg.avg_ph, 600, (value) => {
+            phSummary.textContent = value.toFixed(2);
+          });
+        } else phSummary.textContent = avg.avg_ph.toFixed(2);
+      } else phSummary.textContent = "-";
     }
     if (ppmSummary) {
-      if (latestPpm) {
-        const previous = Number(ppmSummary.textContent) || latestPpm.value;
-        animateValue(previous, latestPpm.value, 600, (value) => {
-          ppmSummary.textContent = Math.round(value);
-        });
-      } else {
-        ppmSummary.textContent = "-";
-      }
+      if (avg && avg.avg_ppm !== null && avg.avg_ppm !== undefined) {
+        const previous = Number(ppmSummary.textContent);
+        if (Number.isFinite(previous)) {
+          animateValue(previous, avg.avg_ppm, 600, (value) => {
+            ppmSummary.textContent = Math.round(value);
+          });
+        } else ppmSummary.textContent = String(avg.avg_ppm);
+      } else ppmSummary.textContent = "-";
     }
 
     /* KARTU REALTIME: nilai PPM/pH aktual di kartu; "Menunggu data..."
@@ -374,9 +392,13 @@
     chartCanvas.classList.add("live-refresh");
     window.setTimeout(() => chartCanvas.classList.remove("live-refresh"), 900);
 
-    chart.data.labels = series.labels;
-    chart.data.datasets[0].data = series.ph;
-    chart.data.datasets[1].data = series.ppm;
+    /* GRAFIK = PERKEMBANGAN RATA-RATA KUMULATIF periode 24 jam
+       (konsisten dgn angka rata-rata di ringkasan bawah; bukan rata-rata
+       harian kalender, dan tidak mencampur periode sebelumnya).         */
+    const prog = (avg && Array.isArray(avg.progress)) ? avg.progress.filter((p) => p.ph !== null || p.ppm !== null) : [];
+    chart.data.labels = prog.map((p) => p.t);
+    chart.data.datasets[0].data = prog.map((p) => p.ph);
+    chart.data.datasets[1].data = prog.map((p) => p.ppm);
     chart.update();
 
     if (updateText) {

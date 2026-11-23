@@ -62,14 +62,9 @@ function mqttPushConfig(string $type, string $configJson): void {
     try {
         require_once __DIR__ . '/../../vendor/hydrotech/MqttClient.php';
         require_once __DIR__ . '/../../includes/mqtt.php';
-        $msgId = $type . '-' . date('Ymd-His') . '-' . substr(bin2hex(random_bytes(3)), 0, 6);
-        $payload = array_merge(
-            ['msg_id' => $msgId],
-            json_decode($configJson, true) ?: []
-        );
         $client = mqttWorkerClient();
         if ($client->connect(3)) {
-            $client->publish("hydrotech/cmd/esp32/{$type}", json_encode($payload), 1, false);
+            $client->publish("hydrotech/cmd/esp32/{$type}", json_encode(mqttConfigPayload($type, json_decode($configJson, true) ?: [])), 1, false);
             $wait = microtime(true) + 1;
             while (microtime(true) < $wait) $client->loop(100);
             $client->disconnect();

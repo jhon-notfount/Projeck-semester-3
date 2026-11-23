@@ -28,6 +28,24 @@ require_once __DIR__ . '/../includes/sensors.php';
 require_once __DIR__ . '/../includes/dithane.php';
 require_once __DIR__ . '/../includes/device_report.php';
 
+/** Simpan status pompa terkini (file runtime, tanpa tabel). */
+function writePumpStatusFile(array $data): void {
+    $dir = __DIR__ . '/../runtime';
+    if (!is_dir($dir)) @mkdir($dir, 0775, true);
+    $file = $dir . '/pump_status.json';
+    $pump = (string)($data['pump'] ?? '');
+    if (!preg_match('/^[a-z]{2,8}$/', $pump)) return;
+    $all = is_readable($file) ? (json_decode((string)file_get_contents($file), true) ?: []) : [];
+    $all[$pump] = [
+        'state'       => (($data['state'] ?? 'off') === 'on') ? 'on' : 'off',
+        'mode'        => (($data['mode'] ?? 'auto') === 'manual') ? 'manual' : 'auto',
+        'remaining_s' => (int)($data['remaining_s'] ?? 0),
+        'updated_at'  => date('Y-m-d H:i:s'),
+    ];
+    @file_put_contents($file . '.tmp', json_encode($all), LOCK_EX);
+    @rename($file . '.tmp', $file);
+}
+
 set_time_limit(0);
 
 const SENSOR_TOPICS = ['hydrotech/sensor/ph', 'hydrotech/sensor/ppm'];
@@ -101,7 +119,9 @@ $client->setOnMessage(function (string $topic, string $payload) use (&$pairing, 
     }
 
     if ($topic === 'hydrotech/pump/status') {
-        /* Telemetri status pompa tidak disimpan (keputusan desain). */
+        /* Telemetri status pompa ditulis ke runtime/pump_status.json
+           agar tombol dashboard selalu mencerminkan relay sebenarnya. */
+        writePumpStatusFile($data);
         return;
     }
     /* hydrotech/device/status: ack perintah tidak dilacak di database
@@ -155,9 +175,11 @@ function pushCurrentConfig(MqttClient $client): void
         $config = json_decode($settings[$type] ?? 'null', true);
         if (!is_array($config) || !isset($config['min'], $config['max'])) continue;
         $msgId = 'cfg-' . $type . '-' . substr(bin2hex(random_bytes(4)), 0, 8);
+        $min = (float)str_replace(',', '.', (string)$config['min']);
+        $max = (float)str_replace(',', '.', (string)$config['max']);
         $client->publish(
             "hydrotech/cmd/esp32/{$type}",
-            json_encode(['msg_id' => $msgId, 'min' => $config['min'], 'max' => $config['max']]),
+            json_encode(['msg_id' => $msgId, 'min' => $min, 'max' => $max]),
             1,
             false
         );
@@ -202,6 +224,7 @@ while (true) {
                 foreach (SENSOR_TOPICS as $t) {
                     if (!$client->subscribe($t, 0)) logLine("SUBSCRIBE $t gagal");
                 }
+                $client->subscribe('hydrotech/pump/status', 1);
                 $client->subscribe('hydrotech/device/status', 1);
             }
         } catch (Throwable $e) {

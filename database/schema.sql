@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS `account_change_logs` (
 
 -- Konfigurasi rentang PPM/pH (jadwal Dithane ada di tabel dithane_schedules).
 CREATE TABLE IF NOT EXISTS `settings` (
-    `type` ENUM('ppm','ph') NOT NULL PRIMARY KEY,
+    `type` ENUM('ppm','ph','system') NOT NULL PRIMARY KEY COMMENT 'ppm/ph = konfigurasi ambang; system = anchor periode rata-rata 24 jam (config_json.period_start)',
     `config_json` JSON NOT NULL,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `updated_by` INT NULL,

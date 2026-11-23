@@ -1,47 +1,54 @@
 /* Kontrol manual pompa HydroTech (kartu PPM, pH, Dithane).
- * KEPUTUSAN DESAIN: tombol = pengirim perintah LANGSUNG via MQTT
- * (api/pump/control.php -> hydrotech/cmd/esp32/pump, QoS 1, tanpa retained,
- * tanpa tabel antrean/status di database). Teks tombol = perintah terakhir
- * yang dikirim sesi ini (bukan kondisi relay sebenarnya).
- * Perangkat dicek via api/device/status.php (kesegaran sensor) agar
- * tombol dinonaktifkan saat ESP tidak terhubung.
+ * Tombol = pengirim perintah MQTT langsung (QoS 1, tanpa retained).
+ * Status tombol DISINKRONKAN dari telemetri perangkat
+ * (hydrotech/pump/status -> api/pump/status.php) sehingga selalu
+ * mencerminkan kondisi relay sebenarnya, termasuk nyala otomatis.
+ * Override manual selalu berdurasi: habis durasi, ESP kembali
+ * ke otomatisasi (timer lokal perangkat).
  */
 (async function () {
   const buttons = Array.from(document.querySelectorAll(".pump-btn[data-pump]"));
   if (!buttons.length) return;
 
   const csrfMeta = document.querySelector('meta[name="csrf-token"]');
-  const POLL_MS = 5000;
-  /* Durasi default override (detik) per aksi — server membatasi maksimum. */
+  const POLL_MS = 2500;
   const DEFAULT_ON = 30;
 
   function token() {
     return csrfMeta ? csrfMeta.getAttribute("content") : "";
   }
 
-  /* Status perangkat: sensor terakhir masuk < 300 s = online. */
-  async function checkDevice() {
-    try {
-      const r = await (await fetch("../api/device/status.php", { cache: "no-store" })).json();
-      return !!(r.success && r.data && r.data.status === "online");
-    } catch { return false; }
-  }
-
   function render(button, on, note) {
     button.classList.toggle("on", on);
     const label = button.querySelector("[data-pump-state]");
     if (label) label.textContent = on ? "ON" : "OFF";
-    button.title = note
-      || (on ? "Perintah ON terkirim; pompa kembali otomatis setelah durasi"
-             : "Klik untuk menyalakan pompa secara manual");
   }
 
-  async function pollDevice() {
-    const online = await checkDevice();
-    buttons.forEach((b) => { b.disabled = !online && !b.classList.contains("busy"); });
+  /* SINKRON STATUS: dari telemetri asli perangkat (bukan tebakan). */
+  async function pollStatus() {
+    try {
+      const response = await fetch("../api/pump/status.php", { cache: "no-store" });
+      const result = await response.json();
+      if (!result.success || !result.data) return;
+      const { pumps, device_online: online } = result.data;
+
+      buttons.forEach((button) => {
+        button.dataset.online = online ? "1" : "0";
+        button.title = online
+          ? "Klik untuk kontrol manual pompa ini"
+          : "Perangkat ESP TIDAK TERHUBUNG - perintah tidak akan dieksekusi sampai perangkat online";
+      });
+      Object.entries(pumps || {}).forEach(([pump, info]) => {
+        const button = buttons.find((b) => b.dataset.pump === pump);
+        if (!button) return;
+        render(button, info.state === "on");
+      });
+    } catch (error) {
+      console.error("Gagal membaca status pompa:", error);
+    }
   }
 
-  async function sendCommand(button, action) {
+  async function sendCommand(button, action, dur) {
     const body = new URLSearchParams({
       pump: button.dataset.pump,
       action,
@@ -55,14 +62,18 @@
   buttons.forEach((button) => {
     render(button, false);
     button.addEventListener("click", async () => {
-      const isOn = button.classList.contains("on");
-      const action = isOn ? "off" : "on";
+      const realOn = button.classList.contains("on");
+      const action = realOn ? "off" : "on";
       const max = Number(button.dataset.pumpMax || 120);
-      const dur = action === "on" ? DEFAULT_ON : max;   // OFF = batas maksimum pompa
+      const dur = action === "on" ? DEFAULT_ON : max;
       const label = button.dataset.pumpLabel || button.dataset.pump;
-      const confirmText = action === "on"
+      const offline = button.dataset.online === "0";
+      const offlineNote = offline
+        ? "\n\nPERINGATAN: Perangkat ESP sedang TIDAK TERHUBUNG - perintah ini tidak akan dieksekusi sampai perangkat online kembali."
+        : "";
+      const confirmText = (action === "on"
         ? `Kirim perintah ON pompa ${label} (${dur} detik, lalu kembali otomatis)?`
-        : `Kirim perintah OFF pompa ${label} (otomatisasi berhenti ${dur} detik)?`;
+        : `Kirim perintah OFF pompa ${label} (otomatisasi berhenti ${dur} detik)?`) + offlineNote;
 
       if (window.Swal) {
         const ask = await Swal.fire({
@@ -81,15 +92,16 @@
 
       button.classList.add("busy"); button.disabled = true;
       try {
-        const result = await sendCommand(button, action);
+        const result = await sendCommand(button, action, dur);
         if (result.success) {
-          render(button, action === "on");        // teks tombol = perintah terakhir
+          /* Optimistic lalu dikoreksi oleh telemetri saat poll berikutnya. */
+          render(button, action === "on");
           if (window.Swal) {
             Swal.fire({
               title: "Perintah terkirim",
               text: result.message,
               icon: "success",
-              timer: 2500,
+              timer: 2000,
               showConfirmButton: false,
             });
           }
@@ -102,11 +114,12 @@
         console.error("Gagal mengirim perintah pompa:", error);
       } finally {
         button.classList.remove("busy");
-        pollDevice();
+        button.disabled = false;          // selalu bisa diklik lagi tanpa refresh
+        pollStatus();
       }
     });
   });
 
-  pollDevice();
-  window.setInterval(pollDevice, POLL_MS);
+  pollStatus();
+  window.setInterval(pollStatus, POLL_MS);
 })();

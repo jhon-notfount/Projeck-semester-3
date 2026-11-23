@@ -196,7 +196,7 @@ function activityIcon(string $type): string {
               <div class="chart-head">
                 <div>
                   <div class="section-title">Monitoring Nutrisi</div>
-                  <p>Perbandingan pH dan PPM hari ini</p>
+                  <p>Perkembangan rata-rata pH dan PPM periode 24 jam</p>
                 </div>
                 <div class="chart-legend">
                   <span><i class="legend-ph"></i>pH</span>
@@ -205,11 +205,11 @@ function activityIcon(string $type): string {
               </div>
               <div class="chart-summary">
                 <div>
-                  <small>pH saat ini</small>
+                  <small>Rata-rata pH (24 jam)</small>
                   <b data-current-ph><?php echo htmlspecialchars($phNow); ?></b>
                 </div>
                 <div>
-                  <small>PPM saat ini</small>
+                  <small>Rata-rata PPM (24 jam)</small>
                   <b data-current-ppm><?php echo htmlspecialchars($ppmNow); ?></b>
                 </div>
               </div>
@@ -306,6 +306,6 @@ function activityIcon(string $type): string {
     <script src="../js/dashboard-activity.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="../js/dashboard-live.js?v=2"></script>
-   <script src="../js/pump-control.js?v=2"></script>
+   <script src="../js/pump-control.js?v=6"></script>
   </body>
 </html>

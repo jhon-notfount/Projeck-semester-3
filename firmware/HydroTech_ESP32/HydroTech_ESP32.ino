@@ -111,7 +111,11 @@ const uint8_t LED_PH_PIN  = 26;    // LED merah : pH di bawah ambang minimum
 const int     I2C_SDA     = 21;
 const int     I2C_SCL     = 22;
 const uint8_t LCD_ADDR_CAND[2] = { 0x27, 0x3F };  // alamat umum LCD 20x4
-const uint8_t LCD_COLS = 20, LCD_ROWS = 4;
+/* Modul terpasang: 16 kolom x 2 baris (sesuai hardware Anda).
+   LCD karakter TIDAK bisa mengubah ukuran font - agar tidak terpotong,
+   teks dirancang muat 16 kolom; informasi Dithane dirotasi tiap 2 dtk
+   pada modul 2 baris (modul 20x4 menampilkan semua sekaligus).        */
+const uint8_t LCD_COLS = 16, LCD_ROWS = 2;
 const uint32_t LCD_PAGE_MS = 5000;                // pergantian halaman LCD
 
 /* --- Kalibrasi default (bisa ditimpa via Serial; tersimpan di NVS) --- */
@@ -241,7 +245,7 @@ uint32_t bootMs = 0;
 
 hd44780_I2Cexp* lcdPtr = nullptr;
 uint8_t  lcdAddrFound = 0;
-uint8_t  lcdPage = 0; uint32_t lcdPage0 = 0, lcdDraw0 = 0;
+uint32_t lcdDraw0 = 0;
 bool     ledOn = false; uint32_t led0 = 0;
 
 Preferences nvs;
@@ -1013,9 +1017,10 @@ bool applyManual(const String& pump, bool on, long durationS) {
     return true;
   }
 
-  /* --- Manual ON --- */
-  if (p == PUMP_DITHANE) {                      // spray manual: interlock penuh
-    if (safeMode) { Serial.println("[CMD]: ditolak (mode aman)"); return true; }
+  /* --- Manual ON: SELALU dieksekusi (hak penuh operator). Batas
+     waktu otomatis adalah satu-satunya pengaman agar tidak ada
+     pompa menyala tanpa pengawasan selamanya.                       */
+  if (p == PUMP_DITHANE) {
     stopAllPumps();
     dosingOwner = PUMP_COUNT;
     circState = CIRC_OFF; circT0 = millis();
@@ -1027,9 +1032,6 @@ bool applyManual(const String& pump, bool on, long durationS) {
     reportPump("dithane", "started", 0);
     return true;
   }
-  if (safeMode || sprayActive()) { Serial.println("[CMD]: ditolak (mode aman/interlock)"); return true; }
-  bool sensorOk = (p == PUMP_AB) ? ppmValid : phValid;
-  if (!sensorOk) { Serial.printf("[CMD]: ditolak (sensor %s invalid)\n", PUMP_NAME[p]); return true; }
   cancelAutoDosing(p);                          // hentikan dosis otomatis berjalan
   manualEnd(p, false);
   manCtl[p].active = true; manCtl[p].on = true;
@@ -1053,16 +1055,8 @@ void applyManualOverrides() {
       continue;
     }
     if (manCtl[i].on) {
-      /* Failsafe: dosing manual langsung dihentikan bila kondisi berbahaya. */
-      if (p == PUMP_AB || p == PUMP_PHDOWN) {
-        bool sensorOk = (p == PUMP_AB) ? ppmValid : phValid;
-        if (safeMode || sprayActive() || !sensorOk) {
-          Serial.printf("[MAN] %s override DIBATAL (keselamatan)\n", PUMP_NAME[p]);
-          relayWrite(p, false);
-          manualEnd(p, true);
-          continue;
-        }
-      }
+      /* Hak penuh operator: manual ON selalu dieksekusi di kondisi
+         apa pun; pengaman = durasi terbatas (otomatis kembali).        */
       relayWrite(p, true);
     } else {
       relayWrite(p, false);                   // paksa OFF selama override
@@ -1122,6 +1116,16 @@ bool msgIdIsNew(const char* id) {
 
 time_t mqttTs() { return systemTimeValid() ? time(nullptr) : 0; }
 
+/* Konversi nilai JSON toleran: angka, atau string "5,5"/"800".        */
+float jsonToFloat(JsonVariant v) {
+  if (v.isNull()) return NAN;
+  if (v.is<float>() || v.is<int>()) return v.as<float>();
+  const char* s = v.as<const char*>();
+  if (!s || !*s) return NAN;
+  String t(s); t.replace(',', '.');
+  return t.toFloat();
+}
+
 void mqttPublishDeviceStatus(bool online) {
   char payload[160];
   if (online) {
@@ -1148,7 +1152,7 @@ void mqttAck(const char* msgId, const char* cmdTopic, bool ok, const char* note)
 /* Terapkan konfigurasi ambang/jadwal dari cmd topic; true bila valid.   */
 bool applyConfigCmd(const String& type, JsonDocument& doc) {
   if (type == "ph" || type == "ppm") {
-    float mn = doc["min"] | NAN, mx = doc["max"] | NAN;
+    float mn = jsonToFloat(doc["min"]), mx = jsonToFloat(doc["max"]);
     float lo = 0.f, hi = (type == "ph") ? 14.f : 5000.f;
     if (isnan(mn) || isnan(mx) || mn < lo || mx > hi || mn > mx) return false;
     if (type == "ph") { cfg.phMin = mn; cfg.phMax = mx; }
@@ -1593,7 +1597,9 @@ bool dithDue(time_t& slotOut) {
    juga diadopsi otomatis dari server (last_completed_at) bila lebih baru:
    inilah ketahanan pasca-restart/NVS-hilang yang diminta spesifikasi.  */
 void controlDithane() {
-  if (manDithSpraying) return;               // spray manual sedang berjalan
+  /* Override manual aktif utk Dithane (ON/OFF) -> siklus terjadwal
+     menunda diri sampai override berakhir (hak penuh operator).        */
+  if (manDithSpraying || manualActive(PUMP_DITHANE)) return;
   switch (dithState) {
     case DITH_IDLE: {
       if (safeMode || !dithArmed() || !configFresh()) return;
@@ -1749,52 +1755,58 @@ void setupLCD() {
   }
   lcdPtr->backlight();
   lcdPtr->clear();
-  lcdLine(0, "HYDROTECH SYSTEM");
-  lcdLine(1, "Booting ...");
-  Serial.println("[LCD] 20x4 I2C siap (auto-locate hd44780)");
+  lcdLine(0, "Web:Terputus");
+  lcdLine(1, "pH:-- PPM:--");
+  Serial.println("[LCD] I2C siap (auto-locate hd44780)");
 }
 
 void updateLCD() {
   if (!lcdPtr) return;
 
-  uint32_t now = millis();
-  if (now - lcdPage0 >= LCD_PAGE_MS) { lcdPage0 = now; lcdPage++; }
-  if (now - lcdDraw0 < 250) return;
-  lcdDraw0 = now;
-  char a[24], b[24], c[24], d[24];
-  switch (lcdPage % 3) {
-    case 0:
-      if (phValid) snprintf(a, sizeof(a), "pH  : %.2f", phValue);
-      else         snprintf(a, sizeof(a), "pH  : ERR");
-      if (ppmValid) snprintf(b, sizeof(b), "PPM : %.0f", ppmValue);
-      else          snprintf(b, sizeof(b), "PPM : ERR");
-      snprintf(c, sizeof(c), "WiFi: %s",
-               wifiState == WIFI_OK ? "ONLINE" : (wifiState == WIFI_CONNECTING ? "..." : "DOWN"));
-      lcdLine(0, "HYDROTECH SYSTEM");
-      lcdLine(1, a);
-      lcdLine(2, b);
-      lcdLine(3, c);
-      break;
-    case 1:
-      snprintf(a, sizeof(a), "AB-Mix : %s", relayIsOn(PUMP_AB)      ? "AKTIF" : "OFF");
-      snprintf(b, sizeof(b), "pH-Adj: %s", relayIsOn(PUMP_PHDOWN) ? "AKTIF" : "OFF");
-      snprintf(c, sizeof(c), "Dithane: %s", sprayActive()           ? "AKTIF" : "OFF");
-      snprintf(d, sizeof(d), "Sirk   : %s", relayIsOn(PUMP_CIRC)    ? "AKTIF" : "OFF");
-      lcdLine(0, "STATUS POMPA");
-      lcdLine(1, a); lcdLine(2, b); lcdLine(3, c);
-      break;
-    case 2: {
-      const char* sync = safeMode ? "SAFE-MODE!"
-                        : (configFresh() ? "SYNC"
-                        : (cfg.valid ? "STALE" : "BELUM"));
-      snprintf(a, sizeof(a), "Server : %s", sync);
-      snprintf(b, sizeof(b), "Sensor : %s", (phValid || ppmValid) ? "OK" : "ERR");
-      snprintf(c, sizeof(c), "Dith   : %s", dithArmed() ? "ARMED" : "DISARM");
-      struct tm t = localTm();
-      snprintf(d, sizeof(d), "Jam    : %02d:%02d WIB", t.tm_hour, t.tm_min);
-      lcdLine(0, "SYNC & KEAMANAN");
-      lcdLine(1, a); lcdLine(2, b); lcdLine(3, c);
-      break;
+  /* Status koneksi WEB = hasil komunikasi NYATA dengan server:
+     WiFi OK + MQTT terhubung (bukan sekadar koneksi WiFi).          */
+  bool webOk = (wifiState == WIFI_OK) && mqtt.connected();
+
+  /* L0 (baris 1): status Web HydroTech.                              */
+  char l0[LCD_COLS + 1];
+  snprintf(l0, sizeof(l0), "Web:%s", webOk ? "Terhubung" : "Terputus");
+
+  /* L1 (baris 2): pH + PPM realtime; pada modul 2 baris, Dithane
+     dirotasi bergantian tiap 2 dtk (batas fisik 16 kolom).            */
+  char l1[LCD_COLS + 1];
+  bool phOk = phValid, ppmOk = ppmValid;
+  if (phOk && ppmOk)
+    snprintf(l1, sizeof(l1), "pH:%.1f PPM:%ld", phValue, (long)roundf(ppmValue));
+  else if (phOk)
+    snprintf(l1, sizeof(l1), "pH:%.1f PPM:--", phValue);
+  else if (ppmOk)
+    snprintf(l1, sizeof(l1), "pH:-- PPM:%ld", (long)roundf(ppmValue));
+  else
+    snprintf(l1, sizeof(l1), "pH:-- PPM:--");
+
+  /* Dithane: status pompa sesungguhnya (manual atau otomatis).        */
+  bool dithOn = manDithSpraying || relayIsOn(PUMP_DITHANE);
+
+  lcdLine(0, l0);
+
+  if (LCD_ROWS >= 4) {
+    /* Modul 20x4: semua informasi tampil sekaligus.                   */
+    char l2[LCD_COLS + 1];
+    snprintf(l2, sizeof(l2), "PPM : %s", ppmOk ? String((long)roundf(ppmValue), DEC).c_str() : "--");
+    char l3[LCD_COLS + 1];
+    snprintf(l3, sizeof(l3), "Dithane : %s", dithOn ? "Menyala" : "Mati");
+    lcdLine(1, l1);
+    lcdLine(2, l2);
+    lcdLine(3, l3);
+  } else {
+    /* Modul 16x2: baris 2 dirotasi tiap 2 dtk (sensor <-> Dithane).   */
+    bool faseDithane = ((millis() / 2000) % 2) == 1;
+    if (faseDithane) {
+      char l1b[LCD_COLS + 1];
+      snprintf(l1b, sizeof(l1b), "Dithane : %s", dithOn ? "Menyala" : "Mati");
+      lcdLine(1, l1b);
+    } else {
+      lcdLine(1, l1);
     }
   }
 }
@@ -2040,16 +2052,15 @@ void loop() {
     requestConfigMqtt();
   }
 
-  if (!safeMode) {
-    applyManualOverrides();                   // override manual dijalankan dulu
-    controlDithane();
-    controlCirculation();
-    if (!manualActive(PUMP_AB)) controlABMix();
-    if (!manualActive(PUMP_PHDOWN)) controlPHDown();
-  } else {
-    stopAllPumps();
-    dosingOwner = PUMP_COUNT;
-  }
+  /* Urutan eksekusi kontrol:
+     - otomatisasi berjalan hanya bila pompa itu tidak di-override manual
+     - mode aman (sensor invalid) hanya mengunci OTOMATISASI;
+       perintah manual operator TETAP dieksekusi (hak penuh operator)   */
+  controlDithane();
+  controlCirculation();
+  if (!manualActive(PUMP_AB)) controlABMix();
+  if (!manualActive(PUMP_PHDOWN)) controlPHDown();
+  applyManualOverrides();     // manual dieksekusi TERAKHIR = selalu menang
 
 
   updateLED();
