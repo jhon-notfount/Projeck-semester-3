@@ -106,8 +106,8 @@ const uint8_t ADC_PPM_PIN = 35;    // AO sensor TDS (ADC1)
 const uint8_t LED_PIN     = 23;    // LED hijau: indikator sistem aktif
 /* LED indikator status (GPIO output aman; bebas dari pin strapping,
    sensor ADC 34/35, I2C 21/22, dan relay 16-19).                    */
-const uint8_t LED_PPM_PIN = 25;    // LED kuning: PPM di bawah ambang minimum
-const uint8_t LED_PH_PIN  = 26;    // LED merah : pH di bawah ambang minimum
+const uint8_t LED_PPM_PIN = 32;    // LED kuning: PPM di bawah ambang minimum
+const uint8_t LED_PH_PIN  = 33;    // LED merah : pH di bawah ambang minimum
 const int     I2C_SDA     = 21;
 const int     I2C_SCL     = 22;
 const uint8_t LCD_ADDR_CAND[2] = { 0x27, 0x3F };  // alamat umum LCD 20x4
