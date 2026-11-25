@@ -4,6 +4,13 @@
      Semua filter dieksekusi di DATABASE (api/history/list.php); halaman
      hanya merender hasilnya. Pagination tetap di sisi klien. */
   const rowsPerPage = 5;
+
+  /* CSRF TOKEN: dari meta tag halaman (dipakai semua POST).            */
+  function token() {
+    if (window.HydrotechCsrf?.token) return window.HydrotechCsrf.token();
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute("content") : "";
+  }
   const table = document.querySelector(".history-table");
   if (!table) return;
   const tableBody = table.querySelector("tbody");
@@ -13,8 +20,86 @@
   const monthFilter = document.querySelector("[data-history-month]");
   const yearFilter = document.querySelector("[data-history-year]");
   const statusFilter = document.querySelector("[data-history-status]");
-  const timeFromInput = document.querySelector("[data-history-time-from]");
-  const timeToInput = document.querySelector("[data-history-time-to]");
+  const timeRangeBtn = document.querySelector("[data-history-time-range]");
+  const timePopup = document.querySelector("[data-history-time-popup]");
+  const fromJamSel = popupQuery("[data-history-time-from-jam]");
+  const fromMenitSel = popupQuery("[data-history-time-from-menit]");
+  const toJamSel = popupQuery("[data-history-time-to-jam]");
+  const toMenitSel = popupQuery("[data-history-time-to-menit]");
+  function popupQuery(sel) {
+    return document.querySelector(sel);
+  }
+  /* Rentang yang SUDAH diterapkan (dipakai fetch & PDF).             */
+  let appliedFrom = "";
+  let appliedTo = "";
+  function timeRangeValues() {
+    return { from: appliedFrom, to: appliedTo };
+  }
+
+  /* DROPDOWN KUSTOM: membuka KE BAWAH, daftar putih terbatas 5 baris
+     (sisanya scroll), tertutup saat memilih/klik luar.                 */
+  function transformTimeDropdowns() {
+    [fromJamSel, fromMenitSel, toJamSel, toMenitSel].forEach((sel) => {
+      if (!sel || sel.dataset.hyddReady) return;
+      sel.dataset.hyddReady = "1";
+      sel.style.display = "none";
+
+      const wrap = document.createElement("div");
+      wrap.className = "hyd-dd";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "hyd-dd-btn";
+      btn.textContent = sel.value || "--";
+      const list = document.createElement("div");
+      list.className = "hyd-dd-list";
+
+      function markSelected() {
+        list.querySelectorAll(".hyd-dd-item").forEach((item) => {
+          item.classList.toggle("sel", item.dataset.value === sel.value);
+        });
+      }
+      Array.from(sel.options).forEach((o) => {
+        const item = document.createElement("div");
+        item.className = "hyd-dd-item" + (o.value === sel.value ? " sel" : "");
+        item.dataset.value = o.value;
+        item.textContent = o.textContent;
+        item.addEventListener("click", function (event) {
+          event.stopPropagation();
+          sel.value = o.value;
+          btn.textContent = o.value === "" ? "--" : o.value;
+          markSelected();
+          list.classList.remove("open");
+          sel.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+        list.appendChild(item);
+      });
+      btn.addEventListener("click", function (event) {
+        event.stopPropagation();
+        document.querySelectorAll(".hyd-dd-list.open").forEach((l) => {
+          if (l !== list) l.classList.remove("open");
+        });
+        markSelected();
+        list.classList.toggle("open");
+      });
+      wrap.appendChild(btn);
+      wrap.appendChild(list);
+      sel.parentNode.insertBefore(wrap, sel);
+    });
+    if (!window.__hyddOutsideBound) {
+      window.__hyddOutsideBound = true;
+      document.addEventListener("click", function () {
+        document.querySelectorAll(".hyd-dd-list.open").forEach((l) => l.classList.remove("open"));
+      });
+    }
+  }
+  function updateTimeLabel() {
+    const label = document.querySelector("[data-history-time-label]");
+    if (!label) return;
+    const fmt = (v) => (v ? v.replace(":", ".") : "--");
+    label.textContent = appliedFrom || appliedTo
+      ? `Pukul: ${fmt(appliedFrom)} – ${fmt(appliedTo)}`
+      : "Pukul: --";
+  }
   const resetButton = document.querySelector("[data-history-reset]");
   const exportButton = document.querySelector("[data-history-export]");
   const showing = document.querySelector("[data-history-showing]");
@@ -22,6 +107,87 @@
   const emptyState = document.querySelector("[data-history-empty]");
   let currentPage = 1;
   let historyRows = [];          // dataset hasil filter terkini (dari database)
+
+  /* ISI DROPDOWN DALAM PANEL: Jam 00-23, Menit 00-59 (24 jam).        */
+  function populateTimeSelects() {
+    const pad = (n) => String(n).padStart(2, "0");
+    [fromJamSel, toJamSel].forEach((sel) => {
+      if (!sel || sel.options.length > 1) return;
+      for (let h = 0; h < 24; h++) {
+        const o = document.createElement("option");
+        o.value = pad(h); o.textContent = pad(h);
+        sel.appendChild(o);
+      }
+    });
+    [fromMenitSel, toMenitSel].forEach((sel) => {
+      if (!sel || sel.options.length > 1) return;
+      for (let m = 0; m < 60; m++) {
+        const o = document.createElement("option");
+        o.value = pad(m); o.textContent = pad(m);
+        sel.appendChild(o);
+      }
+    });
+  }
+  function timeRangeValues() {
+    return { from: appliedFrom, to: appliedTo };
+  }
+
+  /* DROPDOWN KUSTOM: membuka KE BAWAH, daftar putih terbatas 5 baris
+     (sisanya scroll), tertutup saat memilih/klik luar.                 */
+  function transformTimeDropdowns() {
+    [fromJamSel, fromMenitSel, toJamSel, toMenitSel].forEach((sel) => {
+      if (!sel || sel.dataset.hyddReady) return;
+      sel.dataset.hyddReady = "1";
+      sel.style.display = "none";
+
+      const wrap = document.createElement("div");
+      wrap.className = "hyd-dd";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "hyd-dd-btn";
+      btn.textContent = sel.value || "--";
+      const list = document.createElement("div");
+      list.className = "hyd-dd-list";
+
+      function markSelected() {
+        list.querySelectorAll(".hyd-dd-item").forEach((item) => {
+          item.classList.toggle("sel", item.dataset.value === sel.value);
+        });
+      }
+      Array.from(sel.options).forEach((o) => {
+        const item = document.createElement("div");
+        item.className = "hyd-dd-item" + (o.value === sel.value ? " sel" : "");
+        item.dataset.value = o.value;
+        item.textContent = o.textContent;
+        item.addEventListener("click", function (event) {
+          event.stopPropagation();
+          sel.value = o.value;
+          btn.textContent = o.value === "" ? "--" : o.value;
+          markSelected();
+          list.classList.remove("open");
+          sel.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+        list.appendChild(item);
+      });
+      btn.addEventListener("click", function (event) {
+        event.stopPropagation();
+        document.querySelectorAll(".hyd-dd-list.open").forEach((l) => {
+          if (l !== list) l.classList.remove("open");
+        });
+        markSelected();
+        list.classList.toggle("open");
+      });
+      wrap.appendChild(btn);
+      wrap.appendChild(list);
+      sel.parentNode.insertBefore(wrap, sel);
+    });
+    if (!window.__hyddOutsideBound) {
+      window.__hyddOutsideBound = true;
+      document.addEventListener("click", function () {
+        document.querySelectorAll(".hyd-dd-list.open").forEach((l) => l.classList.remove("open"));
+      });
+    }
+  }
 
   const monthNames = [
     "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -63,8 +229,9 @@
     if (monthFilter?.value) params.set("month", monthFilter.value);
     if (yearFilter?.value) params.set("year", yearFilter.value);
     if (statusFilter?.value) params.set("status", statusFilter.value);
-    if (timeFromInput?.value) params.set("time_from", timeFromInput.value);
-    if (timeToInput?.value) params.set("time_to", timeToInput.value);
+    const tr = timeRangeValues();
+    if (tr.from) params.set("time_from", tr.from);
+    if (tr.to) params.set("time_to", tr.to);
     try {
       const response = await fetch(`../api/history/list.php?${params.toString()}`, { cache: "no-store" });
       const result = await response.json();
@@ -195,8 +362,9 @@
     if (monthFilter) monthFilter.value = "";
     if (yearFilter) yearFilter.value = "";
     if (statusFilter) statusFilter.value = "";
-    if (timeFromInput) timeFromInput.value = "";
-    if (timeToInput) timeToInput.value = "";
+    appliedFrom = ""; appliedTo = "";
+    [fromJamSel, fromMenitSel, toJamSel, toMenitSel].forEach((sel) => { if (sel) sel.value = ""; });
+    updateTimeLabel();
     currentPage = 1;
     fetchRows();
   }
@@ -260,165 +428,214 @@
       const d = normalize(dayFilter.value);
       parts.push("hari " + d.charAt(0).toUpperCase() + d.slice(1));
     }
-    if (timeFromInput?.value || timeToInput?.value) {
-      parts.push(`jam ${timeFromInput?.value || "00.00"} - ${timeToInput?.value || "23.59"}`);
+    const trDesc = timeRangeValues();
+    if (trDesc.from || trDesc.to) {
+      const f = (v) => (v ? v.replace(":", ".") : "00.00");
+      parts.push(`jam ${f(trDesc.from)} - ${f(trDesc.to)}`);
     }
     if (statusFilter?.value) parts.push(`status ${statusFilter.value}`);
     return parts.length ? parts.join(", ") : "semua data";
   }
 
-  /* PDF DATA HELPERS: membungkus teks, membaca status, dan membuat detail tabel bulanan. */
+  /* =====================================================================
+     LAPORAN PDF — desain "Professional IoT Monitoring Report"
+     - Page 1 (portrait) : ringkasan, kartu statistik, donut komposisi,
+                           kesimpulan & rekomendasi.
+     - Page 2 (landscape): grafik monitoring pH & PPM — konfigurasi
+                           SAMA dengan grafik web (Chart.js, warna, skala).
+     - Page 3 (portrait) : ringkasan aktivitas pompa (data nyata).
+     - Page 4+ (portrait): tabel lengkap riwayat (header berulang).
+     - Footer semua halaman: identitas + nomor halaman + waktu cetak.
+     ===================================================================== */
+  let phAxis = { min: 5, max: 7 };
+  let ppmAxis = { min: 750, max: 1050 };
+  const PDF_C = {
+    greenDark: [20, 83, 45], green: [22, 163, 74], greenInk: [14, 138, 68],
+    border: [220, 235, 224], text: [46, 74, 58], muted: [125, 143, 131],
+    normal: [22, 163, 74], warn: [217, 119, 6], danger: [220, 38, 38],
+    ph: [255, 119, 119], ppm: [7, 166, 79],
+  };
+  const STATUS_COLOR = { Normal: PDF_C.normal, Perhatian: PDF_C.warn, "Tidak Normal": PDF_C.danger };
+
   function addWrappedText(doc, text, x, y, maxWidth, lineHeight) {
     const lines = doc.splitTextToSize(text, maxWidth);
     doc.text(lines, x, y);
     return y + lines.length * lineHeight;
   }
 
-  /* PDF STYLE: membuat kotak metrik dan footer di setiap halaman laporan. */
-  function drawMetricBox(doc, x, y, width, title, value, note, color) {
-    doc.setDrawColor(222, 234, 226);
-    doc.setFillColor(248, 252, 250);
-    doc.roundedRect(x, y, width, 24, 3, 3, "FD");
-    doc.setTextColor(...color);
+  function drawSectionTitle(doc, text, x, y) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
-    doc.text(String(value), x + 5, y + 10);
-    doc.setTextColor(85, 105, 92);
-    doc.setFontSize(7.5);
-    doc.text(title, x + 5, y + 16);
-    doc.setTextColor(118, 133, 123);
+    doc.setTextColor(...PDF_C.greenDark);
+    doc.text(text, x, y);
+    doc.setDrawColor(...PDF_C.border);
+    doc.setLineWidth(0.4);
+    doc.line(x, y + 2.4, doc.internal.pageSize.getWidth() - 14, y + 2.4);
     doc.setFont("helvetica", "normal");
-    doc.text(note, x + 5, y + 21);
+    return y + 7;
   }
 
-  function addReportFooters(doc, monthName, margin, reportYear) {
-    const pageCount = doc.internal.getNumberOfPages();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    for (let page = 1; page <= pageCount; page++) {
-      doc.setPage(page);
-      doc.setDrawColor(224, 235, 229);
-      doc.line(margin, pageHeight - 12, doc.internal.pageSize.getWidth() - margin, pageHeight - 12);
+  function drawStatCard(doc, x, y, w, h, title, value, note, rgb) {
+    doc.setFillColor(248, 252, 250);
+    doc.setDrawColor(...PDF_C.border);
+    doc.roundedRect(x, y, w, h, 3, 3, "FD");
+    doc.setFillColor(...rgb);
+    doc.roundedRect(x + 4, y + 4, 2.6, h - 8, 1.2, 1.2, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...PDF_C.muted);
+    doc.text(title, x + 10, y + 8);
+    doc.setFontSize(17);
+    doc.setTextColor(...rgb);
+    doc.text(String(value), x + 10, y + 16.5);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...PDF_C.muted);
+    doc.text(note, x + 10, y + h - 4);
+  }
+
+  function addFootersAllPages(doc, subtitle) {
+    const total = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= total; p++) {
+      doc.setPage(p);
+      const w = doc.internal.pageSize.getWidth();
+      const h = doc.internal.pageSize.getHeight();
+      doc.setDrawColor(...PDF_C.border);
+      doc.setLineWidth(0.3);
+      doc.line(14, h - 12, w - 14, h - 12);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
-      doc.setTextColor(110, 124, 112);
-      doc.text(`Hydrotech | Laporan ${monthName} ${reportYear}`, margin, pageHeight - 7);
-      doc.text(`Halaman ${page} dari ${pageCount}`, doc.internal.pageSize.getWidth() - margin, pageHeight - 7, {
-        align: "right",
-      });
+      doc.setTextColor(...PDF_C.muted);
+      doc.text("HydroTech · Laporan Data Aktivitas Sistem", 14, h - 7);
+      doc.text(subtitle, w / 2, h - 7, { align: "center" });
+      doc.text(`Halaman ${p} dari ${total}`, w - 14, h - 7, { align: "right" });
     }
   }
 
-  /* CHART IMAGE: membuat gambar grafik sementara untuk dimasukkan ke PDF. */
-  async function createMonthlyChartImage(trends, monthName, reportYear) {
+  /* GRAFIK KOMPOSISI STATUS: doughnut Chart.js — warna sesuai status.  */
+  async function createStatusDonutImage(counts) {
     if (typeof Chart === "undefined") return null;
-
+    const entries = ["Normal", "Perhatian", "Tidak Normal"]
+      .map((k) => [k, counts[k] || 0]);
+    if (!entries.some(([, v]) => v > 0)) return null;
     const canvas = document.createElement("canvas");
-    canvas.width = 1400;
-    canvas.height = 620;
-    canvas.style.position = "fixed";
-    canvas.style.left = "-9999px";
-    canvas.style.top = "0";
+    canvas.width = 560; canvas.height = 400;
+    canvas.style.position = "fixed"; canvas.style.left = "-9999px";
     document.body.appendChild(canvas);
+    const chart = new Chart(canvas, {
+      type: "doughnut",
+      data: {
+        labels: entries.map(([k]) => k),
+        datasets: [{
+          data: entries.map(([, v]) => v),
+          backgroundColor: entries.map(([k]) =>
+            k === "Normal" ? "#16a34a" : k === "Perhatian" ? "#f59e0b" : "#dc2626"),
+          borderColor: "#ffffff", borderWidth: 3,
+        }],
+      },
+      options: {
+        responsive: false, animation: false, cutout: "58%",
+        plugins: {
+          legend: { position: "bottom", labels: { color: "#2e4a3a", font: { size: 15, weight: "bold" }, padding: 16, usePointStyle: true, pointStyle: "rectRounded" } },
+        },
+      },
+    });
+    await new Promise((r) => requestAnimationFrame(r));
+    const img = canvas.toDataURL("image/png", 1);
+    chart.destroy(); canvas.remove();
+    return img;
+  }
 
+  /* GRAFIK TREND: konfigurasi & identitas visual SAMA dengan grafik web
+     (Chart.js — warna pH/PPM, gradient area, dua sumbu, grid putus-putus),
+     canvas berukuran sesuai area cetak agar utuh & tajam.               */
+  async function createTrendChartImage(trends, monthName, reportYear, chartW, chartH) {
+    if (typeof Chart === "undefined" || !trends.length) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = chartW; canvas.height = chartH;
+    canvas.style.position = "fixed"; canvas.style.left = "-9999px"; canvas.style.top = "0";
+    document.body.appendChild(canvas);
+    if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
     const context = canvas.getContext("2d");
     const whiteBackground = {
       id: "whiteBackground",
       beforeDraw(chart) {
-        const chartContext = chart.canvas.getContext("2d");
-        chartContext.save();
-        chartContext.globalCompositeOperation = "destination-over";
-        chartContext.fillStyle = "#ffffff";
-        chartContext.fillRect(0, 0, chart.width, chart.height);
-        chartContext.restore();
+        const ctx = chart.canvas.getContext("2d");
+        ctx.save(); ctx.globalCompositeOperation = "destination-over";
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, chart.width, chart.height); ctx.restore();
       },
     };
-
     const chart = new Chart(canvas, {
       type: "line",
       data: {
-        labels: trends.map((item) => item.date.split(" ").slice(0, 2).join(" ")),
+        labels: trends.map((item) => `${item.day}, ${item.date} ${item.time}`),
         datasets: [
           {
-            label: "pH",
-            data: trends.map((item) => item.ph),
-            yAxisID: "yPh",
+            label: "pH", data: trends.map((item) => item.ph), yAxisID: "yPh",
             borderColor: "#ff7777",
-            backgroundColor: "rgba(255, 119, 119, 0.12)",
-            borderWidth: 4,
-            pointRadius: 3,
-            pointBackgroundColor: "#ffffff",
-            pointBorderColor: "#ff7777",
-            pointBorderWidth: 2,
-            tension: 0.38,
-            fill: true,
+            backgroundColor: makeHistoryGradient(context, "rgb(255, 119, 119)"),
+            borderWidth: 4, pointRadius: 4, pointHoverRadius: 7,
+            pointBackgroundColor: "#ffffff", pointBorderColor: "#ff7777", pointBorderWidth: 3,
+            tension: 0.42, fill: true, spanGaps: true,
           },
           {
-            label: "PPM",
-            data: trends.map((item) => item.ppm),
-            yAxisID: "yPpm",
+            label: "PPM", data: trends.map((item) => item.ppm), yAxisID: "yPpm",
             borderColor: "#07a64f",
-            backgroundColor: "rgba(7, 166, 79, 0.1)",
-            borderWidth: 4,
-            pointRadius: 3,
-            pointBackgroundColor: "#ffffff",
-            pointBorderColor: "#07a64f",
-            pointBorderWidth: 2,
-            tension: 0.38,
-            fill: true,
+            backgroundColor: makeHistoryGradient(context, "rgb(7, 166, 79)"),
+            borderWidth: 4, pointRadius: 4, pointHoverRadius: 7,
+            pointBackgroundColor: "#ffffff", pointBorderColor: "#07a64f", pointBorderWidth: 3,
+            tension: 0.42, fill: true, spanGaps: true,
           },
         ],
       },
       plugins: [whiteBackground],
       options: {
-        responsive: false,
-        animation: false,
-        layout: { padding: { top: 24, right: 28, bottom: 8, left: 12 } },
+        responsive: false, animation: false, maintainAspectRatio: false,
+        layout: { padding: { top: 16, right: 16, bottom: 4, left: 10 } },
+        interaction: { intersect: false, mode: "index" },
         plugins: {
-          title: {
-            display: true,
-            text: `Grafik Tren Harian pH dan PPM - ${monthName} ${reportYear}`,
-            color: "#203428",
-            font: { size: 22, weight: "bold" },
-            padding: { bottom: 18 },
-          },
           legend: {
-            labels: { color: "#203428", font: { size: 14, weight: "bold" } },
+            display: true, position: "top", align: "end",
+            labels: { color: "#203428", font: { size: 15, weight: "bold" }, usePointStyle: true, pointStyle: "circle", padding: 14 },
+          },
+          tooltip: {
+            backgroundColor: "rgba(255,255,255,0.96)", titleColor: "#203428",
+            bodyColor: "#203428", borderColor: "#dfe8e2", borderWidth: 1, padding: 10,
+            callbacks: { label: (c) => `${c.dataset.label}: ${c.parsed.y}${c.dataset.label === "PPM" ? " PPM" : ""}` },
           },
         },
         scales: {
-          x: {
-            ticks: { color: "#68786d", maxRotation: 0, autoSkip: true, maxTicksLimit: 12 },
-            grid: { display: false },
-          },
-          yPh: {
-            position: "left",
-            min: 4.8,
-            max: 7.5,
-            title: { display: true, text: "pH", color: "#d95f5f" },
-            ticks: { color: "#d95f5f" },
-            grid: { color: "rgba(111, 134, 120, 0.12)" },
-          },
-          yPpm: {
-            position: "right",
-            min: 760,
-            max: 1030,
-            title: { display: true, text: "PPM", color: "#078d43" },
-            ticks: { color: "#078d43" },
-            grid: { drawOnChartArea: false },
-          },
+          x: { ticks: { color: "#6b7c70", font: { size: 12, weight: "700" }, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 }, grid: { display: false } },
+          yPh: { position: "left", min: phAxis.min, max: phAxis.max, title: { display: true, text: "pH", color: "#d95f5f", font: { size: 13, weight: "900" } }, ticks: { color: "#d95f5f", font: { size: 12 } }, grid: { color: "rgba(111,134,120,0.14)", borderDash: [4, 8] } },
+          yPpm: { position: "right", min: ppmAxis.min, max: ppmAxis.max, title: { display: true, text: "PPM", color: "#078d43", font: { size: 13, weight: "900" } }, ticks: { color: "#078d43", font: { size: 12 } }, grid: { drawOnChartArea: false } },
         },
       },
     });
-
-    await new Promise((resolve) => requestAnimationFrame(resolve));
+    await new Promise((r) => requestAnimationFrame(r));
+    await new Promise((r) => requestAnimationFrame(r));
     const image = canvas.toDataURL("image/png", 1);
-    chart.destroy();
-    canvas.remove();
+    chart.destroy(); canvas.remove();
     return image;
   }
 
-  /* PDF EXPORT: menyusun laporan bulanan lengkap berisi ringkasan, grafik, tabel, dan kesimpulan. */
+  /* RINGKASAN AKTIVITAS POMPA: data nyata (log Dithane) sesuai filter.  */
+  async function fetchPumpActivity() {
+    const params = new URLSearchParams();
+    if (searchInput?.value.trim()) params.set("search", searchInput.value.trim());
+    if (dayFilter?.value) params.set("day", dayFilter.value);
+    if (monthFilter?.value) params.set("month", monthFilter.value);
+    if (yearFilter?.value) params.set("year", yearFilter.value);
+    const tr = timeRangeValues();
+    if (tr.from) params.set("time_from", tr.from);
+    if (tr.to) params.set("time_to", tr.to);
+    params.set("type", "dithane");
+    const response = await fetch(`../api/history/list.php?${params.toString()}`, { cache: "no-store" });
+    const result = await response.json();
+    return result.success && Array.isArray(result.data?.rows) ? result.data.rows : [];
+  }
+
   async function exportHistoryPdf() {
+    console.log("[PDF] mulai menyusun laporan...");
     const jsPdf = window.jspdf?.jsPDF;
     if (!jsPdf) {
       alert("Generator PDF belum berhasil dimuat. Pastikan koneksi internet aktif lalu coba lagi.");
@@ -431,183 +648,212 @@
       return;
     }
 
-    /* EKSPOR MENGIKUTI FILTER AKTIF: dataset = hasil filter database. */
     const rows = historyRows;
     const filterText = getFilterDescription();
-
-    /* Bulan tren untuk grafik = bulan catatan terbaru pada filter aktif. */
-    const newest = rows[0];
-    const newestDate = new Date(String(newest.created_at || "").replace(" ", "T"));
-    const trendMonth = Number.isFinite(newestDate.getMonth()) && newest.created_at
-      ? newestDate.getMonth()
-      : new Date().getMonth();
-    const trendYear = newest.created_at ? newestDate.getFullYear() : new Date().getFullYear();
-    const monthName = monthNames[trendMonth];
-
-    const trends = await fetchMonthlyTrend(trendMonth);
-    const averagePh = getAverage(trends, "ph", 1);
-    const averagePpm = getAverage(trends, "ppm", 0);
-    const phRange = getAxisRange(trends, "ph", 0, 0.1, { min: 5, max: 7 });
-    const ppmRange = getAxisRange(trends, "ppm", 0, 1, { min: 750, max: 1050 });
     const statusCounts = countBy(rows, "status");
     const recommendations = getFilteredRecommendation(rows);
     const dominantStatus = Object.entries(statusCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "-";
 
-    /* Rata-rata nilai sensor dari baris kesimpulan terfilter (kolom baru). */
     const phValues = rows.map((r) => Number(r.ph_value)).filter(Number.isFinite);
     const ppmValues = rows.map((r) => Number(r.ppm_value)).filter(Number.isFinite);
     const avgPhFiltered = phValues.length ? (phValues.reduce((s, v) => s + v, 0) / phValues.length).toFixed(2) : "-";
     const avgPpmFiltered = ppmValues.length ? Math.round(ppmValues.reduce((s, v) => s + v, 0) / ppmValues.length) : "-";
 
-    const chartImage = await createMonthlyChartImage(trends, monthName, trendYear);
-    const doc = new jsPdf({ orientation: "landscape", unit: "mm", format: "a4" });
+    /* Tren: bulan catatan terbaru pada filter aktif (data sensor asli). */
+    const newest = rows[0];
+    const newestDate = new Date(String(newest.created_at || "").replace(" ", "T"));
+    const trendMonth = newest.created_at && Number.isFinite(newestDate.getMonth()) ? newestDate.getMonth() : new Date().getMonth();
+    const trendYear = newest.created_at ? newestDate.getFullYear() : new Date().getFullYear();
+    const monthName = monthNames[trendMonth];
+    const trends = await fetchMonthlyTrend(trendMonth);
+    const averagePh = getAverage(trends, "ph", 1);
+    const averagePpm = getAverage(trends, "ppm", 0);
+    phAxis = getAxisRange(trends, "ph", 0.18, 0.1, { min: 5, max: 7 });
+    ppmAxis = getAxisRange(trends, "ppm", 28, 25, { min: 750, max: 1050 });
+
+    if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
+    const trendImage = await createTrendChartImage(trends, monthName, trendYear, 1680, 640);
+    const donutImage = await createStatusDonutImage(statusCounts);
+    const dithRows = await fetchPumpActivity();
+
+    /* P1 PORTRAIT: ringkasan + kartu statistik + donut + kesimpulan.     */
+    const doc = new jsPdf({ orientation: "portrait", unit: "mm", format: "a4" });
     if (typeof doc.autoTable !== "function") {
       alert("Plugin tabel PDF belum berhasil dimuat. Pastikan koneksi internet aktif lalu coba lagi.");
       return;
     }
-
-    const pageWidth = doc.internal.pageSize.getWidth();
+    const PW = doc.internal.pageSize.getWidth();    // 210mm
+    const PH = doc.internal.pageSize.getHeight();   // 297mm
     const margin = 14;
-    const usableWidth = pageWidth - margin * 2;
+    const usable = PW - margin * 2;
 
-    doc.setProperties({
-      title: "Laporan Data Aktivitas Sistem Hydrotech",
-      subject: "Kesimpulan kondisi pH, PPM, dan Dithane",
-      author: "Hydrotech Dashboard Admin",
-    });
-
-    doc.setFillColor(7, 141, 67);
-    doc.rect(0, 0, pageWidth, 28, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
+    doc.setFillColor(...PDF_C.greenDark);
+    doc.rect(0, 0, PW, 30, "F");
+    doc.setFillColor(...PDF_C.green);
+    doc.roundedRect(PW - 26, 6, 20, 18, 3, 3, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(255, 255, 255);
+    doc.text("HT", PW - 16, 17.5, { align: "center" });
     doc.setFontSize(17);
-    doc.text("Laporan Data Aktivitas Sistem Hydrotech", margin, 13);
+    doc.text("Laporan Data Aktivitas Sistem", margin, 14);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    doc.text(`HydroTech Monitoring IoT  ·  Filter: ${filterText}`, margin, 21);
+    doc.text(`Dibuat: ${getGeneratedAtText()} WIB`, margin, 26);
+
+    doc.setTextColor(...PDF_C.greenDark);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(13);
+    doc.text("Ringkasan Statistik Utama", margin, 42);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.text(`Filter: ${filterText} | Dibuat: ${getGeneratedAtText()} WIB`, margin, 21);
 
-    doc.setTextColor(35, 52, 40);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.text("Ringkasan Untuk Pemilik", margin, 40);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    let y = addWrappedText(
-      doc,
-      `Laporan ini merupakan kesimpulan gabungan kondisi pH, PPM, dan Dithane sebagaimana tampil pada halaman Data Aktivitas Sistem, dengan filter aktif: ${filterText}. Setiap baris mewakili kondisi keseluruhan sistem pada satu waktu pencatatan.`,
-      margin,
-      47,
-      usableWidth,
-      5,
-    );
+    const cw = (usable - 12) / 3;
+    let cy = 47; const ch = 22;
+    drawStatCard(doc, margin, cy, cw, ch, "Total catatan aktivitas", rows.length, "kesimpulan sistem", PDF_C.greenDark);
+    drawStatCard(doc, margin + cw + 6, cy, cw, ch, "Rata-rata pH", avgPhFiltered, "dari nilai terfilter", [217, 95, 95]);
+    drawStatCard(doc, margin + (cw + 6) * 2, cy, cw, ch, "Rata-rata PPM", avgPpmFiltered, "dari nilai terfilter", [7, 141, 67]);
+    cy += ch + 6;
+    drawStatCard(doc, margin, cy, cw, ch, "Status dominan", dominantStatus, "berdasarkan filter", [22, 118, 164]);
+    drawStatCard(doc, margin + cw + 6, cy, cw, ch, "Kondisi Normal", statusCounts["Normal"] || 0, "kondisi tercatat", PDF_C.normal);
+    drawStatCard(doc, margin + (cw + 6) * 2, cy, cw, ch, "Kondisi Perhatian", statusCounts["Perhatian"] || 0, "kondisi tercatat", PDF_C.warn);
+    cy += ch + 6;
+    drawStatCard(doc, margin, cy, cw, ch, "Kondisi Tidak Normal", statusCounts["Tidak Normal"] || 0, "perlu penanganan segera", PDF_C.danger);
 
-    const metricY = y + 5;
-    const metricWidth = (usableWidth - 18) / 4;
-    drawMetricBox(doc, margin, metricY, metricWidth, "Catatan terfilter", rows.length, "kesimpulan sistem", [7, 141, 67]);
-    drawMetricBox(doc, margin + metricWidth + 6, metricY, metricWidth, "Rata-rata pH", avgPhFiltered, "dari nilai terfilter", [217, 95, 95]);
-    drawMetricBox(doc, margin + (metricWidth + 6) * 2, metricY, metricWidth, "Rata-rata PPM", avgPpmFiltered, "dari nilai terfilter", [7, 141, 67]);
-    drawMetricBox(doc, margin + (metricWidth + 6) * 3, metricY, metricWidth, "Status dominan", dominantStatus, "berdasarkan filter", [22, 118, 164]);
-    y = metricY + 30;
+    /* DONUT komposisi status (Chart.js — library grafik proyek).       */
+    if (donutImage) {
+      doc.addImage(donutImage, "PNG", PW - 14 - 62, cy - 2, 62, 44);
+    }
+    cy += ch + 10;
 
-    doc.autoTable({
-      startY: y,
-      theme: "grid",
-      pageBreak: "avoid",
-      rowPageBreak: "avoid",
-      styles: { fontSize: 7.3, cellPadding: 1.8, lineColor: [222, 234, 226] },
-      headStyles: { fillColor: [7, 141, 67], textColor: 255 },
-      head: [["Indikator", "Nilai / Penjelasan"]],
-      body: [
-        ["Total kesimpulan terfilter", `${rows.length} catatan`],
-        ["Komposisi status sistem", formatCounts(statusCounts)],
-        ["Rata-rata pH (terfilter)", `${avgPhFiltered} pH (acuan aman 5.5 - 6.5)`],
-        ["Rata-rata PPM (terfilter)", `${avgPpmFiltered} PPM (target 800 - 1000 PPM)`],
-        ["Rentang pH tren harian", `${phRange.min.toFixed(1)} - ${phRange.max.toFixed(1)} pH`],
-        ["Rentang PPM tren harian", `${ppmRange.min} - ${ppmRange.max} PPM`],
-      ],
-      margin: { left: margin, right: margin },
-      columnStyles: { 0: { cellWidth: 64 }, 1: { cellWidth: usableWidth - 64 } },
-    });
-
-    doc.addPage();
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.setTextColor(35, 52, 40);
-    doc.text("Analisis Kondisi & Rekomendasi", margin, 18);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    y = addWrappedText(
-      doc,
-      "Status Normal: pH dan PPM dalam rentang serta Dithane berjalan sesuai jadwal. Status Perhatian: salah satu parameter di luar rentang, data sensor tidak tersedia, atau Dithane melebihi jadwal. Status Tidak Normal: pH dan PPM sekaligus di luar rentang - perlu penanganan segera.",
-      margin,
-      26,
-      usableWidth,
-      4.5,
-    );
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text("Rekomendasi Tindakan", margin, y + 8);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    let ry = y + 15;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(13);
+    doc.setTextColor(...PDF_C.greenDark);
+    doc.text("Kesimpulan & Rekomendasi", margin, cy + 4);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+    let yy = cy + 12;
+    yy = addWrappedText(doc,
+      `Periode laporan: ${filterText}. Sistem mencatat ${rows.length} kesimpulan kondisi gabungan (pH + PPM + Dithane). Rata-rata pembacaan pada catatan terfilter: pH ${avgPhFiltered} (rentang pengaturan berlaku saat pencatatan), PPM ${avgPpmFiltered}. Status dominan: ${dominantStatus}.`,
+      margin, yy, usable, 5.2);
+    doc.setFontSize(10.5);
     recommendations.forEach((note, index) => {
-      ry = addWrappedText(doc, `${index + 1}. ${note}`, margin, ry, usableWidth, 4.5) + 1;
+      yy = addWrappedText(doc, `${index + 1}. ${note}`, margin, yy + 2, usable, 5.4) + 1;
     });
 
-    doc.addPage();
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.setTextColor(35, 52, 40);
-    doc.text(`Grafik Tren Harian - ${monthName} ${trendYear}`, margin, 18);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.text("Grafik pH dan PPM asli dari data sensor (bukan kesimpulan), bulan catatan terbaru pada filter aktif.", margin, 25);
-    if (chartImage) {
-      doc.addImage(chartImage, "PNG", margin, 33, usableWidth, 105);
+    /* P2 LANDSCAPE: GRAFIK — konfigurasi sama dengan grafik web.        */
+    doc.addPage("a4", "landscape");
+    const LW = doc.internal.pageSize.getWidth();
+    doc.setFillColor(...PDF_C.greenDark);
+    doc.rect(0, 0, LW, 22, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(255, 255, 255);
+    doc.text(`Grafik Monitoring pH dan PPM — ${monthName} ${trendYear}`, margin, 12);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    doc.text("Data asli sensor (rata-rata harian) · konfigurasi, warna, dan skala sama dengan grafik web", margin, 18);
+    doc.setTextColor(...PDF_C.text);
+
+    doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+    doc.setTextColor(...PDF_C.greenDark);
+    doc.text("Tren Harian pH dan PPM", margin, 34);
+    if (trendImage) {
+      doc.addImage(trendImage, "PNG", margin, 38, LW - margin * 2, (LW - margin * 2) * (640 / 1680));
     } else {
       doc.setTextColor(180, 70, 70);
-      doc.text("Grafik tidak dapat dimuat karena Chart.js belum tersedia saat PDF dibuat.", margin, 45);
-      doc.setTextColor(35, 52, 40);
+      doc.text("Grafik tidak dapat dimuat karena Chart.js belum tersedia saat PDF dibuat.", margin, 48);
+      doc.setTextColor(...PDF_C.text);
     }
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
+    doc.text(`Periode pengamatan: ${trends.length} hari · Rata-rata pH ${averagePh} · Rata-rata PPM ${averagePpm} PPM`, margin, doc.internal.pageSize.getHeight() - 20);
 
-    doc.addPage();
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.setTextColor(35, 52, 40);
-    doc.text("Data Aktivitas Sistem (Hasil Filter)", margin, 18);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.text("Tabel berisi kesimpulan gabungan yang sama dengan tabel halaman - mengikuti filter yang sedang digunakan.", margin, 25);
+    /* P3 PORTRAIT: RINGKASAN AKTIVITAS POMPA (data nyata jika ada).     */
+    doc.addPage("a4", "portrait");
+    doc.setFillColor(...PDF_C.greenDark);
+    doc.rect(0, 0, PW, 22, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(255, 255, 255);
+    doc.text("Ringkasan Aktivitas Pompa", margin, 12);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    doc.text("Dithane: penyemprotan terjadwal & manual yang tercatat pada filter aktif.", margin, 18);
+    doc.setTextColor(...PDF_C.text);
 
     doc.autoTable({
-      startY: 31,
+      startY: 28,
       theme: "striped",
-      styles: { fontSize: 7, cellPadding: 1.8, overflow: "linebreak" },
-      headStyles: { fillColor: [39, 93, 41], textColor: 255 },
-      head: [["No", "Hari", "Tanggal", "Jam", "Status Sistem", "Keterangan"]],
-      body: rows.map((row, index) => [
-        index + 1,
-        row.day_name || "-",
-        formatTanggalIndo(row.log_date),
-        (row.log_time || "-").slice(0, 5),
-        row.status || "-",
-        row.note || "-",
+      headStyles: { fillColor: [39, 93, 41], textColor: 255, fontSize: 9, halign: "center" },
+      styles: { fontSize: 9, cellPadding: 2.6, lineColor: [222, 234, 226], textColor: [46, 74, 58] },
+      alternateRowStyles: { fillColor: [246, 251, 248] },
+      head: [["No", "Hari", "Tanggal", "Jam", "Status", "Keterangan"]],
+      body: dithRows.map((row, index) => [
+        index + 1, row.day_name || "-", formatTanggalIndo(row.log_date),
+        (row.log_time || "-").slice(0, 5), row.status || "-", row.note || "-",
       ]),
       margin: { left: margin, right: margin },
+      columnStyles: { 0: { cellWidth: 12, halign: "center" }, 1: { cellWidth: 22 }, 2: { cellWidth: 34 }, 3: { cellWidth: 16, halign: "center" }, 4: { cellWidth: 22, halign: "center" } },
+    });
+    if (!dithRows.length) {
+      doc.setFont("helvetica", "italic"); doc.setFontSize(9.5);
+      doc.text("Tidak ada aktivitas pompa Dithane tercatat pada filter aktif.", margin, 40);
+      doc.setFont("helvetica", "normal");
+    }
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
+    doc.setTextColor(...PDF_C.muted);
+    doc.text("Catatan: aktivitas dosing pompa pH & PPM berjalan otomatis di perangkat (bertahap) dan tidak menghasilkan catatan per penyalaan.", margin, doc.internal.pageSize.getHeight() - 16);
+
+    /* P4+: PORTRAIT — TABEL LENGKAP RIWAYAT (font besar, berwarna).     */
+    doc.addPage("a4", "portrait");
+    doc.setFillColor(...PDF_C.greenDark);
+    doc.rect(0, 0, PW, 22, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(255, 255, 255);
+    doc.text("Tabel Lengkap Riwayat Aktivitas", margin, 12);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    doc.text(`Seluruh catatan sesuai filter aktif: ${filterText}`, margin, 18);
+    doc.setTextColor(...PDF_C.text);
+
+    doc.autoTable({
+      startY: 28,
+      theme: "striped",
+      headStyles: { fillColor: [7, 141, 67], textColor: 255, fontSize: 9.5, halign: "center" },
+      styles: { fontSize: 9, cellPadding: 2.8, lineColor: [222, 234, 226], lineWidth: 0.2, overflow: "linebreak", textColor: [46, 74, 58] },
+      alternateRowStyles: { fillColor: [246, 251, 248] },
+      head: [["No", "Hari", "Tanggal", "Jam", "Status Sistem", "Keterangan"]],
+      body: rows.map((row, index) => [
+        index + 1, row.day_name || "-", formatTanggalIndo(row.log_date),
+        (row.log_time || "-").slice(0, 5), row.status || "-", row.note || "-",
+      ]),
+      margin: { left: margin, right: margin, top: 12 },
+      rowPageBreak: "avoid",
       columnStyles: {
-        0: { cellWidth: 10 },
+        0: { cellWidth: 12, halign: "center" },
         1: { cellWidth: 20 },
-        2: { cellWidth: 32 },
-        3: { cellWidth: 16 },
-        4: { cellWidth: 26 },
-        5: { cellWidth: usableWidth - 104 },
+        2: { cellWidth: 34 },
+        3: { cellWidth: 15, halign: "center" },
+        4: { cellWidth: 26, halign: "center", fontStyle: "bold" },
+        5: { cellWidth: usable - 107 },
+      },
+      didParseCell: function (data) {
+        if (data.section === "body" && data.column.index === 4) {
+          const c = STATUS_COLOR[data.cell.raw] || [46, 74, 58];
+          data.cell.styles.textColor = c;
+          data.cell.styles.fontStyle = "bold";
+        }
       },
     });
 
-    addReportFooters(doc, `Aktivitas Sistem (${filterText})`, margin, trendYear);
+    /* INFORMASI TAMBAHAN: keterangan status & metodologi.               */
+    doc.addPage("a4", "portrait");
+    doc.setFillColor(...PDF_C.greenDark);
+    doc.rect(0, 0, PW, 22, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(255, 255, 255);
+    doc.text("Keterangan Status & Metodologi", margin, 12);
+    doc.setTextColor(...PDF_C.text);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+    let ky = 36;
+    ky = addWrappedText(doc,
+      "Status Normal: pH dan PPM berada dalam rentang pengaturan serta Dithane berjalan sesuai jadwal. Status Perhatian: salah satu parameter di luar rentang, data sensor tidak tersedia, atau Dithane melebihi jadwal. Status Tidak Normal: pH dan PPM sekaligus di luar rentang - memerlukan penanganan segera.",
+      margin, ky, usable, 5.4);
+    doc.setFontSize(9.5); doc.setTextColor(...PDF_C.muted);
+    ky = addWrappedText(doc,
+      "Metodologi: seluruh nilai berasal dari sensor ESP32 melalui MQTT dan tersimpan apa adanya di database. Status pada setiap catatan dihitung pada waktu pencatatan menggunakan pengaturan yang berlaku saat itu (tidak dihitung ulang dengan pengaturan terbaru). Grafik menggunakan data sensor asli (rata-rata harian) dengan konfigurasi yang sama seperti grafik web. Data yang tidak tersedia ditampilkan dengan keterangan 'belum tersedia', tidak pernah diasumsikan normal.",
+      margin, ky + 4, usable, 5);
+
+    addFootersAllPages(doc, `Filter: ${filterText} · Dibuat ${getGeneratedAtText()} WIB`);
     doc.save("data-aktivitas-sistem-hydrotech.pdf");
+    console.log("[PDF] laporan selesai dibuat:", rows.length, "catatan,", doc.internal.getNumberOfPages(), "halaman");
   }
+
   /* CHART CONFIG: sumber data grafik history pH dan PPM dari API (data asli). */
   function getCurrentMonthIndex() {
     return new Date().getMonth();
@@ -621,11 +867,15 @@
   let historyChart;
   let selectedChartRange = "month";
 
-  /* CHART DATA: mengambil rata-rata harian pH/PPM asli untuk bulan terpilih. */
+  /* CHART DATA: mengambil rata-rata harian pH/PPM asli untuk bulan terpilih.
+     Cache berlaku 30 detik agar grafik & rata-rata tetap mengikuti data
+     sensor terbaru tanpa harus me-refresh halaman.                    */
   const trendCache = new Map();
+  const TREND_CACHE_TTL = 30000;
 
   async function fetchMonthlyTrend(monthIndex) {
-    if (trendCache.has(monthIndex)) return trendCache.get(monthIndex);
+    const cached = trendCache.get(monthIndex);
+    if (cached && Date.now() - cached.at < TREND_CACHE_TTL) return cached.trend;
     try {
       const year = new Date().getFullYear();
       const response = await fetch(
@@ -636,11 +886,11 @@
         result.success && Array.isArray(result.data?.trend)
           ? result.data.trend
           : [];
-      trendCache.set(monthIndex, trend);
+      trendCache.set(monthIndex, { trend, at: Date.now() });
       return trend;
     } catch (error) {
       console.error("Gagal membaca tren history:", error);
-      return [];
+      return cached ? cached.trend : [];
     }
   }
 
@@ -879,7 +1129,6 @@
   /* FILTER EVENTS: menghubungkan input filter tabel dengan render history. */
   [
     searchInput, dayFilter, monthFilter, yearFilter, statusFilter,
-    timeFromInput, timeToInput,
   ].forEach((control) => {
     control?.addEventListener("input", function () {
       currentPage = 1;
@@ -889,6 +1138,40 @@
       currentPage = 1;
       fetchRows();
     });
+  });
+
+  /* PANEL RENTANG JAM: satu klik membuka jam mulai + jam selesai.      */
+  function closeTimePopup() {
+    if (timePopup) timePopup.hidden = true;
+    document.removeEventListener("click", onDocClickTimePopup);
+  }
+  function onDocClickTimePopup(event) {
+    if (!event.target.closest(".history-time-range")) closeTimePopup();
+  }
+  timeRangeBtn?.addEventListener("click", function (event) {
+    event.stopPropagation();
+    if (!timePopup) return;
+    timePopup.hidden = !timePopup.hidden;
+    if (!timePopup.hidden) document.addEventListener("click", onDocClickTimePopup);
+    else document.removeEventListener("click", onDocClickTimePopup);
+  });
+  timePopup?.querySelector("[data-trp-apply]")?.addEventListener("click", function () {
+    const j1 = fromJamSel?.value || "", m1 = fromMenitSel?.value || "";
+    const j2 = toJamSel?.value || "", m2 = toMenitSel?.value || "";
+    appliedFrom = j1 ? `${j1}:${m1 || "00"}` : "";
+    appliedTo = j2 ? `${j2}:${m2 || "59"}` : "";
+    updateTimeLabel();
+    closeTimePopup();
+    currentPage = 1;
+    fetchRows();
+  });
+  timePopup?.querySelector("[data-trp-clear]")?.addEventListener("click", function () {
+    [fromJamSel, fromMenitSel, toJamSel, toMenitSel].forEach((sel) => { if (sel) sel.value = ""; });
+    appliedFrom = ""; appliedTo = "";
+    updateTimeLabel();
+    closeTimePopup();
+    currentPage = 1;
+    fetchRows();
   });
 
   /* RESET EVENT: menampilkan konfirmasi sebelum filter history dikosongkan. */
@@ -934,6 +1217,7 @@
 
     const formData = new FormData();
     formData.append("id", rowId);
+    formData.append("csrf_token", token());   // WAJIB: server menolak tanpa token
     fetch("../api/history/delete.php", {
       method: "POST",
       body: formData
@@ -941,15 +1225,17 @@
     .then(response => response.json())
     .then(result => {
       if (result.success) {
-        row.remove();
+        if (window.HydrotechToast?.success("Data berhasil dihapus.")) {}
         fetchRows();      // muat ulang dari database (sinkron dgn filter aktif)
       } else {
-        alert("Gagal menghapus data history.");
+        if (window.HydrotechToast?.error(result.message || "Gagal menghapus data history.")) {}
+        else alert(result.message || "Gagal menghapus data history.");
       }
     })
     .catch(e => {
       console.error(e);
-      alert("Kesalahan jaringan.");
+      if (window.HydrotechToast?.error("Kesalahan jaringan.")) {}
+      else alert("Kesalahan jaringan.");
     });
   });
 
@@ -977,6 +1263,11 @@
   });
 
   /* INITIAL RENDER: memuat data kesimpulan + grafik saat halaman dibuka. */
+  populateTimeSelects();
+  transformTimeDropdowns();
   fetchRows();
   renderHistoryChart();
+
+  /* AUTO REFRESH: grafik & rata-rata ikuti data sensor terbaru.        */
+  window.setInterval(renderHistoryChart, 30000);
 })();

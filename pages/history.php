@@ -70,10 +70,34 @@ $bulanIndo = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'A
                   data-history-search
                   type="search"
                   placeholder="Cari tanggal, jam, status, atau keterangan..." />
-                <span class="filter-select history-time-range" aria-label="Rentang jam">
-                  <input data-history-time-from type="time" aria-label="Jam mulai" />
-                  <span>–</span>
-                  <input data-history-time-to type="time" aria-label="Jam selesai" />
+                <span class="history-time-range" style="position:relative">
+                  <button type="button" class="filter-select history-time-btn" data-history-time-range
+                          style="cursor:pointer;display:inline-flex;align-items:center;gap:8px">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+                    <span data-history-time-label>Pukul: --</span>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+                  </button>
+                  <div class="time-range-popup" data-history-time-popup hidden>
+                    <div class="trp-col">
+                      <small>Jam Mulai (24 jam)</small>
+                      <div class="trp-pair">
+                        <select data-history-time-from-jam><option value="">--</option></select>
+                        <select data-history-time-from-menit><option value="">--</option></select>
+                      </div>
+                    </div>
+                    <span class="trp-arrow">➜</span>
+                    <div class="trp-col">
+                      <small>Jam Selesai (24 jam)</small>
+                      <div class="trp-pair">
+                        <select data-history-time-to-jam><option value="">--</option></select>
+                        <select data-history-time-to-menit><option value="">--</option></select>
+                      </div>
+                    </div>
+                    <div class="trp-actions">
+                      <button type="button" class="trp-clear" data-trp-clear>Bersihkan</button>
+                      <button type="button" class="trp-apply" data-trp-apply>Terapkan</button>
+                    </div>
+                  </div>
                 </span>
                 <span class="filter-select">
                   <select data-history-day aria-label="Filter hari">
@@ -247,6 +271,6 @@ $bulanIndo = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'A
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
-    <script src="../js/history.js?v=4"></script>
+    <script src="../js/history.js?v=12"></script>
   </body>
 </html>

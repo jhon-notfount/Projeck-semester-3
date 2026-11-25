@@ -31,11 +31,16 @@ try {
     $timeFrom = trim((string)($_GET['time_from'] ?? ''));
     $timeTo   = trim((string)($_GET['time_to'] ?? ''));
 
+    /* Tipe data: default 'sistem' (kesimpulan gabungan); 'dithane'
+       tersedia untuk ringkasan aktivitas pompa pada laporan PDF.        */
+    $type = trim((string)($_GET['type'] ?? 'sistem'));
+    if (!in_array($type, ['sistem', 'dithane'], true)) $type = 'sistem';
+
     $query = "SELECT `monitoring_id` AS `id`, `type`, `day_name`, `log_time`, `value`,
                      `status`, `note`, `ph_value`, `ppm_value`, `dithane_state`,
                      `is_deleted`, DATE(`created_at`) AS `log_date`, `created_at`
               FROM monitoring_logs
-              WHERE `is_deleted` = 0 AND `type` = 'sistem'";
+              WHERE `is_deleted` = 0 AND `type` = '" . $type . "'";
     $params = [];
 
     if ($search !== '') {
@@ -87,12 +92,13 @@ try {
     $stmt->execute($params);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $years = $pdo->query(
+    $years = $pdo->prepare(
         "SELECT DISTINCT YEAR(`created_at`) AS y FROM monitoring_logs
-          WHERE type = 'sistem' AND is_deleted = 0 ORDER BY y DESC"
-    )->fetchAll(PDO::FETCH_COLUMN);
+          WHERE type = ? AND is_deleted = 0 ORDER BY y DESC"
+    );
+    $years->execute([$type]);
 
-    successResponse(['rows' => $rows, 'years' => array_map('intval', $years)], 'Data aktivitas sistem');
+    successResponse(['rows' => $rows, 'years' => array_map('intval', $years->fetchAll(PDO::FETCH_COLUMN))], 'Data aktivitas sistem');
 } catch (Exception $e) {
     error_log('History list: ' . $e->getMessage());
     errorResponse('Server error: ' . $e->getMessage(), 500);
